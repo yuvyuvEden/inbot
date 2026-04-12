@@ -142,7 +142,7 @@ export default function SettingsTab() {
   const { user } = useAuth();
   const [clientId, setClientId] = useState<string | null>(null);
   const [settings, setSettings] = useState<AdvancedSettings>(DEFAULT_SETTINGS);
-  const [vatRate, setVatRate] = useState(1.17);
+  const [vatRate, setVatRate] = useState(1.18);
   const [vatInput, setVatInput] = useState("");
   const [geminiKey, setGeminiKey] = useState("");
   const [geminiInput, setGeminiInput] = useState("");
@@ -182,7 +182,7 @@ export default function SettingsTab() {
       if (!c) { setIsLoading(false); return; }
       setClientId(c.id);
       setGeminiKey(c.gemini_api_key || "");
-      setVatRate((c as any).vat_rate ?? 1.17);
+      setVatRate((c as any).vat_rate ?? 1.18);
       setDialectWords(asArr((c as any).learned_words));
       setSettings({
         fetchDomains: asArr((c as any).fetch_domains),
@@ -513,7 +513,7 @@ export default function SettingsTab() {
               <span style={{ fontSize: 13 }}>שיעור נוכחי:</span>
               <span style={{ fontSize: 16, fontWeight: 700, color: "#1e3a5f" }}>{vatPct}%</span>
               <span style={{ fontSize: 11, color: "#64748b" }}>
-                {vatRate !== 1.17 ? "(מותאם אישית)" : "(ברירת מחדל)"}
+                {vatRate !== 1.18 ? "(מותאם אישית)" : "(ברירת מחדל)"}
               </span>
             </div>
             <div style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
