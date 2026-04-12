@@ -35,7 +35,35 @@ interface TaxRule {
   editing: boolean;
   editVat: number;
   editTax: number;
+  isDefaultVat: boolean;
+  isDefaultTax: boolean;
 }
+
+/* ── Tax rule defaults (Israeli tax law) ── */
+const VAT_DEFAULTS: Record<string, number> = {
+  "דלק": 67, "תחזוקת רכב": 67, "אגרות כביש": 67, "תקשורת": 67, "מוניות": 67,
+  "חניה": 100, "שכירות": 100, "חשמל": 25, "מים": 25, "ניהול ואחזקה": 25,
+  "כיבוד למשרד": 0, "ארוחות ומסעדות": 0, "מתנות ורווחה": 0, "תרומות": 0,
+  "ביטוח רכב": 0, "ביטוח עסקי": 0, "ביטוח פנסיוני": 0, "ביטוח לאומי": 0,
+  "מס הכנסה ומע\"מ": 0, "עמלות בנק": 0, "ריבית ומימון": 0, "תחבורה ציבורית": 0,
+  "ארנונה ואגרות": 0,
+};
+const TAX_DEFAULTS: Record<string, number> = {
+  "דלק": 45, "תחזוקת רכב": 45, "ביטוח רכב": 45, "אגרות כביש": 45,
+  "מוניות": 45, "תחבורה ציבורית": 45, "חניה": 45,
+  "כיבוד למשרד": 80, "ארוחות ומסעדות": 0,
+  "שכירות": 25, "חשמל": 25, "מים": 25, "ארנונה ואגרות": 25, "ניהול ואחזקה": 25,
+  "תקשורת": 50,
+};
+const getDefaultVat = (cat: string) => VAT_DEFAULTS[cat] ?? 100;
+const getDefaultTax = (cat: string) => TAX_DEFAULTS[cat] ?? 100;
+
+/* ── Tooltip helper ── */
+const SubCardTooltip = ({ text }: { text: string }) => (
+  <span title={text} style={{ fontSize: 11, opacity: 0.5, cursor: "help", marginRight: 4 }}>
+    <i className="fas fa-question-circle" />
+  </span>
+);
 
 const DEFAULT_SETTINGS: AdvancedSettings = {
   fetchDomains: [],
@@ -188,9 +216,13 @@ export default function SettingsTab() {
       const rulesMap = new Map(storedRules.map(r => [r.category, r]));
       setTaxRules(uniqueCats.sort().map(cat => {
         const s = rulesMap.get(cat);
+        const vatPct = s?.vatPct ?? getDefaultVat(cat);
+        const taxPct = s?.taxPct ?? getDefaultTax(cat);
         return {
-          category: cat, vatPct: s?.vatPct ?? 100, taxPct: s?.taxPct ?? 100,
-          editing: false, editVat: s?.vatPct ?? 100, editTax: s?.taxPct ?? 100,
+          category: cat, vatPct, taxPct,
+          editing: false, editVat: vatPct, editTax: taxPct,
+          isDefaultVat: !s || s.vatPct === getDefaultVat(cat),
+          isDefaultTax: !s || s.taxPct === getDefaultTax(cat),
         };
       }));
     } catch (e: any) {
@@ -256,23 +288,25 @@ export default function SettingsTab() {
   /* ── Tax rules ── */
   const saveTaxRule = async (cat: string, vat: number, tax: number) => {
     const updated = taxRules.map(r =>
-      r.category === cat ? { ...r, vatPct: vat, taxPct: tax, editing: false } : r
+      r.category === cat ? { ...r, vatPct: vat, taxPct: tax, editing: false, isDefaultVat: vat === getDefaultVat(cat), isDefaultTax: tax === getDefaultTax(cat) } : r
     );
     setTaxRules(updated);
-    const stored = updated.filter(r => r.vatPct !== 100 || r.taxPct !== 100)
+    const stored = updated.filter(r => r.vatPct !== getDefaultVat(r.category) || r.taxPct !== getDefaultTax(r.category))
       .map(r => ({ category: r.category, vatPct: r.vatPct, taxPct: r.taxPct }));
     await updateClient({ tax_rules: stored } as any);
     toast.success("כלל מס עודכן");
   };
   const resetTaxRule = async (cat: string) => {
+    const defVat = getDefaultVat(cat);
+    const defTax = getDefaultTax(cat);
     const updated = taxRules.map(r =>
-      r.category === cat ? { ...r, vatPct: 100, taxPct: 100, editing: false } : r
+      r.category === cat ? { ...r, vatPct: defVat, taxPct: defTax, editing: false, isDefaultVat: true, isDefaultTax: true } : r
     );
     setTaxRules(updated);
-    const stored = updated.filter(r => r.vatPct !== 100 || r.taxPct !== 100)
+    const stored = updated.filter(r => r.vatPct !== getDefaultVat(r.category) || r.taxPct !== getDefaultTax(r.category))
       .map(r => ({ category: r.category, vatPct: r.vatPct, taxPct: r.taxPct }));
     await updateClient({ tax_rules: stored } as any);
-    toast.success("הכלל אופס לברירת מחדל");
+    toast.success(`כללי ${cat} אופסו לברירת מחדל`);
   };
 
   /* ── Advanced list managers ── */
@@ -541,11 +575,11 @@ export default function SettingsTab() {
                       </>
                     ) : (
                       <>
-                        <td style={{ textAlign: "center", padding: 8, fontFamily: "monospace" }}>{rule.vatPct}%</td>
-                        <td style={{ textAlign: "center", padding: 8, fontFamily: "monospace" }}>{rule.taxPct}%</td>
+                        <td style={{ textAlign: "center", padding: 8, fontFamily: "monospace", color: rule.isDefaultVat ? "#64748b" : "#1e3a5f", fontWeight: rule.isDefaultVat ? 400 : 600 }}>{rule.vatPct}%</td>
+                        <td style={{ textAlign: "center", padding: 8, fontFamily: "monospace", color: rule.isDefaultTax ? "#64748b" : "#1e3a5f", fontWeight: rule.isDefaultTax ? 400 : 600 }}>{rule.taxPct}%</td>
                         <td style={{ textAlign: "center", padding: 8, display: "flex", gap: 4, justifyContent: "center" }}>
                           <button style={btnGhost} onClick={() => setTaxRules(prev => prev.map(r => r.category === rule.category ? { ...r, editing: true, editVat: r.vatPct, editTax: r.taxPct } : r))}><Pencil size={14} /></button>
-                          {(rule.vatPct !== 100 || rule.taxPct !== 100) && (
+                          {(rule.vatPct !== getDefaultVat(rule.category) || rule.taxPct !== getDefaultTax(rule.category)) && (
                             <button style={{ ...btnGhost, color: "#e8941a" }} onClick={() => resetTaxRule(rule.category)}><RotateCcw size={14} /></button>
                           )}
                         </td>
@@ -578,7 +612,7 @@ export default function SettingsTab() {
 
                 {/* Fetch Domains */}
                 <div style={subCard}>
-                  <div style={subCardHeader}><Download size={14} /> משיכה אוטומטית (Fetch)</div>
+                  <div style={subCardHeader}><Download size={14} /> משיכה אוטומטית (Fetch) <SubCardTooltip text={"דומיינים שהמערכת תנסה להוריד מהם PDF אוטומטית מתוך הלינק שבמייל.\nאם ספק לא מופיע כאן — תקבל התראה ידנית במקום הורדה אוטומטית."} /></div>
                   <div style={{ padding: 12 }}>
                     <div style={{ fontSize: 11, color: "#64748b", marginBottom: 8 }}>דומיינים שהמערכת תנסה להוריד מהם PDF אוטומטית.</div>
                     <ListManager field="fetchDomains" placeholder="דומיין חדש (למשל grow.business)" />
@@ -587,7 +621,7 @@ export default function SettingsTab() {
 
                 {/* Invoice Platforms */}
                 <div style={subCard}>
-                  <div style={subCardHeader}><FileText size={14} /> פלטפורמות חשבוניות</div>
+                  <div style={subCardHeader}><FileText size={14} /> פלטפורמות חשבוניות <SubCardTooltip text={"חברות שמנפיקות חשבוניות בשם הספק (כמו morning, iCount, חשבונית ירוקה).\nה-AI יודע שהן רק צינור — ולא ירשום אותן כספק."} /></div>
                   <div style={{ padding: 12 }}>
                     <div style={{ fontSize: 11, color: "#64748b", marginBottom: 8 }}>חברות שמנפיקות חשבוניות בשם הספק — ה-AI לא ירשום אותן כספק.</div>
                     <ListManager field="invoicePlatforms" placeholder="דומיין פלטפורמה (למשל morning.co)" />
@@ -596,7 +630,7 @@ export default function SettingsTab() {
 
                 {/* Known Domains */}
                 <div style={subCard}>
-                  <div style={subCardHeader}><Globe size={14} /> דומיינים לסריקת Gmail</div>
+                  <div style={subCardHeader}><Globe size={14} /> דומיינים לסריקת Gmail <SubCardTooltip text={"דומיינים שנכנסים לשאילתת הסריקה של Gmail.\nספק שלא מופיע כאן — המייל שלו לא נסרק כלל."} /></div>
                   <div style={{ padding: 12 }}>
                     <div style={{ fontSize: 11, color: "#64748b", marginBottom: 8 }}>דומיינים שנכנסים לשאילתת הסריקה של Gmail.</div>
                     <ListManager field="knownDomains" placeholder="דומיין ידוע (למשל cellcom.co.il)" />
@@ -605,7 +639,7 @@ export default function SettingsTab() {
 
                 {/* AI Tuning */}
                 <div style={subCard}>
-                  <div style={subCardHeader}><Brain size={14} /> כוונון AI</div>
+                  <div style={subCardHeader}><Brain size={14} /> כוונון AI <SubCardTooltip text={"הקשר עסקי שמועבר ל-Gemini לפני כל ניתוח.\nאופי העסק משפיע ישירות על סיווג הקטגוריות."} /></div>
                   <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 10 }}>
                     <div style={{ fontSize: 11, color: "#64748b" }}>הקשר עסקי שמועבר ל-Gemini לפני כל ניתוח.</div>
                     <div>
@@ -626,7 +660,7 @@ export default function SettingsTab() {
 
                 {/* Owner Aliases */}
                 <div style={subCard}>
-                  <div style={subCardHeader}><UserCheck size={14} /> כינויי בעלים</div>
+                  <div style={subCardHeader}><UserCheck size={14} /> כינויי בעלים <SubCardTooltip text={"שמות נוספים שלך שעשויים להופיע בשדה 'לכבוד' בחשבוניות —\nעברית, אנגלית, או וריאציות נפוצות.\nמונע דחיית חשבוניות בגלל איות שונה."} /></div>
                   <div style={{ padding: 12 }}>
                     <div style={{ fontSize: 11, color: "#64748b", marginBottom: 8 }}>שמות נוספים שלך שעשויים להופיע בשדה "לכבוד".</div>
                     <ListManager field="ownerAliases" placeholder="שם נוסף (עברית או אנגלית)" />
@@ -635,7 +669,7 @@ export default function SettingsTab() {
 
                 {/* Custom Categories */}
                 <div style={subCard}>
-                  <div style={subCardHeader}><Tags size={14} /> קטגוריות מותאמות</div>
+                  <div style={subCardHeader}><Tags size={14} /> קטגוריות מותאמות <SubCardTooltip text={"קטגוריות הוצאה ספציפיות לעסק שלך, בנוסף לרשימה הסטנדרטית.\nה-AI ישתמש בהן לסיווג ויופיעו בגרפים ובדוחות."} /></div>
                   <div style={{ padding: 12 }}>
                     <div style={{ fontSize: 11, color: "#64748b", marginBottom: 8 }}>הוסף שם קטגוריה והסבר — ה-AI ישתמש בהסבר לסיווג.</div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 5, marginBottom: 8 }}>
@@ -665,7 +699,7 @@ export default function SettingsTab() {
 
                 {/* Allocation Threshold */}
                 <div style={subCard}>
-                  <div style={subCardHeader}><Scale size={14} /> סף מספר הקצאה</div>
+                  <div style={subCardHeader}><Scale size={14} /> סף מספר הקצאה <SubCardTooltip text={"סכום מינימום שמעליו המערכת דורשת מספר הקצאה בחשבונית מס.\nחשבונית ללא מספר הקצאה מעל הסף — תעצר לאישורך.\nמיוני 2026: הסף יורד מ-₪10,000 ל-₪5,000 (תקנות רשות המסים)."} /></div>
                   <div style={{ padding: 12 }}>
                     <div style={{ fontSize: 11, color: "#64748b", marginBottom: 8 }}>סכום מינימום שמעליו נדרש מספר הקצאה בחשבונית מס.</div>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
@@ -695,7 +729,7 @@ export default function SettingsTab() {
 
                 {/* Advanced Tuning */}
                 <div style={subCard}>
-                  <div style={subCardHeader}><SlidersHorizontal size={14} /> כוונון מתקדם</div>
+                  <div style={subCardHeader}><SlidersHorizontal size={14} /> כוונון מתקדם <SubCardTooltip text={"פרמטרים טכניים שמשפיעים על ביצועי הסריקה.\nשנה רק אם יש סיבה ספציפית — ברירות המחדל מותאמות לרוב המקרים."} /></div>
                   <div style={{ padding: 12 }}>
                     <div style={{ fontSize: 11, color: "#64748b", marginBottom: 8 }}>פרמטרים טכניים של הסריקה — שנה רק אם יש סיבה ספציפית.</div>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
