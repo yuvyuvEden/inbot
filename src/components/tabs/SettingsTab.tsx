@@ -612,7 +612,7 @@ export default function SettingsTab() {
 
                 {/* Fetch Domains */}
                 <div style={subCard}>
-                  <div style={subCardHeader}><Download size={14} /> משיכה אוטומטית (Fetch)</div>
+                  <div style={subCardHeader}><Download size={14} /> משיכה אוטומטית (Fetch) <SubCardTooltip text={"דומיינים שהמערכת תנסה להוריד מהם PDF אוטומטית מתוך הלינק שבמייל.\nאם ספק לא מופיע כאן — תקבל התראה ידנית במקום הורדה אוטומטית."} /></div>
                   <div style={{ padding: 12 }}>
                     <div style={{ fontSize: 11, color: "#64748b", marginBottom: 8 }}>דומיינים שהמערכת תנסה להוריד מהם PDF אוטומטית.</div>
                     <ListManager field="fetchDomains" placeholder="דומיין חדש (למשל grow.business)" />
