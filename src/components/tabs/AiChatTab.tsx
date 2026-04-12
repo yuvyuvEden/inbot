@@ -313,49 +313,41 @@ Data summary: ${JSON.stringify(summary)}`;
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Quick prompts */}
-      {!noKey && (
-        <div className="flex flex-wrap gap-1.5 px-5 pb-3">
-          {QUICK_PROMPTS.map((p) => (
-            <button
-              key={p}
-              onClick={() => sendChat(p)}
-              disabled={isLoading}
-              className="rounded-full border border-border bg-white px-3 py-1 text-[12px] text-muted-foreground transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
-            >
-              {p}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Input bar */}
-      {!noKey && (
-        <div className="flex items-center gap-2 border-t border-border px-5 py-3.5">
-          <input
-            value={chatInput}
-            onChange={(e) => setChatInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && !isLoading && sendChat()}
-            placeholder="שאל שאלה על ההוצאות שלך..."
+      {/* Quick prompts — always visible */}
+      <div className="flex flex-wrap gap-1.5 border-t border-border bg-white px-4 py-2">
+        {QUICK_PROMPTS.map((p) => (
+          <button
+            key={p}
+            onClick={() => sendChat(p)}
             disabled={isLoading}
-            className="h-[40px] flex-1 rounded-lg border border-border bg-background px-3 text-[13px] outline-none focus:border-primary disabled:opacity-50"
-          />
-          <button
-            onClick={() => sendChat()}
-            disabled={isLoading || !chatInput.trim()}
-            className="flex h-[40px] w-[40px] items-center justify-center rounded-lg text-white transition-colors disabled:opacity-50"
-            style={{ background: "#1e3a5f" }}
+            className="rounded-full border border-border bg-white px-3 py-[5px] text-[12px] text-muted-foreground transition-all duration-150 hover:border-primary hover:text-primary disabled:opacity-50"
+            style={{ fontFamily: "Heebo, sans-serif" }}
           >
-            <Send size={16} />
+            {p}
           </button>
-          <button
-            onClick={clearChat}
-            className="flex h-[40px] w-[40px] items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-secondary"
-          >
-            <Trash2 size={14} />
-          </button>
-        </div>
-      )}
+        ))}
+      </div>
+
+      {/* Input bar — always visible */}
+      <div className="flex items-center gap-2 border-t border-border bg-white px-4 py-3">
+        <input
+          value={chatInput}
+          onChange={(e) => setChatInput(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && !isLoading && sendChat()}
+          placeholder="שאל שאלה על ההוצאות שלך..."
+          disabled={isLoading}
+          className="h-[40px] flex-1 rounded-lg border border-border px-3 text-[13px] outline-none focus:border-primary disabled:opacity-50"
+          style={{ fontFamily: "Heebo, sans-serif" }}
+        />
+        <button
+          onClick={() => sendChat()}
+          disabled={isLoading || !chatInput.trim()}
+          className="flex items-center justify-center rounded-lg px-3.5 py-2 text-white transition-colors disabled:opacity-50"
+          style={{ background: "#1e3a5f" }}
+        >
+          <Send size={16} />
+        </button>
+      </div>
     </div>
   );
 }
