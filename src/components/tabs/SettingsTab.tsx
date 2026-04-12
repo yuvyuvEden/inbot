@@ -630,7 +630,7 @@ export default function SettingsTab() {
 
                 {/* Known Domains */}
                 <div style={subCard}>
-                  <div style={subCardHeader}><Globe size={14} /> דומיינים לסריקת Gmail</div>
+                  <div style={subCardHeader}><Globe size={14} /> דומיינים לסריקת Gmail <SubCardTooltip text={"דומיינים שנכנסים לשאילתת הסריקה של Gmail.\nספק שלא מופיע כאן — המייל שלו לא נסרק כלל."} /></div>
                   <div style={{ padding: 12 }}>
                     <div style={{ fontSize: 11, color: "#64748b", marginBottom: 8 }}>דומיינים שנכנסים לשאילתת הסריקה של Gmail.</div>
                     <ListManager field="knownDomains" placeholder="דומיין ידוע (למשל cellcom.co.il)" />
@@ -639,7 +639,7 @@ export default function SettingsTab() {
 
                 {/* AI Tuning */}
                 <div style={subCard}>
-                  <div style={subCardHeader}><Brain size={14} /> כוונון AI</div>
+                  <div style={subCardHeader}><Brain size={14} /> כוונון AI <SubCardTooltip text={"הקשר עסקי שמועבר ל-Gemini לפני כל ניתוח.\nאופי העסק משפיע ישירות על סיווג הקטגוריות."} /></div>
                   <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 10 }}>
                     <div style={{ fontSize: 11, color: "#64748b" }}>הקשר עסקי שמועבר ל-Gemini לפני כל ניתוח.</div>
                     <div>
@@ -660,7 +660,7 @@ export default function SettingsTab() {
 
                 {/* Owner Aliases */}
                 <div style={subCard}>
-                  <div style={subCardHeader}><UserCheck size={14} /> כינויי בעלים</div>
+                  <div style={subCardHeader}><UserCheck size={14} /> כינויי בעלים <SubCardTooltip text={"שמות נוספים שלך שעשויים להופיע בשדה 'לכבוד' בחשבוניות —\nעברית, אנגלית, או וריאציות נפוצות.\nמונע דחיית חשבוניות בגלל איות שונה."} /></div>
                   <div style={{ padding: 12 }}>
                     <div style={{ fontSize: 11, color: "#64748b", marginBottom: 8 }}>שמות נוספים שלך שעשויים להופיע בשדה "לכבוד".</div>
                     <ListManager field="ownerAliases" placeholder="שם נוסף (עברית או אנגלית)" />
@@ -669,7 +669,7 @@ export default function SettingsTab() {
 
                 {/* Custom Categories */}
                 <div style={subCard}>
-                  <div style={subCardHeader}><Tags size={14} /> קטגוריות מותאמות</div>
+                  <div style={subCardHeader}><Tags size={14} /> קטגוריות מותאמות <SubCardTooltip text={"קטגוריות הוצאה ספציפיות לעסק שלך, בנוסף לרשימה הסטנדרטית.\nה-AI ישתמש בהן לסיווג ויופיעו בגרפים ובדוחות."} /></div>
                   <div style={{ padding: 12 }}>
                     <div style={{ fontSize: 11, color: "#64748b", marginBottom: 8 }}>הוסף שם קטגוריה והסבר — ה-AI ישתמש בהסבר לסיווג.</div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 5, marginBottom: 8 }}>
@@ -699,7 +699,7 @@ export default function SettingsTab() {
 
                 {/* Allocation Threshold */}
                 <div style={subCard}>
-                  <div style={subCardHeader}><Scale size={14} /> סף מספר הקצאה</div>
+                  <div style={subCardHeader}><Scale size={14} /> סף מספר הקצאה <SubCardTooltip text={"סכום מינימום שמעליו המערכת דורשת מספר הקצאה בחשבונית מס.\nחשבונית ללא מספר הקצאה מעל הסף — תעצר לאישורך.\nמיוני 2026: הסף יורד מ-₪10,000 ל-₪5,000 (תקנות רשות המסים)."} /></div>
                   <div style={{ padding: 12 }}>
                     <div style={{ fontSize: 11, color: "#64748b", marginBottom: 8 }}>סכום מינימום שמעליו נדרש מספר הקצאה בחשבונית מס.</div>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
@@ -729,7 +729,7 @@ export default function SettingsTab() {
 
                 {/* Advanced Tuning */}
                 <div style={subCard}>
-                  <div style={subCardHeader}><SlidersHorizontal size={14} /> כוונון מתקדם</div>
+                  <div style={subCardHeader}><SlidersHorizontal size={14} /> כוונון מתקדם <SubCardTooltip text={"פרמטרים טכניים שמשפיעים על ביצועי הסריקה.\nשנה רק אם יש סיבה ספציפית — ברירות המחדל מותאמות לרוב המקרים."} /></div>
                   <div style={{ padding: 12 }}>
                     <div style={{ fontSize: 11, color: "#64748b", marginBottom: 8 }}>פרמטרים טכניים של הסריקה — שנה רק אם יש סיבה ספציפית.</div>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
