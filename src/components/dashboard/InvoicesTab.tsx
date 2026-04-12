@@ -191,7 +191,7 @@ export default function InvoicesTab() {
   );
 
   return (
-    <div className="flex flex-col" style={{ margin: "0 -24px", width: "calc(100% + 48px)" }}>
+    <div className="flex flex-col">
       {/* ── Filters ── */}
       <div className="bg-white border-b border-[#e2e8f0] px-6 py-3">
         {/* Mobile: search on top */}
