@@ -11,6 +11,7 @@ import RecentInvoicesTable from "@/components/dashboard/RecentInvoicesTable";
 import InvoicesTab from "@/components/dashboard/InvoicesTab";
 import ExportTab from "@/components/tabs/ExportTab";
 import AiChatTab from "@/components/tabs/AiChatTab";
+import SettingsTab from "@/components/tabs/SettingsTab";
 import {
   BarChart2, FileText, MessageSquare, Archive, Download, Bot, Settings, LogOut,
 } from "lucide-react";
@@ -141,6 +142,8 @@ export default function Dashboard() {
             <ExportTab />
           ) : activeTab === "ai" ? (
             <AiChatTab />
+          ) : activeTab === "settings" ? (
+            <SettingsTab />
           ) : (
             <p className="py-16 text-center text-muted-foreground">בקרוב...</p>
           )}
