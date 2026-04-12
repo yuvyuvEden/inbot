@@ -267,19 +267,31 @@ export default function InvoicesTab({ clientId }: Props) {
         <>
           {/* Desktop table */}
           <div className="hidden md:block bg-white overflow-visible">
-            <table className="w-full text-[13px]" style={{ tableLayout: "auto" }}>
+            <table className="w-full text-[13px]" style={{ tableLayout: "fixed", width: "100%" }}>
+              <colgroup>
+                <col style={{ width: 90 }} />
+                <col style={{ width: 150 }} />
+                <col style={{ width: 110 }} />
+                <col style={{ width: 80 }} />
+                <col style={{ width: 80 }} />
+                <col style={{ width: 80 }} />
+                <col style={{ width: 110 }} />
+                <col style={{ width: 95 }} />
+                <col style={{ width: 100 }} />
+                <col style={{ width: 80 }} />
+              </colgroup>
               <thead>
                 <tr className="border-b border-[#e2e8f0] bg-[#f8fafc] text-[12px] font-bold text-gray-500">
-                  <th className="px-3 py-3 text-right" style={{ width: 85 }}>תאריך</th>
+                  <th className="px-3 py-3 text-right">תאריך</th>
                   <th className="px-3 py-3 text-right">ספק</th>
-                  <th className="px-3 py-3 text-right" style={{ width: 110 }}>מספר חשבונית</th>
-                  <th className="px-3 py-3 text-left" style={{ width: 80 }}>סכום</th>
-                  <th className="px-3 py-3 text-left" style={{ width: 80 }}>מע״מ בפועל</th>
-                  <th className="px-3 py-3 text-left" style={{ width: 80 }}>מע״מ מוכר</th>
-                  <th className="px-3 py-3 text-right" style={{ width: 110 }}>קטגוריה</th>
-                  <th className="px-3 py-3 text-right" style={{ width: 95 }}>סוג</th>
-                  <th className="px-3 py-3 text-right" style={{ width: 100 }}>סטטוס</th>
-                  <th className="px-3 py-3 text-center" style={{ width: 80 }}>פעולות</th>
+                  <th className="px-3 py-3 text-right">מספר חשבונית</th>
+                  <th className="px-3 py-3 text-left">סכום</th>
+                  <th className="px-3 py-3 text-left">מע״מ בפועל</th>
+                  <th className="px-3 py-3 text-left">מע״מ מוכר</th>
+                  <th className="px-3 py-3 text-right">קטגוריה</th>
+                  <th className="px-3 py-3 text-right">סוג</th>
+                  <th className="px-3 py-3 text-right">סטטוס</th>
+                  <th className="px-3 py-3 text-center">פעולות</th>
                 </tr>
               </thead>
               <tbody>
@@ -289,7 +301,7 @@ export default function InvoicesTab({ clientId }: Props) {
                   return (
                     <tr key={inv.id} className="border-b border-[#e2e8f0]/60 hover:bg-[#f8fafc] transition-colors">
                       <td className="px-3 py-3 whitespace-nowrap">{inv.invoice_date || "—"}</td>
-                      <td className="px-3 py-3 max-w-0 truncate" title={inv.vendor || ""}>{inv.vendor || "—"}</td>
+                      <td className="px-3 py-3" style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={inv.vendor || ""}>{inv.vendor || "—"}</td>
                       <td className="px-3 py-3 truncate">{inv.invoice_number || "—"}</td>
                       <td className="px-3 py-3 text-left font-mono tabular-nums whitespace-nowrap">{inv.total != null ? `₪${inv.total.toLocaleString("he-IL")}` : "—"}</td>
                       <td className="px-3 py-3 text-left font-mono tabular-nums whitespace-nowrap">{inv.vat_original != null ? `₪${inv.vat_original.toLocaleString("he-IL")}` : "—"}</td>
