@@ -89,6 +89,8 @@ function matchesQuickFilter(dateStr: string | null, qf: string): boolean {
 function getCatColor(cat: string | null) { return cat ? (CATEGORY_COLORS[cat] || DEFAULT_CAT_COLOR) : DEFAULT_CAT_COLOR; }
 
 const PAGE_SIZE = 20;
+interface Invoice { id: string; invoice_date: string | null; vendor: string | null; invoice_number: string | null; total: number | null; vat_original: number | null; vat_deductible: number | null; category: string | null; document_type: string | null; status: string; drive_file_url: string | null; }
+
 interface Props { clientId?: string; }
 
 /* ─── Component ─── */
