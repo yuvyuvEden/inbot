@@ -1,9 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useClientRecord } from "@/hooks/useClientData";
 import { Search, ExternalLink, X, ChevronLeft, ChevronRight, FileText, Pencil, Trash2, Download } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import {
@@ -107,21 +106,6 @@ function matchesQuickFilter(dateStr: string | null, qf: string): boolean {
   }
 }
 
-function matchesDateRange(dateStr: string | null, fromStr: string, toStr: string): boolean {
-  if (!fromStr && !toStr) return true;
-  const parsed = parseDMY(dateStr);
-  if (!parsed) return false;
-  if (fromStr) {
-    const from = parseDMY(fromStr);
-    if (from && parsed < from) return false;
-  }
-  if (toStr) {
-    const to = parseDMY(toStr);
-    if (to && parsed > to) return false;
-  }
-  return true;
-}
-
 const PAGE_SIZE = 20;
 
 interface Invoice {
@@ -151,12 +135,14 @@ export default function InvoicesTab() {
   const [categoryFilter, setCategoryFilter] = useState("");
   const [docTypeFilter, setDocTypeFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
+  const [dateFrom, setDateFrom] = useState(""); // YYYY-MM-DD
+  const [dateTo, setDateTo] = useState("");     // YYYY-MM-DD
   const [quickFilter, setQuickFilter] = useState("all");
   const [page, setPage] = useState(0);
 
-  // Modals
+  const dateFromRef = useRef<HTMLInputElement>(null);
+  const dateToRef = useRef<HTMLInputElement>(null);
+
   const [editModal, setEditModal] = useState<Invoice | null>(null);
   const [editCatValue, setEditCatValue] = useState("");
   const [deleteModal, setDeleteModal] = useState<Invoice | null>(null);
@@ -198,7 +184,19 @@ export default function InvoicesTab() {
       if (quickFilter && quickFilter !== "all") {
         if (!matchesQuickFilter(inv.invoice_date, quickFilter)) return false;
       }
-      if (!matchesDateRange(inv.invoice_date, dateFrom, dateTo)) return false;
+      // Date range filtering (dateFrom/dateTo are YYYY-MM-DD)
+      if (dateFrom || dateTo) {
+        const parsed = parseDMY(inv.invoice_date);
+        if (!parsed) return false;
+        if (dateFrom) {
+          const from = new Date(dateFrom);
+          if (parsed < from) return false;
+        }
+        if (dateTo) {
+          const to = new Date(dateTo + "T23:59:59");
+          if (parsed > to) return false;
+        }
+      }
       return true;
     });
   }, [invoices, search, categoryFilter, docTypeFilter, statusFilter, quickFilter, dateFrom, dateTo]);
@@ -259,20 +257,24 @@ export default function InvoicesTab() {
     URL.revokeObjectURL(url);
   };
 
-  const selectClass = "h-9 rounded-lg border border-border bg-card px-3 text-[13px] text-foreground outline-none focus:ring-1 focus:ring-primary";
+  const selectClass = "h-[38px] shrink-0 min-w-[120px] rounded-lg border border-border bg-card px-3 text-[13px] text-foreground outline-none focus:ring-1 focus:ring-primary";
+  const dateClass = "h-[38px] w-[130px] shrink-0 rounded-lg border border-border bg-card px-3 text-[13px] text-foreground outline-none focus:ring-1 focus:ring-primary cursor-pointer";
 
   return (
-    <div className="space-y-0">
-      {/* Filters Bar */}
-      <div className="flex flex-wrap items-center gap-3 rounded-xl bg-card p-4 shadow-[0_4px_12px_rgba(0,0,0,.08)]">
+    <div className="space-y-0 p-6">
+      {/* Filters Bar — single row, no wrapping */}
+      <div
+        className="flex items-center gap-2 rounded-xl bg-card p-3 shadow-[0_4px_12px_rgba(0,0,0,.08)]"
+        style={{ flexWrap: "nowrap", overflowX: "auto" }}
+      >
         {/* Search */}
-        <div className="relative">
-          <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input
+        <div className="relative shrink min-w-[180px] flex-1">
+          <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+          <input
             placeholder="חיפוש לפי ספק, מספר חשבונית, סכום..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-            className="h-9 w-[280px] rounded-lg border-border pr-9 text-[13px]"
+            className="h-[38px] w-full rounded-lg border border-border bg-card pr-9 pl-3 text-[13px] text-foreground outline-none focus:ring-1 focus:ring-primary"
           />
         </div>
 
@@ -292,33 +294,37 @@ export default function InvoicesTab() {
           {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
 
-        {/* Date Range — text inputs DD/MM/YYYY */}
-        <div className="flex items-center gap-1.5">
-          <Input
-            placeholder="מ-תאריך (DD/MM/YYYY)"
-            value={dateFrom}
-            onChange={(e) => { setDateFrom(e.target.value); setQuickFilter(""); setPage(0); }}
-            className="h-9 w-[150px] rounded-lg border-border text-[13px]"
-          />
-          <span className="text-[12px] text-muted-foreground">עד</span>
-          <Input
-            placeholder="עד-תאריך (DD/MM/YYYY)"
-            value={dateTo}
-            onChange={(e) => { setDateTo(e.target.value); setQuickFilter(""); setPage(0); }}
-            className="h-9 w-[150px] rounded-lg border-border text-[13px]"
-          />
-        </div>
+        {/* Date From */}
+        <input
+          ref={dateFromRef}
+          type="date"
+          value={dateFrom}
+          onChange={(e) => { setDateFrom(e.target.value); setQuickFilter(""); setPage(0); }}
+          onClick={() => dateFromRef.current?.showPicker?.()}
+          className={dateClass}
+          title="מ-תאריך"
+        />
+        <span className="shrink-0 text-[12px] text-muted-foreground">עד</span>
+        <input
+          ref={dateToRef}
+          type="date"
+          value={dateTo}
+          onChange={(e) => { setDateTo(e.target.value); setQuickFilter(""); setPage(0); }}
+          onClick={() => dateToRef.current?.showPicker?.()}
+          className={dateClass}
+          title="עד-תאריך"
+        />
 
         {/* Spacer */}
-        <div className="flex-1" />
+        <div className="flex-1 min-w-[8px] shrink" />
 
         {/* Quick Filters */}
-        <div className="flex gap-1">
+        <div className="flex shrink-0 gap-1">
           {QUICK_FILTERS.map((qf) => (
             <button
               key={qf.key}
               onClick={() => { setQuickFilter(qf.key); setDateFrom(""); setDateTo(""); setPage(0); }}
-              className={`rounded-lg px-3 py-1.5 text-[12px] font-medium transition-colors ${
+              className={`shrink-0 rounded-lg px-3 py-1.5 text-[12px] font-medium transition-colors ${
                 quickFilter === qf.key
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:text-foreground"
@@ -330,13 +336,13 @@ export default function InvoicesTab() {
         </div>
 
         {/* CSV Export */}
-        <button onClick={exportCSV} className="flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-[12px] font-medium text-muted-foreground hover:text-foreground transition-colors">
+        <button onClick={exportCSV} className="flex shrink-0 items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-[12px] font-medium text-muted-foreground hover:text-foreground transition-colors">
           <Download size={12} />
           CSV
         </button>
 
         {/* Clear */}
-        <button onClick={resetFilters} className="flex items-center gap-1 text-[12px] text-muted-foreground hover:text-foreground transition-colors">
+        <button onClick={resetFilters} className="flex shrink-0 items-center gap-1 text-[12px] text-muted-foreground hover:text-foreground transition-colors">
           <X size={12} />
           נקה
         </button>
@@ -355,19 +361,32 @@ export default function InvoicesTab() {
         </div>
       ) : (
         <div className="mt-4 overflow-x-auto rounded-xl bg-card shadow-[0_4px_12px_rgba(0,0,0,.08)]">
-          <table className="w-full text-[13px]">
+          <table className="w-full text-[13px]" style={{ tableLayout: "fixed" }}>
+            <colgroup>
+              <col style={{ width: 100 }} />
+              {/* ספק — flexible */}
+              <col />
+              <col style={{ width: 130 }} />
+              <col style={{ width: 90 }} />
+              <col style={{ width: 90 }} />
+              <col style={{ width: 90 }} />
+              <col style={{ width: 130 }} />
+              <col style={{ width: 120 }} />
+              <col style={{ width: 110 }} />
+              <col style={{ width: 90 }} />
+            </colgroup>
             <thead>
               <tr className="bg-[#f8fafc] text-[12px] font-bold uppercase text-muted-foreground">
-                <th className="px-4 py-3 text-right">תאריך</th>
-                <th className="px-4 py-3 text-right">ספק</th>
-                <th className="px-4 py-3 text-right">מספר חשבונית</th>
-                <th className="px-4 py-3 text-left" style={{ fontVariantNumeric: "tabular-nums" }}>סכום</th>
-                <th className="px-4 py-3 text-left">מע״מ בפועל</th>
-                <th className="px-4 py-3 text-left">מע״מ מוכר</th>
-                <th className="px-4 py-3 text-right">קטגוריה</th>
-                <th className="px-4 py-3 text-right">סוג</th>
-                <th className="px-4 py-3 text-right">סטטוס</th>
-                <th className="px-4 py-3 text-center">פעולות</th>
+                <th className="px-3 py-3 text-right">תאריך</th>
+                <th className="px-3 py-3 text-right">ספק</th>
+                <th className="px-3 py-3 text-right">מספר חשבונית</th>
+                <th className="px-3 py-3 text-left" style={{ fontVariantNumeric: "tabular-nums" }}>סכום</th>
+                <th className="px-3 py-3 text-left">מע״מ בפועל</th>
+                <th className="px-3 py-3 text-left">מע״מ מוכר</th>
+                <th className="px-3 py-3 text-right">קטגוריה</th>
+                <th className="px-3 py-3 text-right">סוג</th>
+                <th className="px-3 py-3 text-right">סטטוס</th>
+                <th className="px-3 py-3 text-center">פעולות</th>
               </tr>
             </thead>
             <tbody>
@@ -376,29 +395,28 @@ export default function InvoicesTab() {
                 const catColor = getCatColor(inv.category);
                 return (
                   <tr key={inv.id} className="border-b border-border/50 transition-colors hover:bg-[#f8fafc]">
-                    <td className="px-4 py-3">{inv.invoice_date || "—"}</td>
-                    <td className="px-4 py-3">{inv.vendor || "—"}</td>
-                    <td className="px-4 py-3">{inv.invoice_number || "—"}</td>
-                    <td className="px-4 py-3 text-left font-mono">{inv.total != null ? `₪${inv.total.toLocaleString("he-IL")}` : "—"}</td>
-                    <td className="px-4 py-3 text-left font-mono">{inv.vat_original != null ? `₪${inv.vat_original.toLocaleString("he-IL")}` : "—"}</td>
-                    <td className="px-4 py-3 text-left font-mono">{inv.vat_deductible != null ? `₪${inv.vat_deductible.toLocaleString("he-IL")}` : "—"}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-3 truncate">{inv.invoice_date || "—"}</td>
+                    <td className="px-3 py-3 truncate">{inv.vendor || "—"}</td>
+                    <td className="px-3 py-3 truncate">{inv.invoice_number || "—"}</td>
+                    <td className="px-3 py-3 text-left font-mono truncate">{inv.total != null ? `₪${inv.total.toLocaleString("he-IL")}` : "—"}</td>
+                    <td className="px-3 py-3 text-left font-mono truncate">{inv.vat_original != null ? `₪${inv.vat_original.toLocaleString("he-IL")}` : "—"}</td>
+                    <td className="px-3 py-3 text-left font-mono truncate">{inv.vat_deductible != null ? `₪${inv.vat_deductible.toLocaleString("he-IL")}` : "—"}</td>
+                    <td className="px-3 py-3">
                       <span
-                        className="inline-block rounded-full px-2.5 py-0.5 text-[11px] font-medium"
+                        className="inline-block max-w-full truncate rounded-full px-2.5 py-0.5 text-[11px] font-medium"
                         style={{ backgroundColor: catColor.bg, color: catColor.text }}
                       >
                         {inv.category || "—"}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-[12px]">{inv.document_type || "—"}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-3 text-[12px] truncate">{inv.document_type || "—"}</td>
+                    <td className="px-3 py-3">
                       <span className="inline-block rounded-full px-2.5 py-0.5 text-[11px] font-medium" style={{ backgroundColor: st.bg, color: st.text }}>
                         {st.label}
                       </span>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-3">
                       <div className="flex items-center justify-center gap-2">
-                        {/* PDF link */}
                         {inv.drive_file_url ? (
                           <a href={inv.drive_file_url} target="_blank" rel="noopener noreferrer" className="text-red-500 hover:text-red-700 transition-colors">
                             <ExternalLink size={15} />
@@ -406,14 +424,12 @@ export default function InvoicesTab() {
                         ) : (
                           <span className="text-muted-foreground/30"><ExternalLink size={15} /></span>
                         )}
-                        {/* Edit category */}
                         <button
                           onClick={() => { setEditModal(inv); setEditCatValue(inv.category || ALL_CATEGORIES[0]); }}
                           className="text-muted-foreground hover:text-primary transition-colors"
                         >
                           <Pencil size={14} />
                         </button>
-                        {/* Delete */}
                         <button
                           onClick={() => setDeleteModal(inv)}
                           className="text-muted-foreground hover:text-red-600 transition-colors"
