@@ -575,11 +575,11 @@ export default function SettingsTab() {
                       </>
                     ) : (
                       <>
-                        <td style={{ textAlign: "center", padding: 8, fontFamily: "monospace" }}>{rule.vatPct}%</td>
-                        <td style={{ textAlign: "center", padding: 8, fontFamily: "monospace" }}>{rule.taxPct}%</td>
+                        <td style={{ textAlign: "center", padding: 8, fontFamily: "monospace", color: rule.isDefaultVat ? "#64748b" : "#1e3a5f", fontWeight: rule.isDefaultVat ? 400 : 600 }}>{rule.vatPct}%</td>
+                        <td style={{ textAlign: "center", padding: 8, fontFamily: "monospace", color: rule.isDefaultTax ? "#64748b" : "#1e3a5f", fontWeight: rule.isDefaultTax ? 400 : 600 }}>{rule.taxPct}%</td>
                         <td style={{ textAlign: "center", padding: 8, display: "flex", gap: 4, justifyContent: "center" }}>
                           <button style={btnGhost} onClick={() => setTaxRules(prev => prev.map(r => r.category === rule.category ? { ...r, editing: true, editVat: r.vatPct, editTax: r.taxPct } : r))}><Pencil size={14} /></button>
-                          {(rule.vatPct !== 100 || rule.taxPct !== 100) && (
+                          {(rule.vatPct !== getDefaultVat(rule.category) || rule.taxPct !== getDefaultTax(rule.category)) && (
                             <button style={{ ...btnGhost, color: "#e8941a" }} onClick={() => resetTaxRule(rule.category)}><RotateCcw size={14} /></button>
                           )}
                         </td>
