@@ -22,7 +22,7 @@ const Login = () => {
   const [signUpConfirm, setSignUpConfirm] = useState("");
 
   useEffect(() => {
-    if (session) navigate("/", { replace: true });
+    if (session) navigate("/dashboard", { replace: true });
   }, [session, navigate]);
 
   const handleGoogleSignIn = async () => {
@@ -38,7 +38,7 @@ const Login = () => {
       return;
     }
     if (result.redirected) return;
-    navigate("/", { replace: true });
+    navigate("/dashboard", { replace: true });
   };
 
   const handleSignIn = async (e: React.FormEvent) => {

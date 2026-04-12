@@ -143,6 +143,7 @@ export type Database = {
           email_message_id: string | null
           id: string
           invoice_id: string
+          is_read: boolean
         }
         Insert: {
           author_id: string
@@ -152,6 +153,7 @@ export type Database = {
           email_message_id?: string | null
           id?: string
           invoice_id: string
+          is_read?: boolean
         }
         Update: {
           author_id?: string
@@ -161,6 +163,7 @@ export type Database = {
           email_message_id?: string | null
           id?: string
           invoice_id?: string
+          is_read?: boolean
         }
         Relationships: [
           {
