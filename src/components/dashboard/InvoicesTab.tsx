@@ -301,7 +301,7 @@ export default function InvoicesTab({ clientId }: Props) {
                   return (
                     <tr key={inv.id} className="border-b border-[#e2e8f0]/60 hover:bg-[#f8fafc] transition-colors">
                       <td className="px-3 py-3 whitespace-nowrap">{inv.invoice_date || "—"}</td>
-                      <td className="px-3 py-3" style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={inv.vendor || ""}>{inv.vendor || "—"}</td>
+                      <td className="px-3 py-3 whitespace-nowrap" title={inv.vendor || ""}>{inv.vendor || "—"}</td>
                       <td className="px-3 py-3 truncate">{inv.invoice_number || "—"}</td>
                       <td className="px-3 py-3 text-left font-mono tabular-nums whitespace-nowrap">{inv.total != null ? `₪${inv.total.toLocaleString("he-IL")}` : "—"}</td>
                       <td className="px-3 py-3 text-left font-mono tabular-nums whitespace-nowrap">{inv.vat_original != null ? `₪${inv.vat_original.toLocaleString("he-IL")}` : "—"}</td>
