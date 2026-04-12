@@ -97,7 +97,7 @@ export default function Dashboard() {
       <main className="mx-auto max-w-6xl p-4 md:p-6">
         {activeTab === "dashboard" ? (
           <div className="space-y-6">
-            {/* Period Selector */}
+            {/* 1. Period Selector */}
             <div className="flex flex-wrap gap-2">
               {PERIODS.map((p) => (
                 <button
@@ -114,17 +114,21 @@ export default function Dashboard() {
               ))}
             </div>
 
-            {/* KPI Cards */}
+            {/* 2. KPI Cards — always visible */}
             <KPICards kpis={kpis} prevKpis={prevKpis} isLoading={kpisLoading} />
 
-            {/* Charts */}
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[3fr_2fr]">
-              <ExpenseChart data={timeline} isLoading={timelineLoading} />
-              <CategoryPieChart data={categories} isLoading={categoriesLoading} />
-            </div>
+            {/* 3. Recent Invoices Table */}
+            <RecentInvoicesTable
+              invoices={recentInvoices}
+              isLoading={recentLoading}
+              onViewAll={() => setActiveTab("invoices")}
+            />
 
-            {/* Recent Invoices */}
-            <RecentInvoicesTable invoices={recentInvoices} isLoading={recentLoading} />
+            {/* 4. Charts — Pie right (40%), Bar left (60%) */}
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_3fr]">
+              <CategoryPieChart data={categories} isLoading={categoriesLoading} />
+              <ExpenseChart data={timeline} isLoading={timelineLoading} />
+            </div>
           </div>
         ) : (
           <p className="py-16 text-center text-muted-foreground">בקרוב...</p>

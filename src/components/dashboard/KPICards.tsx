@@ -14,14 +14,17 @@ function formatCurrency(n: number) {
 }
 
 function calcDelta(current: number, previous: number): { pct: number; direction: "up" | "down" | "flat" } {
-  if (previous === 0) return { pct: 0, direction: "flat" };
+  if (previous === 0 && current === 0) return { pct: 0, direction: "flat" };
+  if (previous === 0) return { pct: 100, direction: "up" };
   const pct = ((current - previous) / previous) * 100;
   return { pct: Math.abs(pct), direction: pct > 0 ? "up" : pct < 0 ? "down" : "flat" };
 }
 
+interface KPIs { totalExpenses: number; totalVat: number; totalTax: number; count: number; noAllocation: number }
+
 interface KPICardsProps {
-  kpis: { totalExpenses: number; totalVat: number; totalTax: number; count: number; noAllocation: number } | undefined;
-  prevKpis?: { totalExpenses: number; totalVat: number; totalTax: number; count: number; noAllocation: number } | undefined;
+  kpis: KPIs | undefined;
+  prevKpis?: KPIs | undefined;
   isLoading: boolean;
 }
 
@@ -40,21 +43,15 @@ export default function KPICards({ kpis, prevKpis, isLoading }: KPICardsProps) {
     );
   }
 
-  if (!kpis || (kpis.count === 0 && kpis.totalExpenses === 0)) {
-    return (
-      <div className="flex flex-col items-center gap-2 py-16">
-        <Receipt className="text-muted-foreground" size={40} strokeWidth={1.5} />
-        <p className="text-muted-foreground">אין נתונים לתקופה זו</p>
-      </div>
-    );
-  }
+  // Always show cards, even with 0 values
+  const data: KPIs = kpis || { totalExpenses: 0, totalVat: 0, totalTax: 0, count: 0, noAllocation: 0 };
 
   return (
     <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4">
       {KPI_CARDS.map((card) => {
         const Icon = card.icon;
-        const value = kpis[card.key as keyof typeof kpis] as number;
-        const prevValue = prevKpis ? (prevKpis[card.key as keyof typeof prevKpis] as number) : undefined;
+        const value = data[card.key as keyof KPIs] as number;
+        const prevValue = prevKpis ? (prevKpis[card.key as keyof KPIs] as number) : undefined;
         const delta = prevValue !== undefined ? calcDelta(value, prevValue) : null;
 
         return (
@@ -77,10 +74,7 @@ export default function KPICards({ kpis, prevKpis, isLoading }: KPICardsProps) {
                 ) : (
                   <TrendingDown size={14} className="text-[#dc2626]" />
                 )}
-                <span
-                  className="text-[12px] font-medium"
-                  style={{ color: delta.direction === "up" ? "#16a34a" : "#dc2626" }}
-                >
+                <span className="text-[12px] font-medium" style={{ color: delta.direction === "up" ? "#16a34a" : "#dc2626" }}>
                   {delta.pct.toFixed(1)}%
                 </span>
               </div>
