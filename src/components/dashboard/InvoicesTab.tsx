@@ -111,12 +111,12 @@ export default function InvoicesTab({ clientId }: Props) {
   const [deleteModal, setDeleteModal] = useState<Invoice | null>(null);
 
   const { data: invoices, isLoading } = useQuery({
-    queryKey: ["all-invoices", client?.id],
-    enabled: !!client?.id,
+    queryKey: ["all-invoices", clientId],
+    enabled: !!clientId,
     queryFn: async () => {
       const { data, error } = await supabase.from("invoices")
         .select("id, invoice_date, vendor, invoice_number, total, vat_original, vat_deductible, category, document_type, status, drive_file_url")
-        .eq("client_id", client!.id).eq("is_archived", false).order("created_at", { ascending: false });
+        .eq("client_id", clientId!).eq("is_archived", false).order("created_at", { ascending: false });
       if (error) throw error;
       return (data || []) as Invoice[];
     },
