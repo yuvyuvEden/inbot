@@ -1,7 +1,6 @@
 import { useState, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useClientRecord } from "@/hooks/useClientData";
 import { Search, ExternalLink, X, ChevronLeft, ChevronRight, FileText, Pencil, Trash2, Download } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
@@ -92,9 +91,10 @@ function getCatColor(cat: string | null) { return cat ? (CATEGORY_COLORS[cat] ||
 const PAGE_SIZE = 20;
 interface Invoice { id: string; invoice_date: string | null; vendor: string | null; invoice_number: string | null; total: number | null; vat_original: number | null; vat_deductible: number | null; category: string | null; document_type: string | null; status: string; drive_file_url: string | null; }
 
+interface Props { clientId?: string; }
+
 /* ─── Component ─── */
-export default function InvoicesTab() {
-  const { data: client } = useClientRecord();
+export default function InvoicesTab({ clientId }: Props) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -111,12 +111,12 @@ export default function InvoicesTab() {
   const [deleteModal, setDeleteModal] = useState<Invoice | null>(null);
 
   const { data: invoices, isLoading } = useQuery({
-    queryKey: ["all-invoices", client?.id],
-    enabled: !!client?.id,
+    queryKey: ["all-invoices", clientId],
+    enabled: !!clientId,
     queryFn: async () => {
       const { data, error } = await supabase.from("invoices")
         .select("id, invoice_date, vendor, invoice_number, total, vat_original, vat_deductible, category, document_type, status, drive_file_url")
-        .eq("client_id", client!.id).eq("is_archived", false).order("created_at", { ascending: false });
+        .eq("client_id", clientId!).eq("is_archived", false).order("created_at", { ascending: false });
       if (error) throw error;
       return (data || []) as Invoice[];
     },
@@ -178,19 +178,27 @@ export default function InvoicesTab() {
   const sel = "h-[36px] shrink-0 rounded-md border border-[#e2e8f0] bg-white px-2 text-[13px] outline-none focus:ring-1 focus:ring-primary";
   const dateCls = "h-[36px] w-[130px] shrink-0 rounded-md border border-[#e2e8f0] bg-white px-2 text-[13px] outline-none focus:ring-1 focus:ring-primary cursor-pointer";
 
-  const actionBtn = "p-1.5 rounded-md border-none bg-transparent cursor-pointer transition-all duration-150";
   const renderActions = (inv: Invoice) => (
     <div className="flex items-center justify-center gap-1">
       {inv.drive_file_url ? (
         <a href={inv.drive_file_url} target="_blank" rel="noopener noreferrer"
-          className={`${actionBtn} text-[#dc2626] hover:bg-[#fee2e2]`}><ExternalLink size={16} /></a>
+          style={{ color: '#dc2626', background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '6px' }}
+          onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#fee2e2')}
+          onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+        ><ExternalLink size={16} /></a>
       ) : (
-        <span className={`${actionBtn} text-[#dc2626]/30 cursor-default`}><ExternalLink size={16} /></span>
+        <span style={{ color: '#dc2626', opacity: 0.3, padding: '6px', borderRadius: '6px' }}><ExternalLink size={16} /></span>
       )}
       <button onClick={() => { setEditModal(inv); setEditCatValue(inv.category || ALL_CATEGORIES[0]); }}
-        className={`${actionBtn} text-[#64748b] hover:bg-[#f1f5f9] hover:text-[#1e3a5f]`}><Pencil size={16} /></button>
+        style={{ color: '#1e3a5f', background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '6px' }}
+        onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#f1f5f9')}
+        onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+      ><Pencil size={16} /></button>
       <button onClick={() => setDeleteModal(inv)}
-        className={`${actionBtn} text-[#dc2626] hover:bg-[#fee2e2]`}><Trash2 size={16} /></button>
+        style={{ color: '#dc2626', background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '6px' }}
+        onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#fee2e2')}
+        onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+      ><Trash2 size={16} /></button>
     </div>
   );
 

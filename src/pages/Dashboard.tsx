@@ -134,7 +134,7 @@ export default function Dashboard() {
               </div>
             </div>
           ) : activeTab === "invoices" ? (
-            <InvoicesTab />
+            <InvoicesTab clientId={client?.id} />
           ) : (
             <p className="py-16 text-center text-muted-foreground">בקרוב...</p>
           )}
