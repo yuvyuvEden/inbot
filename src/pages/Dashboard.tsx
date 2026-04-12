@@ -8,6 +8,7 @@ import KPICards from "@/components/dashboard/KPICards";
 import ExpenseChart from "@/components/dashboard/ExpenseChart";
 import CategoryPieChart from "@/components/dashboard/CategoryPieChart";
 import RecentInvoicesTable from "@/components/dashboard/RecentInvoicesTable";
+import InvoicesTab from "@/components/dashboard/InvoicesTab";
 import {
   BarChart2, FileText, MessageSquare, Archive, Download, Bot, Settings, LogOut,
 } from "lucide-react";
@@ -98,7 +99,8 @@ export default function Dashboard() {
         {activeTab === "dashboard" ? (
           <div className="space-y-6">
             {/* 1. Period Selector */}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[13px] font-medium text-muted-foreground">תקופה:</span>
               {PERIODS.map((p) => (
                 <button
                   key={p.key}
@@ -130,6 +132,8 @@ export default function Dashboard() {
               <ExpenseChart data={timeline} isLoading={timelineLoading} />
             </div>
           </div>
+        ) : activeTab === "invoices" ? (
+          <InvoicesTab />
         ) : (
           <p className="py-16 text-center text-muted-foreground">בקרוב...</p>
         )}
