@@ -95,48 +95,50 @@ export default function Dashboard() {
       </div>
 
       {/* Content */}
-      <main className={activeTab === "invoices" ? "" : "mx-auto max-w-6xl p-4 md:p-6"}>
-        {activeTab === "dashboard" ? (
-          <div className="space-y-6">
-            {/* 1. Period Selector */}
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[13px] font-medium text-muted-foreground">תקופה:</span>
-              {PERIODS.map((p) => (
-                <button
-                  key={p.key}
-                  onClick={() => setPeriod(p.key)}
-                  className={`rounded-lg px-4 py-2 text-[13px] font-medium transition-colors ${
-                    period === p.key
-                      ? "bg-primary text-primary-foreground"
-                      : "border border-border bg-card text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {p.label}
-                </button>
-              ))}
+      <main className="py-4 md:py-6">
+        <div className="mx-auto w-full md:w-[90%] bg-white rounded-none md:rounded-xl shadow-none md:shadow-[0_4px_12px_rgba(0,0,0,.08)] overflow-hidden">
+          {activeTab === "dashboard" ? (
+            <div className="space-y-6 p-4 md:p-6">
+              {/* 1. Period Selector */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[13px] font-medium text-muted-foreground">תקופה:</span>
+                {PERIODS.map((p) => (
+                  <button
+                    key={p.key}
+                    onClick={() => setPeriod(p.key)}
+                    className={`rounded-lg px-4 py-2 text-[13px] font-medium transition-colors ${
+                      period === p.key
+                        ? "bg-primary text-primary-foreground"
+                        : "border border-border bg-card text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* 2. KPI Cards — always visible */}
+              <KPICards kpis={kpis} prevKpis={prevKpis} isLoading={kpisLoading} />
+
+              {/* 3. Recent Invoices Table */}
+              <RecentInvoicesTable
+                invoices={recentInvoices}
+                isLoading={recentLoading}
+                onViewAll={() => setActiveTab("invoices")}
+              />
+
+              {/* 4. Charts — Pie right (40%), Bar left (60%) */}
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_3fr]">
+                <CategoryPieChart data={categories} isLoading={categoriesLoading} />
+                <ExpenseChart data={timeline} isLoading={timelineLoading} />
+              </div>
             </div>
-
-            {/* 2. KPI Cards — always visible */}
-            <KPICards kpis={kpis} prevKpis={prevKpis} isLoading={kpisLoading} />
-
-            {/* 3. Recent Invoices Table */}
-            <RecentInvoicesTable
-              invoices={recentInvoices}
-              isLoading={recentLoading}
-              onViewAll={() => setActiveTab("invoices")}
-            />
-
-            {/* 4. Charts — Pie right (40%), Bar left (60%) */}
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_3fr]">
-              <CategoryPieChart data={categories} isLoading={categoriesLoading} />
-              <ExpenseChart data={timeline} isLoading={timelineLoading} />
-            </div>
-          </div>
-        ) : activeTab === "invoices" ? (
-          <InvoicesTab />
-        ) : (
-          <p className="py-16 text-center text-muted-foreground">בקרוב...</p>
-        )}
+          ) : activeTab === "invoices" ? (
+            <InvoicesTab />
+          ) : (
+            <p className="py-16 text-center text-muted-foreground">בקרוב...</p>
+          )}
+        </div>
       </main>
     </div>
   );
