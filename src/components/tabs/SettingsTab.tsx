@@ -216,9 +216,13 @@ export default function SettingsTab() {
       const rulesMap = new Map(storedRules.map(r => [r.category, r]));
       setTaxRules(uniqueCats.sort().map(cat => {
         const s = rulesMap.get(cat);
+        const vatPct = s?.vatPct ?? getDefaultVat(cat);
+        const taxPct = s?.taxPct ?? getDefaultTax(cat);
         return {
-          category: cat, vatPct: s?.vatPct ?? 100, taxPct: s?.taxPct ?? 100,
-          editing: false, editVat: s?.vatPct ?? 100, editTax: s?.taxPct ?? 100,
+          category: cat, vatPct, taxPct,
+          editing: false, editVat: vatPct, editTax: taxPct,
+          isDefaultVat: !s || s.vatPct === getDefaultVat(cat),
+          isDefaultTax: !s || s.taxPct === getDefaultTax(cat),
         };
       }));
     } catch (e: any) {
