@@ -1,9 +1,14 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Search, ExternalLink, X, ChevronLeft, ChevronRight, FileText, Pencil, Trash2, Download } from "lucide-react";
+import { Search, ExternalLink, X, ChevronLeft, ChevronRight, FileText, Pencil, Trash2, Download, CalendarIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -108,12 +113,10 @@ export default function InvoicesTab({ clientId }: Props) {
   const [categoryFilter, setCategoryFilter] = useState("");
   const [docTypeFilter, setDocTypeFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [quickFilter, setQuickFilter] = useState("all");
   const [page, setPage] = useState(0);
-  const dateFromRef = useRef<HTMLInputElement>(null);
-  const dateToRef = useRef<HTMLInputElement>(null);
   const [editModal, setEditModal] = useState<Invoice | null>(null);
   const [editCatValue, setEditCatValue] = useState("");
   const [deleteModal, setDeleteModal] = useState<Invoice | null>(null);
@@ -149,10 +152,8 @@ export default function InvoicesTab({ clientId }: Props) {
       if (dateFrom || dateTo) {
         const parsed = parseDMY(inv.invoice_date);
         if (!parsed) return false;
-        const fromDate = parseDMY(dateFrom);
-        const toDate = parseDMY(dateTo);
-        if (fromDate && parsed < fromDate) return false;
-        if (toDate && parsed > toDate) return false;
+        if (dateFrom && parsed < dateFrom) return false;
+        if (dateTo) { const end = new Date(dateTo); end.setHours(23, 59, 59); if (parsed > end) return false; }
       }
       return true;
     });
@@ -161,7 +162,7 @@ export default function InvoicesTab({ clientId }: Props) {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
   const totalAmount = filtered.reduce((s, i) => s + (i.total || 0), 0);
-  const resetFilters = () => { setSearch(""); setCategoryFilter(""); setDocTypeFilter(""); setStatusFilter(""); setDateFrom(""); setDateTo(""); setQuickFilter("all"); setPage(0); };
+  const resetFilters = () => { setSearch(""); setCategoryFilter(""); setDocTypeFilter(""); setStatusFilter(""); setDateFrom(undefined); setDateTo(undefined); setQuickFilter("all"); setPage(0); };
 
   const updateCategory = async () => {
     if (!editModal) return;
@@ -241,16 +242,32 @@ export default function InvoicesTab({ clientId }: Props) {
           <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(0); }} className={sel}>
             {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
-          <input ref={dateFromRef} type="text" inputMode="numeric" dir="ltr" placeholder="DD/MM/YYYY" value={dateFrom}
-            onChange={e => { const v = formatDateInput(e.target.value); setDateFrom(v); setQuickFilter(""); setPage(0); }}
-            maxLength={10} className={dateCls} title="מ-תאריך" style={{ width: 112, textAlign: "left" }} />
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className={cn("h-[36px] shrink-0 gap-1 text-[12px] font-normal", !dateFrom && "text-muted-foreground")} style={{ minWidth: 120 }}>
+                <CalendarIcon size={14} />
+                {dateFrom ? format(dateFrom, "dd/MM/yyyy") : "מ-תאריך"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar mode="single" selected={dateFrom} onSelect={(d) => { setDateFrom(d); setQuickFilter(""); setPage(0); }} initialFocus className={cn("p-3 pointer-events-auto")} />
+            </PopoverContent>
+          </Popover>
           <span className="shrink-0 text-[12px] text-gray-400">עד</span>
-          <input ref={dateToRef} type="text" inputMode="numeric" dir="ltr" placeholder="DD/MM/YYYY" value={dateTo}
-            onChange={e => { const v = formatDateInput(e.target.value); setDateTo(v); setQuickFilter(""); setPage(0); }}
-            maxLength={10} className={dateCls} title="עד-תאריך" style={{ width: 112, textAlign: "left" }} />
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className={cn("h-[36px] shrink-0 gap-1 text-[12px] font-normal", !dateTo && "text-muted-foreground")} style={{ minWidth: 120 }}>
+                <CalendarIcon size={14} />
+                {dateTo ? format(dateTo, "dd/MM/yyyy") : "עד-תאריך"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar mode="single" selected={dateTo} onSelect={(d) => { setDateTo(d); setQuickFilter(""); setPage(0); }} initialFocus className={cn("p-3 pointer-events-auto")} />
+            </PopoverContent>
+          </Popover>
           <span className="shrink-0 text-gray-300 text-[16px]">|</span>
           {QUICK_FILTERS.map(qf => (
-            <button key={qf.key} onClick={() => { setQuickFilter(qf.key); setDateFrom(""); setDateTo(""); setPage(0); }}
+            <button key={qf.key} onClick={() => { setQuickFilter(qf.key); setDateFrom(undefined); setDateTo(undefined); setPage(0); }}
               className={`shrink-0 rounded-md px-3 py-1.5 text-[12px] font-medium transition-colors ${quickFilter === qf.key ? "bg-[#1e3a5f] text-white" : "text-gray-500 hover:text-gray-800"}`}>
               {qf.label}
             </button>
