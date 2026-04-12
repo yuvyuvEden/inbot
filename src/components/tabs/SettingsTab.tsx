@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Bot, BookOpen, Percent, Scale, Settings2, Wrench,
   ChevronDown, Plus, X, Pencil, RotateCcw, Save, Trash2,
-  Download, Globe, FileText, Brain, UserCheck, Tags, SlidersHorizontal,
+  Download, Globe, FileText, Brain, UserCheck, Tags, SlidersHorizontal, HelpCircle,
   AlertTriangle, RefreshCw,
 } from "lucide-react";
 
@@ -60,8 +60,8 @@ const getDefaultTax = (cat: string) => TAX_DEFAULTS[cat] ?? 100;
 
 /* ── Tooltip helper ── */
 const SubCardTooltip = ({ text }: { text: string }) => (
-  <span title={text} style={{ fontSize: 11, opacity: 0.5, cursor: "help", marginRight: 4 }}>
-    <i className="fas fa-question-circle" />
+  <span title={text} style={{ cursor: "help", opacity: 0.45, marginRight: 4, display: "inline-flex", alignItems: "center" }}>
+    <HelpCircle size={13} />
   </span>
 );
 
@@ -210,9 +210,19 @@ export default function SettingsTab() {
       // tax rules
       const storedRules: Array<{ category: string; vatPct: number; taxPct: number }> =
         Array.isArray((c as any).tax_rules) ? (c as any).tax_rules : [];
+      const STANDARD_CATEGORIES = [
+        "תקשורת","דלק","ציוד משרדי","מחשוב ותוכנה","שירותי ענן","מינויים (SaaS)",
+        "שכירות","חשמל","מים","ניהול ואחזקה","ביטוח עסקי","ביטוח פנסיוני",
+        "ביטוח לאומי","ביטוח רכב","תחזוקת רכב","מוניות","תחבורה ציבורית",
+        "חניה","אגרות כביש","ארוחות ומסעדות","כיבוד למשרד","פרסום ושיווק",
+        "שירותי תוכן","כנסים ואירועים","הכשרה והשתלמויות","ייעוץ משפטי",
+        "שירותי הנהלת חשבונות","עמלות בנק","ריבית ומימון","עמלות סליקה",
+        "מתנות ורווחה","תרומות","ארנונה ואגרות","מס הכנסה ומע\"מ","אחר"
+      ];
       const { data: cats } = await supabase
         .from("invoices").select("category").eq("client_id", c.id);
-      const uniqueCats = [...new Set((cats || []).map(r => r.category).filter(Boolean))] as string[];
+      const invoiceCats = (cats || []).map(r => r.category).filter(Boolean) as string[];
+      const uniqueCats = [...new Set([...STANDARD_CATEGORIES, ...invoiceCats])];
       const rulesMap = new Map(storedRules.map(r => [r.category, r]));
       setTaxRules(uniqueCats.sort().map(cat => {
         const s = rulesMap.get(cat);
