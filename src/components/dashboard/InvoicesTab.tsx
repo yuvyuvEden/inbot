@@ -68,6 +68,14 @@ const QUICK_FILTERS = [
   { key: "all", label: "הכל" },
 ];
 
+/** Auto-format typed digits into dd/mm/yyyy */
+function formatDateInput(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 8);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return digits.slice(0, 2) + "/" + digits.slice(2);
+  return digits.slice(0, 2) + "/" + digits.slice(2, 4) + "/" + digits.slice(4);
+}
+
 function parseDMY(d: string | null): Date | null {
   if (!d) return null;
   const m = d.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
