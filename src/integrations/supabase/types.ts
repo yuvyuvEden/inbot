@@ -14,56 +14,289 @@ export type Database = {
   }
   public: {
     Tables: {
-      invoices: {
+      accountant_clients: {
         Row: {
-          amount: number
+          accountant_id: string
+          assigned_at: string
           client_id: string
-          created_at: string
-          created_by: string | null
-          currency: string
-          description: string | null
-          due_date: string | null
           id: string
-          invoice_number: string
-          issue_date: string
-          status: string
-          total_amount: number
-          updated_at: string
-          vat_amount: number
         }
         Insert: {
-          amount: number
+          accountant_id: string
+          assigned_at?: string
           client_id: string
-          created_at?: string
-          created_by?: string | null
-          currency?: string
-          description?: string | null
-          due_date?: string | null
           id?: string
-          invoice_number: string
-          issue_date?: string
-          status?: string
-          total_amount: number
-          updated_at?: string
-          vat_amount?: number
         }
         Update: {
-          amount?: number
+          accountant_id?: string
+          assigned_at?: string
           client_id?: string
-          created_at?: string
-          created_by?: string | null
-          currency?: string
-          description?: string | null
-          due_date?: string | null
           id?: string
-          invoice_number?: string
-          issue_date?: string
-          status?: string
-          total_amount?: number
-          updated_at?: string
-          vat_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accountant_clients_accountant_id_fkey"
+            columns: ["accountant_id"]
+            isOneToOne: false
+            referencedRelation: "accountants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accountant_clients_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      accountants: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          name: string
+          phone: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          phone?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          phone?: string | null
+          user_id?: string | null
         }
         Relationships: []
+      }
+      clients: {
+        Row: {
+          advanced_settings: Json | null
+          brand_name: string
+          business_nature: string | null
+          created_at: string
+          custom_categories: Json | null
+          drive_folder_id: string | null
+          gemini_api_key: string | null
+          id: string
+          is_active: boolean
+          legal_name: string | null
+          plan_expires_at: string | null
+          plan_type: string
+          script_id: string | null
+          telegram_chat_id: string | null
+          user_id: string | null
+          vat_number: string | null
+        }
+        Insert: {
+          advanced_settings?: Json | null
+          brand_name: string
+          business_nature?: string | null
+          created_at?: string
+          custom_categories?: Json | null
+          drive_folder_id?: string | null
+          gemini_api_key?: string | null
+          id?: string
+          is_active?: boolean
+          legal_name?: string | null
+          plan_expires_at?: string | null
+          plan_type?: string
+          script_id?: string | null
+          telegram_chat_id?: string | null
+          user_id?: string | null
+          vat_number?: string | null
+        }
+        Update: {
+          advanced_settings?: Json | null
+          brand_name?: string
+          business_nature?: string | null
+          created_at?: string
+          custom_categories?: Json | null
+          drive_folder_id?: string | null
+          gemini_api_key?: string | null
+          id?: string
+          is_active?: boolean
+          legal_name?: string | null
+          plan_expires_at?: string | null
+          plan_type?: string
+          script_id?: string | null
+          telegram_chat_id?: string | null
+          user_id?: string | null
+          vat_number?: string | null
+        }
+        Relationships: []
+      }
+      invoice_comments: {
+        Row: {
+          author_id: string
+          author_role: string
+          body: string
+          created_at: string
+          email_message_id: string | null
+          id: string
+          invoice_id: string
+        }
+        Insert: {
+          author_id: string
+          author_role: string
+          body: string
+          created_at?: string
+          email_message_id?: string | null
+          id?: string
+          invoice_id: string
+        }
+        Update: {
+          author_id?: string
+          author_role?: string
+          body?: string
+          created_at?: string
+          email_message_id?: string | null
+          id?: string
+          invoice_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_comments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          allocation_number: string | null
+          category: string | null
+          client_id: string
+          created_at: string
+          currency_note: string | null
+          document_type: string | null
+          drive_file_url: string | null
+          id: string
+          invoice_date: string | null
+          invoice_number: string | null
+          is_archived: boolean
+          payment_date: string | null
+          status: string
+          tax_deductible: number | null
+          total: number | null
+          vat_deductible: number | null
+          vat_original: number | null
+          vendor: string | null
+        }
+        Insert: {
+          allocation_number?: string | null
+          category?: string | null
+          client_id: string
+          created_at?: string
+          currency_note?: string | null
+          document_type?: string | null
+          drive_file_url?: string | null
+          id?: string
+          invoice_date?: string | null
+          invoice_number?: string | null
+          is_archived?: boolean
+          payment_date?: string | null
+          status?: string
+          tax_deductible?: number | null
+          total?: number | null
+          vat_deductible?: number | null
+          vat_original?: number | null
+          vendor?: string | null
+        }
+        Update: {
+          allocation_number?: string | null
+          category?: string | null
+          client_id?: string
+          created_at?: string
+          currency_note?: string | null
+          document_type?: string | null
+          drive_file_url?: string | null
+          id?: string
+          invoice_date?: string | null
+          invoice_number?: string | null
+          is_archived?: boolean
+          payment_date?: string | null
+          status?: string
+          tax_deductible?: number | null
+          total?: number | null
+          vat_deductible?: number | null
+          vat_original?: number | null
+          vendor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          client_id: string
+          created_at: string
+          from_accountant_id: string | null
+          id: string
+          invoice_id: string | null
+          is_read: boolean
+          message: string | null
+          type: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          from_accountant_id?: string | null
+          id?: string
+          invoice_id?: string | null
+          is_read?: boolean
+          message?: string | null
+          type: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          from_accountant_id?: string | null
+          id?: string
+          invoice_id?: string | null
+          is_read?: boolean
+          message?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_from_accountant_id_fkey"
+            columns: ["from_accountant_id"]
+            isOneToOne: false
+            referencedRelation: "accountants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -94,6 +327,38 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      usage_log: {
+        Row: {
+          action: string
+          client_id: string
+          count: number
+          created_at: string
+          id: string
+        }
+        Insert: {
+          action: string
+          client_id: string
+          count?: number
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          action?: string
+          client_id?: string
+          count?: number
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usage_log_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
