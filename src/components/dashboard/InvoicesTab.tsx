@@ -2,20 +2,26 @@ import { useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useClientRecord } from "@/hooks/useClientData";
-import { Search, ExternalLink, X, ChevronLeft, ChevronRight, FileText } from "lucide-react";
+import { Search, ExternalLink, X, ChevronLeft, ChevronRight, FileText, Pencil, Trash2, Download } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const STATUS_OPTIONS = [
-  { value: "", label: "הכל" },
+  { value: "", label: "סטטוס: הכל" },
   { value: "approved", label: "מאושר" },
   { value: "pending_review", label: "ממתין לבדיקה" },
   { value: "needs_clarification", label: "דרוש הבהרה" },
 ];
 
 const DOC_TYPE_OPTIONS = [
-  { value: "", label: "הכל" },
+  { value: "", label: "סוג מסמך: הכל" },
   { value: "חשבונית מס", label: "חשבונית מס" },
   { value: "חשבונית מס קבלה", label: "חשבונית מס קבלה" },
   { value: "קבלה", label: "קבלה" },
@@ -28,6 +34,42 @@ const STATUS_MAP: Record<string, { label: string; bg: string; text: string }> = 
   needs_clarification: { label: "דרוש הבהרה", bg: "#fef2f2", text: "#dc2626" },
   archived: { label: "בארכיון", bg: "#f1f5f9", text: "#64748b" },
 };
+
+const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
+  "תקשורת": { bg: "#dbeafe", text: "#1d4ed8" },
+  "דלק": { bg: "#fef3c7", text: "#b45309" },
+  "ציוד משרדי": { bg: "#f1f5f9", text: "#475569" },
+  "מחשוב ותוכנה": { bg: "#ede9fe", text: "#6d28d9" },
+  "שירותי ענן": { bg: "#ede9fe", text: "#6d28d9" },
+  "מינויים (SaaS)": { bg: "#ede9fe", text: "#6d28d9" },
+  "שכירות": { bg: "#fce7f3", text: "#9d174d" },
+  "חשמל": { bg: "#fef9c3", text: "#854d0e" },
+  "ביטוח עסקי": { bg: "#d1fae5", text: "#065f46" },
+  "ביטוח רכב": { bg: "#d1fae5", text: "#065f46" },
+  "ביטוח פנסיוני": { bg: "#d1fae5", text: "#065f46" },
+  "תחזוקת רכב": { bg: "#ffedd5", text: "#9a3412" },
+  "מוניות": { bg: "#ffedd5", text: "#9a3412" },
+  "חניה": { bg: "#ffedd5", text: "#9a3412" },
+  "ארוחות ומסעדות": { bg: "#fee2e2", text: "#991b1b" },
+  "כיבוד למשרד": { bg: "#fee2e2", text: "#991b1b" },
+  "פרסום ושיווק": { bg: "#fae8ff", text: "#7e22ce" },
+  "ייעוץ משפטי": { bg: "#f0fdf4", text: "#15803d" },
+  "שירותי הנהלת חשבונות": { bg: "#f0fdf4", text: "#15803d" },
+  "עמלות בנק": { bg: "#f8fafc", text: "#334155" },
+  "עמלות סליקה": { bg: "#e2e8f0", text: "#1e293b" },
+};
+const DEFAULT_CAT_COLOR = { bg: "#f1f5f9", text: "#64748b" };
+
+const ALL_CATEGORIES = [
+  "ציוד משרדי", "שכירות", "ניהול ואחזקה", "ניקיון והיגיינה", "תיקונים ושיפוצים",
+  "ריהוט וציוד קבוע", "ארנונה ואגרות", "חשמל", "מים", "ביטוח עסקי", "ביטוח פנסיוני",
+  "ביטוח לאומי", "מס הכנסה ומע\"מ", "מחשוב ותוכנה", "שירותי ענן", "דומיינים ואחסון",
+  "פיתוח אתרים", "תקשורת", "מינויים (SaaS)", "דלק", "חניה", "תחזוקת רכב", "ביטוח רכב",
+  "אגרות כביש", "מוניות", "תחבורה ציבורית", "פרסום ושיווק", "שירותי תוכן",
+  "כנסים ואירועים", "הכשרה והשתלמויות", "ייעוץ משפטי", "שירותי הנהלת חשבונות",
+  "עמלות בנק", "עמלות סליקה", "ריבית ומימון", "כיבוד למשרד", "ארוחות ומסעדות",
+  "מתנות ורווחה", "תרומות", "אחר",
+];
 
 const QUICK_FILTERS = [
   { key: "this_month", label: "החודש" },
@@ -65,6 +107,21 @@ function matchesQuickFilter(dateStr: string | null, qf: string): boolean {
   }
 }
 
+function matchesDateRange(dateStr: string | null, fromStr: string, toStr: string): boolean {
+  if (!fromStr && !toStr) return true;
+  const parsed = parseDMY(dateStr);
+  if (!parsed) return false;
+  if (fromStr) {
+    const from = parseDMY(fromStr);
+    if (from && parsed < from) return false;
+  }
+  if (toStr) {
+    const to = parseDMY(toStr);
+    if (to && parsed > to) return false;
+  }
+  return true;
+}
+
 const PAGE_SIZE = 20;
 
 interface Invoice {
@@ -81,11 +138,15 @@ interface Invoice {
   drive_file_url: string | null;
 }
 
+function getCatColor(cat: string | null) {
+  if (!cat) return DEFAULT_CAT_COLOR;
+  return CATEGORY_COLORS[cat] || DEFAULT_CAT_COLOR;
+}
+
 export default function InvoicesTab() {
   const { data: client } = useClientRecord();
   const queryClient = useQueryClient();
 
-  // Filters
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [docTypeFilter, setDocTypeFilter] = useState("");
@@ -94,7 +155,11 @@ export default function InvoicesTab() {
   const [dateTo, setDateTo] = useState("");
   const [quickFilter, setQuickFilter] = useState("all");
   const [page, setPage] = useState(0);
-  const [editingCategory, setEditingCategory] = useState<string | null>(null);
+
+  // Modals
+  const [editModal, setEditModal] = useState<Invoice | null>(null);
+  const [editCatValue, setEditCatValue] = useState("");
+  const [deleteModal, setDeleteModal] = useState<Invoice | null>(null);
 
   const { data: invoices, isLoading } = useQuery({
     queryKey: ["all-invoices", client?.id],
@@ -120,19 +185,20 @@ export default function InvoicesTab() {
   const filtered = useMemo(() => {
     if (!invoices) return [];
     return invoices.filter((inv) => {
-      if (search && !(inv.vendor || "").includes(search)) return false;
+      if (search) {
+        const s = search.toLowerCase();
+        const matchVendor = (inv.vendor || "").toLowerCase().includes(s);
+        const matchNumber = (inv.invoice_number || "").toLowerCase().includes(s);
+        const matchAmount = inv.total != null && inv.total.toString().includes(s);
+        if (!matchVendor && !matchNumber && !matchAmount) return false;
+      }
       if (categoryFilter && inv.category !== categoryFilter) return false;
       if (docTypeFilter && inv.document_type !== docTypeFilter) return false;
       if (statusFilter && inv.status !== statusFilter) return false;
-      if (!matchesQuickFilter(inv.invoice_date, quickFilter)) return false;
-      if (dateFrom) {
-        const d = parseDMY(inv.invoice_date);
-        if (!d || d < new Date(dateFrom)) return false;
+      if (quickFilter && quickFilter !== "all") {
+        if (!matchesQuickFilter(inv.invoice_date, quickFilter)) return false;
       }
-      if (dateTo) {
-        const d = parseDMY(inv.invoice_date);
-        if (!d || d > new Date(dateTo + "T23:59:59")) return false;
-      }
+      if (!matchesDateRange(inv.invoice_date, dateFrom, dateTo)) return false;
       return true;
     });
   }, [invoices, search, categoryFilter, docTypeFilter, statusFilter, quickFilter, dateFrom, dateTo]);
@@ -146,18 +212,51 @@ export default function InvoicesTab() {
     setDateFrom(""); setDateTo(""); setQuickFilter("all"); setPage(0);
   };
 
-  const updateCategory = async (invoiceId: string, newCategory: string) => {
+  const updateCategory = async () => {
+    if (!editModal) return;
     const { error } = await supabase
       .from("invoices")
-      .update({ category: newCategory })
-      .eq("id", invoiceId);
+      .update({ category: editCatValue })
+      .eq("id", editModal.id);
     if (error) {
       toast.error("שגיאה בעדכון קטגוריה");
     } else {
       toast.success("הקטגוריה עודכנה");
       queryClient.invalidateQueries({ queryKey: ["all-invoices"] });
     }
-    setEditingCategory(null);
+    setEditModal(null);
+  };
+
+  const deleteInvoice = async () => {
+    if (!deleteModal) return;
+    const { error } = await supabase
+      .from("invoices")
+      .delete()
+      .eq("id", deleteModal.id);
+    if (error) {
+      toast.error("שגיאה במחיקת חשבונית");
+    } else {
+      toast.success("החשבונית נמחקה");
+      queryClient.invalidateQueries({ queryKey: ["all-invoices"] });
+    }
+    setDeleteModal(null);
+  };
+
+  const exportCSV = () => {
+    if (!filtered.length) return;
+    const headers = ["תאריך", "ספק", "מספר חשבונית", "סכום", "מע״מ בפועל", "מע״מ מוכר", "קטגוריה", "סוג", "סטטוס"];
+    const rows = filtered.map((inv) => [
+      inv.invoice_date || "", inv.vendor || "", inv.invoice_number || "",
+      inv.total ?? "", inv.vat_original ?? "", inv.vat_deductible ?? "",
+      inv.category || "", inv.document_type || "", STATUS_MAP[inv.status]?.label || inv.status,
+    ]);
+    const bom = "\uFEFF";
+    const csv = bom + [headers.join(","), ...rows.map((r) => r.map((c) => `"${c}"`).join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "invoices.csv"; a.click();
+    URL.revokeObjectURL(url);
   };
 
   const selectClass = "h-9 rounded-lg border border-border bg-card px-3 text-[13px] text-foreground outline-none focus:ring-1 focus:ring-primary";
@@ -170,10 +269,10 @@ export default function InvoicesTab() {
         <div className="relative">
           <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="חיפוש לפי ספק..."
+            placeholder="חיפוש לפי ספק, מספר חשבונית, סכום..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-            className="h-9 w-[220px] rounded-lg border-border pr-9 text-[13px]"
+            className="h-9 w-[280px] rounded-lg border-border pr-9 text-[13px]"
           />
         </div>
 
@@ -185,20 +284,33 @@ export default function InvoicesTab() {
 
         {/* Doc Type */}
         <select value={docTypeFilter} onChange={(e) => { setDocTypeFilter(e.target.value); setPage(0); }} className={selectClass}>
-          {DOC_TYPE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.value ? o.label : "סוג מסמך: הכל"}</option>)}
+          {DOC_TYPE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
 
         {/* Status */}
         <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(0); }} className={selectClass}>
-          {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.value ? o.label : "סטטוס: הכל"}</option>)}
+          {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
 
-        {/* Date Range */}
+        {/* Date Range — text inputs DD/MM/YYYY */}
         <div className="flex items-center gap-1.5">
-          <input type="date" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setQuickFilter(""); setPage(0); }} className={`${selectClass} w-[130px]`} />
+          <Input
+            placeholder="מ-תאריך (DD/MM/YYYY)"
+            value={dateFrom}
+            onChange={(e) => { setDateFrom(e.target.value); setQuickFilter(""); setPage(0); }}
+            className="h-9 w-[150px] rounded-lg border-border text-[13px]"
+          />
           <span className="text-[12px] text-muted-foreground">עד</span>
-          <input type="date" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setQuickFilter(""); setPage(0); }} className={`${selectClass} w-[130px]`} />
+          <Input
+            placeholder="עד-תאריך (DD/MM/YYYY)"
+            value={dateTo}
+            onChange={(e) => { setDateTo(e.target.value); setQuickFilter(""); setPage(0); }}
+            className="h-9 w-[150px] rounded-lg border-border text-[13px]"
+          />
         </div>
+
+        {/* Spacer */}
+        <div className="flex-1" />
 
         {/* Quick Filters */}
         <div className="flex gap-1">
@@ -216,6 +328,12 @@ export default function InvoicesTab() {
             </button>
           ))}
         </div>
+
+        {/* CSV Export */}
+        <button onClick={exportCSV} className="flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-[12px] font-medium text-muted-foreground hover:text-foreground transition-colors">
+          <Download size={12} />
+          CSV
+        </button>
 
         {/* Clear */}
         <button onClick={resetFilters} className="flex items-center gap-1 text-[12px] text-muted-foreground hover:text-foreground transition-colors">
@@ -255,6 +373,7 @@ export default function InvoicesTab() {
             <tbody>
               {paged.map((inv) => {
                 const st = STATUS_MAP[inv.status] || STATUS_MAP.pending_review;
+                const catColor = getCatColor(inv.category);
                 return (
                   <tr key={inv.id} className="border-b border-border/50 transition-colors hover:bg-[#f8fafc]">
                     <td className="px-4 py-3">{inv.invoice_date || "—"}</td>
@@ -264,25 +383,12 @@ export default function InvoicesTab() {
                     <td className="px-4 py-3 text-left font-mono">{inv.vat_original != null ? `₪${inv.vat_original.toLocaleString("he-IL")}` : "—"}</td>
                     <td className="px-4 py-3 text-left font-mono">{inv.vat_deductible != null ? `₪${inv.vat_deductible.toLocaleString("he-IL")}` : "—"}</td>
                     <td className="px-4 py-3">
-                      {editingCategory === inv.id ? (
-                        <select
-                          autoFocus
-                          defaultValue={inv.category || ""}
-                          onBlur={() => setEditingCategory(null)}
-                          onChange={(e) => updateCategory(inv.id, e.target.value)}
-                          className="h-7 rounded border border-primary bg-card px-1 text-[12px] outline-none"
-                        >
-                          {categories.map((c) => <option key={c} value={c}>{c}</option>)}
-                          <option value="אחר">אחר</option>
-                        </select>
-                      ) : (
-                        <button
-                          onClick={() => setEditingCategory(inv.id)}
-                          className="rounded-full bg-secondary px-2.5 py-0.5 text-[11px] font-medium text-foreground hover:bg-primary/10 transition-colors"
-                        >
-                          {inv.category || "—"}
-                        </button>
-                      )}
+                      <span
+                        className="inline-block rounded-full px-2.5 py-0.5 text-[11px] font-medium"
+                        style={{ backgroundColor: catColor.bg, color: catColor.text }}
+                      >
+                        {inv.category || "—"}
+                      </span>
                     </td>
                     <td className="px-4 py-3 text-[12px]">{inv.document_type || "—"}</td>
                     <td className="px-4 py-3">
@@ -290,14 +396,31 @@ export default function InvoicesTab() {
                         {st.label}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-center">
-                      {inv.drive_file_url ? (
-                        <a href={inv.drive_file_url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
-                          <ExternalLink size={15} />
-                        </a>
-                      ) : (
-                        <span className="text-muted-foreground/30">—</span>
-                      )}
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-center gap-2">
+                        {/* PDF link */}
+                        {inv.drive_file_url ? (
+                          <a href={inv.drive_file_url} target="_blank" rel="noopener noreferrer" className="text-red-500 hover:text-red-700 transition-colors">
+                            <ExternalLink size={15} />
+                          </a>
+                        ) : (
+                          <span className="text-muted-foreground/30"><ExternalLink size={15} /></span>
+                        )}
+                        {/* Edit category */}
+                        <button
+                          onClick={() => { setEditModal(inv); setEditCatValue(inv.category || ALL_CATEGORIES[0]); }}
+                          className="text-muted-foreground hover:text-primary transition-colors"
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        {/* Delete */}
+                        <button
+                          onClick={() => setDeleteModal(inv)}
+                          className="text-muted-foreground hover:text-red-600 transition-colors"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -324,6 +447,68 @@ export default function InvoicesTab() {
           </div>
         </div>
       )}
+
+      {/* Edit Category Modal */}
+      <Dialog open={!!editModal} onOpenChange={(open) => !open && setEditModal(null)}>
+        <DialogContent className="max-w-[400px] rounded-2xl p-8" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold" style={{ color: "#1e3a5f" }}>
+              עריכת קטגוריה — {editModal?.vendor || ""}
+            </DialogTitle>
+          </DialogHeader>
+          <select
+            value={editCatValue}
+            onChange={(e) => setEditCatValue(e.target.value)}
+            className="mt-4 w-full rounded-lg border border-border bg-card px-3 py-2 text-[14px] outline-none focus:ring-1 focus:ring-primary"
+          >
+            {ALL_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <div className="mt-6 flex justify-end gap-2">
+            <button
+              onClick={() => setEditModal(null)}
+              className="rounded-lg border border-border bg-white px-4 py-2 text-[13px] font-medium text-foreground hover:bg-muted transition-colors"
+            >
+              ביטול
+            </button>
+            <button
+              onClick={updateCategory}
+              className="rounded-lg px-4 py-2 text-[13px] font-medium text-white transition-colors"
+              style={{ backgroundColor: "#1e3a5f" }}
+            >
+              שמור
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Modal */}
+      <Dialog open={!!deleteModal} onOpenChange={(open) => !open && setDeleteModal(null)}>
+        <DialogContent className="max-w-[400px] rounded-2xl p-8" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold" style={{ color: "#1e3a5f" }}>
+              מחיקת חשבונית
+            </DialogTitle>
+          </DialogHeader>
+          <p className="mt-4 text-[14px] text-muted-foreground leading-relaxed">
+            האם אתה בטוח שברצונך למחוק את החשבונית של <strong className="text-foreground">{deleteModal?.vendor}</strong>? פעולה זו אינה הפיכה.
+          </p>
+          <div className="mt-6 flex justify-end gap-2">
+            <button
+              onClick={() => setDeleteModal(null)}
+              className="rounded-lg border border-border bg-white px-4 py-2 text-[13px] font-medium text-foreground hover:bg-muted transition-colors"
+            >
+              ביטול
+            </button>
+            <button
+              onClick={deleteInvoice}
+              className="rounded-lg px-4 py-2 text-[13px] font-medium text-white transition-colors"
+              style={{ backgroundColor: "#dc2626" }}
+            >
+              מחק
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
