@@ -8,6 +8,7 @@ import KPICards from "@/components/dashboard/KPICards";
 import ExpenseChart from "@/components/dashboard/ExpenseChart";
 import CategoryPieChart from "@/components/dashboard/CategoryPieChart";
 import RecentInvoicesTable from "@/components/dashboard/RecentInvoicesTable";
+import InvoicesTab from "@/components/dashboard/InvoicesTab";
 import {
   BarChart2, FileText, MessageSquare, Archive, Download, Bot, Settings, LogOut,
 } from "lucide-react";
