@@ -288,23 +288,25 @@ export default function SettingsTab() {
   /* ── Tax rules ── */
   const saveTaxRule = async (cat: string, vat: number, tax: number) => {
     const updated = taxRules.map(r =>
-      r.category === cat ? { ...r, vatPct: vat, taxPct: tax, editing: false } : r
+      r.category === cat ? { ...r, vatPct: vat, taxPct: tax, editing: false, isDefaultVat: vat === getDefaultVat(cat), isDefaultTax: tax === getDefaultTax(cat) } : r
     );
     setTaxRules(updated);
-    const stored = updated.filter(r => r.vatPct !== 100 || r.taxPct !== 100)
+    const stored = updated.filter(r => r.vatPct !== getDefaultVat(r.category) || r.taxPct !== getDefaultTax(r.category))
       .map(r => ({ category: r.category, vatPct: r.vatPct, taxPct: r.taxPct }));
     await updateClient({ tax_rules: stored } as any);
     toast.success("כלל מס עודכן");
   };
   const resetTaxRule = async (cat: string) => {
+    const defVat = getDefaultVat(cat);
+    const defTax = getDefaultTax(cat);
     const updated = taxRules.map(r =>
-      r.category === cat ? { ...r, vatPct: 100, taxPct: 100, editing: false } : r
+      r.category === cat ? { ...r, vatPct: defVat, taxPct: defTax, editing: false, isDefaultVat: true, isDefaultTax: true } : r
     );
     setTaxRules(updated);
-    const stored = updated.filter(r => r.vatPct !== 100 || r.taxPct !== 100)
+    const stored = updated.filter(r => r.vatPct !== getDefaultVat(r.category) || r.taxPct !== getDefaultTax(r.category))
       .map(r => ({ category: r.category, vatPct: r.vatPct, taxPct: r.taxPct }));
     await updateClient({ tax_rules: stored } as any);
-    toast.success("הכלל אופס לברירת מחדל");
+    toast.success(`כללי ${cat} אופסו לברירת מחדל`);
   };
 
   /* ── Advanced list managers ── */
