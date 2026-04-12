@@ -241,13 +241,13 @@ export default function InvoicesTab({ clientId }: Props) {
           <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(0); }} className={sel}>
             {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
-          <input ref={dateFromRef} type="text" inputMode="numeric" placeholder="dd/mm/yyyy" value={dateFrom}
+          <input ref={dateFromRef} type="text" inputMode="numeric" dir="ltr" placeholder="DD/MM/YYYY" value={dateFrom}
             onChange={e => { const v = formatDateInput(e.target.value); setDateFrom(v); setQuickFilter(""); setPage(0); }}
-            maxLength={10} className={dateCls} title="מ-תאריך" style={{ width: 95, textAlign: "center" }} />
+            maxLength={10} className={dateCls} title="מ-תאריך" style={{ width: 112, textAlign: "left" }} />
           <span className="shrink-0 text-[12px] text-gray-400">עד</span>
-          <input ref={dateToRef} type="text" inputMode="numeric" placeholder="dd/mm/yyyy" value={dateTo}
+          <input ref={dateToRef} type="text" inputMode="numeric" dir="ltr" placeholder="DD/MM/YYYY" value={dateTo}
             onChange={e => { const v = formatDateInput(e.target.value); setDateTo(v); setQuickFilter(""); setPage(0); }}
-            maxLength={10} className={dateCls} title="עד-תאריך" style={{ width: 95, textAlign: "center" }} />
+            maxLength={10} className={dateCls} title="עד-תאריך" style={{ width: 112, textAlign: "left" }} />
           <span className="shrink-0 text-gray-300 text-[16px]">|</span>
           {QUICK_FILTERS.map(qf => (
             <button key={qf.key} onClick={() => { setQuickFilter(qf.key); setDateFrom(""); setDateTo(""); setPage(0); }}
@@ -276,8 +276,8 @@ export default function InvoicesTab({ clientId }: Props) {
       ) : (
         <>
           {/* Desktop table */}
-          <div className="hidden md:block bg-white overflow-visible">
-            <table className="text-[13px]" style={{ tableLayout: "auto" }}>
+          <div className="hidden md:block w-full bg-white overflow-visible">
+            <table className="w-full text-[13px]" style={{ width: "100%", tableLayout: "fixed" }}>
               <colgroup>
                 <col style={{ width: 90 }} />
                 <col />
@@ -292,16 +292,16 @@ export default function InvoicesTab({ clientId }: Props) {
               </colgroup>
               <thead>
                 <tr className="border-b border-[#e2e8f0] bg-[#f8fafc] text-[12px] font-bold text-gray-500">
-                  <th className="px-3 py-3 text-right">תאריך</th>
-                  <th className="px-3 py-3 text-right">ספק</th>
-                  <th className="px-3 py-3 text-right">מספר חשבונית</th>
-                  <th className="px-3 py-3 text-left">סכום</th>
-                  <th className="px-3 py-3 text-left">מע״מ בפועל</th>
-                  <th className="px-3 py-3 text-left">מע״מ מוכר</th>
-                  <th className="px-3 py-3 text-right">קטגוריה</th>
-                  <th className="px-3 py-3 text-right">סוג</th>
-                  <th className="px-3 py-3 text-right">סטטוס</th>
-                  <th className="px-3 py-3 text-center">פעולות</th>
+                  <th className="px-4 py-3 text-right">תאריך</th>
+                  <th className="px-4 py-3 text-right">ספק</th>
+                  <th className="px-4 py-3 text-right">מספר חשבונית</th>
+                  <th className="px-4 py-3 text-left">סכום</th>
+                  <th className="px-4 py-3 text-left">מע״מ בפועל</th>
+                  <th className="px-4 py-3 text-left">מע״מ מוכר</th>
+                  <th className="px-4 py-3 text-right">קטגוריה</th>
+                  <th className="px-4 py-3 text-right">סוג</th>
+                  <th className="px-4 py-3 text-right">סטטוס</th>
+                  <th className="px-4 py-3 text-center">פעולות</th>
                 </tr>
               </thead>
               <tbody>
@@ -310,16 +310,16 @@ export default function InvoicesTab({ clientId }: Props) {
                   const cc = getCatColor(inv.category);
                   return (
                     <tr key={inv.id} className="border-b border-[#e2e8f0]/60 hover:bg-[#f8fafc] transition-colors">
-                      <td className="px-3 py-3 whitespace-nowrap">{inv.invoice_date || "—"}</td>
-                      <td className="px-3 py-3 whitespace-nowrap" title={inv.vendor || ""}>{inv.vendor || "—"}</td>
-                      <td className="px-3 py-3 truncate">{inv.invoice_number || "—"}</td>
-                      <td className="px-3 py-3 text-left font-mono tabular-nums whitespace-nowrap">{inv.total != null ? `₪${inv.total.toLocaleString("he-IL")}` : "—"}</td>
-                      <td className="px-3 py-3 text-left font-mono tabular-nums whitespace-nowrap">{inv.vat_original != null ? `₪${inv.vat_original.toLocaleString("he-IL")}` : "—"}</td>
-                      <td className="px-3 py-3 text-left font-mono tabular-nums whitespace-nowrap">{inv.vat_deductible != null ? `₪${inv.vat_deductible.toLocaleString("he-IL")}` : "—"}</td>
-                      <td className="px-3 py-3"><span className="inline-block max-w-full truncate rounded-full px-2.5 py-0.5 text-[11px] font-medium" style={{ backgroundColor: cc.bg, color: cc.text }}>{inv.category || "—"}</span></td>
-                      <td className="px-3 py-3 text-[12px] truncate">{inv.document_type || "—"}</td>
-                      <td className="px-3 py-3"><span className="inline-block rounded-full px-2.5 py-0.5 text-[11px] font-medium" style={{ backgroundColor: st.bg, color: st.text }}>{st.label}</span></td>
-                      <td className="px-3 py-3">{renderActions(inv)}</td>
+                      <td className="px-4 py-3 whitespace-nowrap">{inv.invoice_date || "—"}</td>
+                      <td className="px-4 py-3" title={inv.vendor || ""} style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{inv.vendor || "—"}</td>
+                      <td className="px-4 py-3 truncate">{inv.invoice_number || "—"}</td>
+                      <td className="px-4 py-3 text-left font-mono tabular-nums whitespace-nowrap">{inv.total != null ? `₪${inv.total.toLocaleString("he-IL")}` : "—"}</td>
+                      <td className="px-4 py-3 text-left font-mono tabular-nums whitespace-nowrap">{inv.vat_original != null ? `₪${inv.vat_original.toLocaleString("he-IL")}` : "—"}</td>
+                      <td className="px-4 py-3 text-left font-mono tabular-nums whitespace-nowrap">{inv.vat_deductible != null ? `₪${inv.vat_deductible.toLocaleString("he-IL")}` : "—"}</td>
+                      <td className="px-4 py-3"><span className="inline-block max-w-full truncate rounded-full px-2.5 py-0.5 text-[11px] font-medium" style={{ backgroundColor: cc.bg, color: cc.text }}>{inv.category || "—"}</span></td>
+                      <td className="px-4 py-3 text-[12px] truncate">{inv.document_type || "—"}</td>
+                      <td className="px-4 py-3"><span className="inline-block rounded-full px-2.5 py-0.5 text-[11px] font-medium" style={{ backgroundColor: st.bg, color: st.text }}>{st.label}</span></td>
+                      <td className="px-4 py-3">{renderActions(inv)}</td>
                     </tr>
                   );
                 })}
