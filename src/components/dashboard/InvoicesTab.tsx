@@ -267,10 +267,10 @@ export default function InvoicesTab({ clientId }: Props) {
         <>
           {/* Desktop table */}
           <div className="hidden md:block bg-white overflow-visible">
-            <table className="w-full text-[13px]" style={{ tableLayout: "fixed", width: "100%" }}>
+            <table className="text-[13px]" style={{ tableLayout: "auto" }}>
               <colgroup>
                 <col style={{ width: 90 }} />
-                <col style={{ width: 150 }} />
+                <col />
                 <col style={{ width: 110 }} />
                 <col style={{ width: 80 }} />
                 <col style={{ width: 80 }} />
