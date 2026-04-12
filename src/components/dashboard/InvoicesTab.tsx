@@ -267,10 +267,10 @@ export default function InvoicesTab({ clientId }: Props) {
         <>
           {/* Desktop table */}
           <div className="hidden md:block bg-white overflow-visible">
-            <table className="w-full text-[13px]" style={{ tableLayout: "fixed", width: "100%" }}>
+            <table className="text-[13px]" style={{ tableLayout: "auto" }}>
               <colgroup>
                 <col style={{ width: 90 }} />
-                <col style={{ width: 150 }} />
+                <col />
                 <col style={{ width: 110 }} />
                 <col style={{ width: 80 }} />
                 <col style={{ width: 80 }} />
@@ -301,7 +301,7 @@ export default function InvoicesTab({ clientId }: Props) {
                   return (
                     <tr key={inv.id} className="border-b border-[#e2e8f0]/60 hover:bg-[#f8fafc] transition-colors">
                       <td className="px-3 py-3 whitespace-nowrap">{inv.invoice_date || "—"}</td>
-                      <td className="px-3 py-3" style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={inv.vendor || ""}>{inv.vendor || "—"}</td>
+                      <td className="px-3 py-3 whitespace-nowrap" title={inv.vendor || ""}>{inv.vendor || "—"}</td>
                       <td className="px-3 py-3 truncate">{inv.invoice_number || "—"}</td>
                       <td className="px-3 py-3 text-left font-mono tabular-nums whitespace-nowrap">{inv.total != null ? `₪${inv.total.toLocaleString("he-IL")}` : "—"}</td>
                       <td className="px-3 py-3 text-left font-mono tabular-nums whitespace-nowrap">{inv.vat_original != null ? `₪${inv.vat_original.toLocaleString("he-IL")}` : "—"}</td>
