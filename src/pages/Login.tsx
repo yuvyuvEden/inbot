@@ -107,11 +107,12 @@ const Login = () => {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-[420px] rounded-2xl bg-card p-10 shadow-card">
         {/* Logo */}
-        <div className="mb-8 text-center">
-          <h1 className="text-[32px] font-bold text-primary">INBOT</h1>
-          <p className="mt-1 text-[14px] text-muted-foreground">
-            אוטומציה חכמה לאיסוף חשבוניות
-          </p>
+        <div className="mb-8">
+          <img
+            src="https://drive.google.com/uc?export=view&id=1aWnx9n812gE-FiERDPedIxiHKbdZBdu1"
+            alt="INBOT לוגו"
+            className="mx-auto block h-auto max-w-[200px]"
+          />
         </div>
 
         {/* Google Button */}
