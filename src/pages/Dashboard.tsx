@@ -9,6 +9,7 @@ import ExpenseChart from "@/components/dashboard/ExpenseChart";
 import CategoryPieChart from "@/components/dashboard/CategoryPieChart";
 import RecentInvoicesTable from "@/components/dashboard/RecentInvoicesTable";
 import InvoicesTab from "@/components/dashboard/InvoicesTab";
+import ExportTab from "@/components/tabs/ExportTab";
 import {
   BarChart2, FileText, MessageSquare, Archive, Download, Bot, Settings, LogOut,
 } from "lucide-react";
@@ -135,6 +136,8 @@ export default function Dashboard() {
             </div>
           ) : activeTab === "invoices" ? (
             <InvoicesTab clientId={client?.id} />
+          ) : activeTab === "export" ? (
+            <ExportTab />
           ) : (
             <p className="py-16 text-center text-muted-foreground">בקרוב...</p>
           )}
