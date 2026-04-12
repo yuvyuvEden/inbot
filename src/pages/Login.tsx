@@ -52,14 +52,17 @@ const Login = () => {
       setFormLoading(false);
       return;
     }
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password: signInPassword });
+    const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password: signInPassword });
     if (authError) {
+      console.error("Login error:", authError.message, authError);
       if (authError.message.includes("Invalid login")) setError("אימייל או סיסמה שגויים.");
       else if (authError.message.includes("Email not confirmed")) setError("יש לאמת את כתובת האימייל לפני ההתחברות.");
+      else if (authError.message.includes("Email logins are disabled")) setError("התחברות באימייל לא מופעלת. פנה למנהל.");
       else setError("שגיאה בהתחברות. נסה שוב.");
       setFormLoading(false);
       return;
     }
+    console.log("Login successful, session:", data.session);
     setFormLoading(false);
   };
 
