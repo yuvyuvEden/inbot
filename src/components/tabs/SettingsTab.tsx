@@ -204,7 +204,7 @@ export default function SettingsTab() {
   /* ── update helper ── */
   const updateClient = async (payload: Record<string, any>) => {
     if (!clientId) return false;
-    const { error } = await supabase.from("clients").update(payload).eq("id", clientId);
+    const { error } = await supabase.from("clients").update(payload as any).eq("id", clientId);
     if (error) { toast.error("שגיאה בשמירה"); return false; }
     return true;
   };
