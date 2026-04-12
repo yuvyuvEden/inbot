@@ -80,57 +80,105 @@ export type Database = {
       clients: {
         Row: {
           advanced_settings: Json | null
+          ai_temperature: number
+          alloc_threshold_after: number
+          alloc_threshold_before: number
           brand_name: string
           business_nature: string | null
           created_at: string
           custom_categories: Json | null
           drive_folder_id: string | null
+          fetch_domains: Json
           gemini_api_key: string | null
           id: string
+          invoice_platforms: Json
           is_active: boolean
+          known_domains: Json
+          learned_words: Json
           legal_name: string | null
+          lookback_rows: number
+          max_distance: number
+          max_logo_bytes: number
+          owner_aliases: Json
           plan_expires_at: string | null
           plan_type: string
+          processed_ids: Json
           script_id: string | null
+          search_days: number
+          tax_rules: Json
           telegram_chat_id: string | null
+          thread_limit: number
           user_id: string | null
           vat_number: string | null
+          vat_rate: number
         }
         Insert: {
           advanced_settings?: Json | null
+          ai_temperature?: number
+          alloc_threshold_after?: number
+          alloc_threshold_before?: number
           brand_name: string
           business_nature?: string | null
           created_at?: string
           custom_categories?: Json | null
           drive_folder_id?: string | null
+          fetch_domains?: Json
           gemini_api_key?: string | null
           id?: string
+          invoice_platforms?: Json
           is_active?: boolean
+          known_domains?: Json
+          learned_words?: Json
           legal_name?: string | null
+          lookback_rows?: number
+          max_distance?: number
+          max_logo_bytes?: number
+          owner_aliases?: Json
           plan_expires_at?: string | null
           plan_type?: string
+          processed_ids?: Json
           script_id?: string | null
+          search_days?: number
+          tax_rules?: Json
           telegram_chat_id?: string | null
+          thread_limit?: number
           user_id?: string | null
           vat_number?: string | null
+          vat_rate?: number
         }
         Update: {
           advanced_settings?: Json | null
+          ai_temperature?: number
+          alloc_threshold_after?: number
+          alloc_threshold_before?: number
           brand_name?: string
           business_nature?: string | null
           created_at?: string
           custom_categories?: Json | null
           drive_folder_id?: string | null
+          fetch_domains?: Json
           gemini_api_key?: string | null
           id?: string
+          invoice_platforms?: Json
           is_active?: boolean
+          known_domains?: Json
+          learned_words?: Json
           legal_name?: string | null
+          lookback_rows?: number
+          max_distance?: number
+          max_logo_bytes?: number
+          owner_aliases?: Json
           plan_expires_at?: string | null
           plan_type?: string
+          processed_ids?: Json
           script_id?: string | null
+          search_days?: number
+          tax_rules?: Json
           telegram_chat_id?: string | null
+          thread_limit?: number
           user_id?: string | null
           vat_number?: string | null
+          vat_rate?: number
         }
         Relationships: []
       }
