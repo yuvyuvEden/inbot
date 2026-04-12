@@ -95,7 +95,7 @@ export default function Dashboard() {
       </div>
 
       {/* Content */}
-      <main className="mx-auto max-w-6xl p-4 md:p-6">
+      <main className={activeTab === "invoices" ? "" : "mx-auto max-w-6xl p-4 md:p-6"}>
         {activeTab === "dashboard" ? (
           <div className="space-y-6">
             {/* 1. Period Selector */}
