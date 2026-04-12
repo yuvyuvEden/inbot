@@ -1,10 +1,14 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
 import { useClientRecord } from "@/hooks/useClientData";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Filter, FileSpreadsheet, FileText, FileDown } from "lucide-react";
+import { Filter, FileSpreadsheet, FileText, FileDown, CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
 import * as XLSX from "xlsx";
 
 interface Invoice {
@@ -52,8 +56,8 @@ export default function ExportTab() {
   const [allInvoices, setAllInvoices] = useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const today = new Date();
-  const [dateFrom, setDateFrom] = useState(fmtDate(startOfMonth(today)));
-  const [dateTo, setDateTo] = useState(fmtDate(today));
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(startOfMonth(today));
+  const [dateTo, setDateTo] = useState<Date | undefined>(today);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [activeQuick, setActiveQuick] = useState("this_month");
 
@@ -79,14 +83,12 @@ export default function ExportTab() {
   }, [allInvoices]);
 
   const filteredInvoices = useMemo(() => {
-    const from = parseDDMMYYYY(dateFrom);
-    const to = parseDDMMYYYY(dateTo);
     return allInvoices.filter((inv) => {
       if (!inv.invoice_date) return false;
       const d = parseDDMMYYYY(inv.invoice_date);
       if (!d) return false;
-      if (from && d < from) return false;
-      if (to && d > to) return false;
+      if (dateFrom && d < dateFrom) return false;
+      if (dateTo && d > dateTo) return false;
       if (selectedCategory && inv.category !== selectedCategory) return false;
       return true;
     });
@@ -107,8 +109,8 @@ export default function ExportTab() {
       case "this_year": from = new Date(now.getFullYear(), 0, 1); to = now; break;
       default: from = startOfMonth(now); to = now;
     }
-    setDateFrom(fmtDate(from));
-    setDateTo(fmtDate(to));
+    setDateFrom(from);
+    setDateTo(to);
   }
 
   /* ---- EXPORT: XLSX ---- */
@@ -246,19 +248,31 @@ ${noAlloc > 0 ? `<div class="warn">⚠️ ${noAlloc} חשבוניות ללא מ�
           <div className="flex flex-wrap gap-3">
             <div className="flex flex-col gap-1">
               <label className="text-[12px] text-[#64748b]">מ-תאריך</label>
-              <input
-                type="text" placeholder="DD/MM/YYYY" value={dateFrom}
-                onChange={(e) => { setDateFrom(e.target.value); setActiveQuick(""); }}
-                className="h-[38px] w-[140px] rounded-lg border border-[#e2e8f0] px-3 text-[13px] text-[#1a202c] outline-none focus:border-[#1e3a5f]"
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn("h-[38px] w-[160px] justify-start text-right text-[13px] font-normal border-[#e2e8f0]", !dateFrom && "text-[#64748b]")}>
+                    <CalendarIcon className="ml-2 h-4 w-4 opacity-60" />
+                    {dateFrom ? format(dateFrom, "dd/MM/yyyy") : "DD/MM/YYYY"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={dateFrom} onSelect={(d) => { setDateFrom(d); setActiveQuick(""); }} initialFocus className={cn("p-3 pointer-events-auto")} />
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-[12px] text-[#64748b]">עד-תאריך</label>
-              <input
-                type="text" placeholder="DD/MM/YYYY" value={dateTo}
-                onChange={(e) => { setDateTo(e.target.value); setActiveQuick(""); }}
-                className="h-[38px] w-[140px] rounded-lg border border-[#e2e8f0] px-3 text-[13px] text-[#1a202c] outline-none focus:border-[#1e3a5f]"
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn("h-[38px] w-[160px] justify-start text-right text-[13px] font-normal border-[#e2e8f0]", !dateTo && "text-[#64748b]")}>
+                    <CalendarIcon className="ml-2 h-4 w-4 opacity-60" />
+                    {dateTo ? format(dateTo, "dd/MM/yyyy") : "DD/MM/YYYY"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={dateTo} onSelect={(d) => { setDateTo(d); setActiveQuick(""); }} initialFocus className={cn("p-3 pointer-events-auto")} />
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-[12px] text-[#64748b]">קטגוריה</label>
