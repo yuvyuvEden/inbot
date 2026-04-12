@@ -1,5 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import { FileText } from "lucide-react";
+import { FileText, ArrowLeft } from "lucide-react";
 
 interface Invoice {
   id: string;
@@ -14,14 +14,16 @@ const STATUS_MAP: Record<string, { label: string; bg: string; text: string }> = 
   approved: { label: "מאושר", bg: "#dcfce7", text: "#16a34a" },
   pending_review: { label: "ממתין לבדיקה", bg: "#fff7ed", text: "#ea580c" },
   needs_clarification: { label: "דרוש הבהרה", bg: "#fef2f2", text: "#dc2626" },
+  archived: { label: "בארכיון", bg: "#f1f5f9", text: "#64748b" },
 };
 
 interface RecentInvoicesTableProps {
   invoices: Invoice[] | undefined;
   isLoading: boolean;
+  onViewAll?: () => void;
 }
 
-export default function RecentInvoicesTable({ invoices, isLoading }: RecentInvoicesTableProps) {
+export default function RecentInvoicesTable({ invoices, isLoading, onViewAll }: RecentInvoicesTableProps) {
   if (isLoading) {
     return (
       <div className="rounded-xl bg-card p-5 shadow-[0_4px_12px_rgba(0,0,0,.08)]">
@@ -44,7 +46,15 @@ export default function RecentInvoicesTable({ invoices, isLoading }: RecentInvoi
 
   return (
     <div className="rounded-xl bg-card p-5 shadow-[0_4px_12px_rgba(0,0,0,.08)] overflow-x-auto">
-      <h3 className="mb-4 text-[14px] font-bold text-foreground">חשבוניות אחרונות</h3>
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-[14px] font-bold text-foreground">חשבוניות אחרונות</h3>
+        {onViewAll && (
+          <button onClick={onViewAll} className="flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground transition-colors">
+            כל החשבוניות
+            <ArrowLeft size={14} />
+          </button>
+        )}
+      </div>
       <table className="w-full text-[13px]">
         <thead>
           <tr className="border-b border-border text-muted-foreground">
