@@ -329,14 +329,14 @@ export default function InvoicesTab({ clientId }: Props) {
                     <tr key={inv.id} className="border-b border-[#e2e8f0]/60 hover:bg-[#f8fafc] transition-colors">
                       <td className="px-3 py-3 whitespace-nowrap">{inv.invoice_date || "—"}</td>
                       <td className="px-3 py-3 truncate" title={inv.vendor || ""}>{inv.vendor || "—"}</td>
-                      <td className="px-4 py-3 truncate">{inv.invoice_number || "—"}</td>
-                      <td className="px-4 py-3 text-left font-mono tabular-nums whitespace-nowrap">{inv.total != null ? `₪${inv.total.toLocaleString("he-IL")}` : "—"}</td>
-                      <td className="px-4 py-3 text-left font-mono tabular-nums whitespace-nowrap">{inv.vat_original != null ? `₪${inv.vat_original.toLocaleString("he-IL")}` : "—"}</td>
-                      <td className="px-4 py-3 text-left font-mono tabular-nums whitespace-nowrap">{inv.vat_deductible != null ? `₪${inv.vat_deductible.toLocaleString("he-IL")}` : "—"}</td>
-                      <td className="px-4 py-3"><span className="inline-block max-w-full truncate rounded-full px-2.5 py-0.5 text-[11px] font-medium" style={{ backgroundColor: cc.bg, color: cc.text }}>{inv.category || "—"}</span></td>
-                      <td className="px-4 py-3 text-[12px] truncate">{inv.document_type || "—"}</td>
-                      <td className="px-4 py-3"><span className="inline-block rounded-full px-2.5 py-0.5 text-[11px] font-medium" style={{ backgroundColor: st.bg, color: st.text }}>{st.label}</span></td>
-                      <td className="px-4 py-3">{renderActions(inv)}</td>
+                      <td className="px-3 py-3 truncate">{inv.invoice_number || "—"}</td>
+                      <td className="px-3 py-3 text-left font-mono tabular-nums whitespace-nowrap">{inv.total != null ? `₪${inv.total.toLocaleString("he-IL")}` : "—"}</td>
+                      <td className="px-3 py-3 text-left font-mono tabular-nums whitespace-nowrap">{inv.vat_original != null ? `₪${inv.vat_original.toLocaleString("he-IL")}` : "—"}</td>
+                      <td className="px-3 py-3 text-left font-mono tabular-nums whitespace-nowrap">{inv.vat_deductible != null ? `₪${inv.vat_deductible.toLocaleString("he-IL")}` : "—"}</td>
+                      <td className="px-3 py-3"><span className="inline-block max-w-full truncate rounded-full px-2.5 py-0.5 text-[11px] font-medium" style={{ backgroundColor: cc.bg, color: cc.text }}>{inv.category || "—"}</span></td>
+                      <td className="px-3 py-3 text-[12px] truncate">{inv.document_type || "—"}</td>
+                      <td className="px-3 py-3"><span className="inline-block rounded-full px-2.5 py-0.5 text-[11px] font-medium" style={{ backgroundColor: st.bg, color: st.text }}>{st.label}</span></td>
+                      <td className="px-3 py-3">{renderActions(inv)}</td>
                     </tr>
                   );
                 })}
