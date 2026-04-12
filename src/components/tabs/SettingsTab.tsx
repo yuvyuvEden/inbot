@@ -35,7 +35,35 @@ interface TaxRule {
   editing: boolean;
   editVat: number;
   editTax: number;
+  isDefaultVat: boolean;
+  isDefaultTax: boolean;
 }
+
+/* ── Tax rule defaults (Israeli tax law) ── */
+const VAT_DEFAULTS: Record<string, number> = {
+  "דלק": 67, "תחזוקת רכב": 67, "אגרות כביש": 67, "תקשורת": 67, "מוניות": 67,
+  "חניה": 100, "שכירות": 100, "חשמל": 25, "מים": 25, "ניהול ואחזקה": 25,
+  "כיבוד למשרד": 0, "ארוחות ומסעדות": 0, "מתנות ורווחה": 0, "תרומות": 0,
+  "ביטוח רכב": 0, "ביטוח עסקי": 0, "ביטוח פנסיוני": 0, "ביטוח לאומי": 0,
+  "מס הכנסה ומע\"מ": 0, "עמלות בנק": 0, "ריבית ומימון": 0, "תחבורה ציבורית": 0,
+  "ארנונה ואגרות": 0,
+};
+const TAX_DEFAULTS: Record<string, number> = {
+  "דלק": 45, "תחזוקת רכב": 45, "ביטוח רכב": 45, "אגרות כביש": 45,
+  "מוניות": 45, "תחבורה ציבורית": 45, "חניה": 45,
+  "כיבוד למשרד": 80, "ארוחות ומסעדות": 0,
+  "שכירות": 25, "חשמל": 25, "מים": 25, "ארנונה ואגרות": 25, "ניהול ואחזקה": 25,
+  "תקשורת": 50,
+};
+const getDefaultVat = (cat: string) => VAT_DEFAULTS[cat] ?? 100;
+const getDefaultTax = (cat: string) => TAX_DEFAULTS[cat] ?? 100;
+
+/* ── Tooltip helper ── */
+const SubCardTooltip = ({ text }: { text: string }) => (
+  <span title={text} style={{ fontSize: 11, opacity: 0.5, cursor: "help", marginRight: 4 }}>
+    <i className="fas fa-question-circle" />
+  </span>
+);
 
 const DEFAULT_SETTINGS: AdvancedSettings = {
   fetchDomains: [],
