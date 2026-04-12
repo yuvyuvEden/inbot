@@ -51,16 +51,111 @@ function getPeriodRange(period: string): { start: string; end: string } {
   }
 }
 
-export function useInvoiceKPIs(clientId: string | undefined, period: string) {
-  const { start, end } = getPeriodRange(period);
+function getPreviousPeriod(period: string): string {
+  switch (period) {
+    case "this_month": return "last_month";
+    case "this_quarter": return "last_quarter";
+    case "this_year": {
+      const y = new Date().getFullYear();
+      return `custom_${y - 1}-01-01_${y - 1}-12-31`;
+    }
+    default: return "";
+  }
+}
 
+function getCustomRange(period: string): { start: string; end: string } | null {
+  if (period.startsWith("custom_")) {
+    const [, start, end] = period.split("_");
+    return { start, end };
+  }
+  return null;
+}
+
+function resolveRange(period: string) {
+  return getCustomRange(period) || getPeriodRange(period);
+}
+
+async function fetchKPIData(clientId: string, period: string) {
+  const { start, end } = resolveRange(period);
+  const { data, error } = await supabase
+    .from("invoices")
+    .select("total, vat_deductible, tax_deductible, allocation_number")
+    .eq("client_id", clientId)
+    .eq("is_archived", false)
+    .eq("status", "approved")
+    .gte("invoice_date", start)
+    .lte("invoice_date", end);
+
+  if (error) throw error;
+  const invoices = data || [];
+  return {
+    totalExpenses: invoices.reduce((s, i) => s + (i.total || 0), 0),
+    totalVat: invoices.reduce((s, i) => s + (i.vat_deductible || 0), 0),
+    totalTax: invoices.reduce((s, i) => s + (i.tax_deductible || 0), 0),
+    count: invoices.length,
+    noAllocation: invoices.filter((i) => !i.allocation_number || i.allocation_number.trim() === "").length,
+  };
+}
+
+export function useInvoiceKPIs(clientId: string | undefined, period: string) {
   return useQuery({
     queryKey: ["invoice-kpis", clientId, period],
+    enabled: !!clientId,
+    queryFn: () => fetchKPIData(clientId!, period),
+  });
+}
+
+export function useInvoiceKPIsDelta(clientId: string | undefined, period: string) {
+  const prevPeriod = getPreviousPeriod(period);
+  return useQuery({
+    queryKey: ["invoice-kpis-prev", clientId, prevPeriod],
+    enabled: !!clientId && !!prevPeriod,
+    queryFn: () => fetchKPIData(clientId!, prevPeriod),
+  });
+}
+
+export function useExpenseTimeline(clientId: string | undefined, period: string) {
+  const { start, end } = resolveRange(period);
+  const isYearView = period === "this_year" || period.startsWith("custom_");
+
+  return useQuery({
+    queryKey: ["expense-timeline", clientId, period],
     enabled: !!clientId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("invoices")
-        .select("total, vat_deductible, tax_deductible, allocation_number")
+        .select("invoice_date, total")
+        .eq("client_id", clientId!)
+        .eq("is_archived", false)
+        .eq("status", "approved")
+        .gte("invoice_date", start)
+        .lte("invoice_date", end)
+        .order("invoice_date", { ascending: true });
+
+      if (error) throw error;
+
+      const grouped: Record<string, number> = {};
+      (data || []).forEach((inv) => {
+        if (!inv.invoice_date) return;
+        const key = isYearView ? inv.invoice_date.slice(0, 7) : inv.invoice_date.slice(0, 10);
+        grouped[key] = (grouped[key] || 0) + (inv.total || 0);
+      });
+
+      return Object.entries(grouped).map(([date, total]) => ({ date, total }));
+    },
+  });
+}
+
+export function useCategoryBreakdown(clientId: string | undefined, period: string) {
+  const { start, end } = resolveRange(period);
+
+  return useQuery({
+    queryKey: ["category-breakdown", clientId, period],
+    enabled: !!clientId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("invoices")
+        .select("category, total")
         .eq("client_id", clientId!)
         .eq("is_archived", false)
         .eq("status", "approved")
@@ -69,16 +164,32 @@ export function useInvoiceKPIs(clientId: string | undefined, period: string) {
 
       if (error) throw error;
 
-      const invoices = data || [];
-      const totalExpenses = invoices.reduce((s, i) => s + (i.total || 0), 0);
-      const totalVat = invoices.reduce((s, i) => s + (i.vat_deductible || 0), 0);
-      const totalTax = invoices.reduce((s, i) => s + (i.tax_deductible || 0), 0);
-      const count = invoices.length;
-      const noAllocation = invoices.filter(
-        (i) => !i.allocation_number || i.allocation_number.trim() === ""
-      ).length;
+      const grouped: Record<string, number> = {};
+      (data || []).forEach((inv) => {
+        const cat = inv.category || "ללא קטגוריה";
+        grouped[cat] = (grouped[cat] || 0) + (inv.total || 0);
+      });
 
-      return { totalExpenses, totalVat, totalTax, count, noAllocation };
+      return Object.entries(grouped).map(([name, value]) => ({ name, value }));
+    },
+  });
+}
+
+export function useRecentInvoices(clientId: string | undefined) {
+  return useQuery({
+    queryKey: ["recent-invoices", clientId],
+    enabled: !!clientId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("invoices")
+        .select("id, invoice_date, vendor, total, category, status")
+        .eq("client_id", clientId!)
+        .eq("is_archived", false)
+        .order("invoice_date", { ascending: false })
+        .limit(5);
+
+      if (error) throw error;
+      return data || [];
     },
   });
 }
@@ -88,7 +199,6 @@ export function useUnreadComments(clientId: string | undefined) {
     queryKey: ["unread-comments", clientId],
     enabled: !!clientId,
     queryFn: async () => {
-      // Get all invoice ids for this client
       const { data: invoices, error: invErr } = await supabase
         .from("invoices")
         .select("id")

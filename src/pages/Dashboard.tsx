@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useClientRecord, useInvoiceKPIs, useUnreadComments } from "@/hooks/useClientData";
-import { Skeleton } from "@/components/ui/skeleton";
+import {
+  useClientRecord, useInvoiceKPIs, useInvoiceKPIsDelta,
+  useUnreadComments, useExpenseTimeline, useCategoryBreakdown, useRecentInvoices,
+} from "@/hooks/useClientData";
+import KPICards from "@/components/dashboard/KPICards";
+import ExpenseChart from "@/components/dashboard/ExpenseChart";
+import CategoryPieChart from "@/components/dashboard/CategoryPieChart";
+import RecentInvoicesTable from "@/components/dashboard/RecentInvoicesTable";
 import {
   BarChart2, FileText, MessageSquare, Archive, Download, Bot, Settings, LogOut,
 } from "lucide-react";
@@ -26,25 +32,17 @@ const TABS = [
   { key: "settings", label: "הגדרות", icon: Settings },
 ] as const;
 
-function formatCurrency(n: number) {
-  return "₪" + n.toLocaleString("he-IL", { maximumFractionDigits: 0 });
-}
-
-const KPI_CARDS = [
-  { key: "totalExpenses", label: "סה״כ הוצאות", color: "#1e3a5f", format: true },
-  { key: "totalVat", label: "מע״מ לקיזוז", color: "#16a34a", format: true },
-  { key: "totalTax", label: "הוצאה מוכרת מס", color: "#7c3aed", format: true },
-  { key: "count", label: "חשבוניות", color: "#e8941a", format: false },
-  { key: "noAllocation", label: "ללא הקצאה", color: "#dc2626", format: false },
-] as const;
-
 export default function Dashboard() {
   const { user, signOut } = useAuth();
   const { data: client } = useClientRecord();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [period, setPeriod] = useState("this_month");
-  const { data: kpis, isLoading } = useInvoiceKPIs(client?.id, period);
+  const { data: kpis, isLoading: kpisLoading } = useInvoiceKPIs(client?.id, period);
+  const { data: prevKpis } = useInvoiceKPIsDelta(client?.id, period);
   const { data: unreadCount } = useUnreadComments(client?.id);
+  const { data: timeline, isLoading: timelineLoading } = useExpenseTimeline(client?.id, period);
+  const { data: categories, isLoading: categoriesLoading } = useCategoryBreakdown(client?.id, period);
+  const { data: recentInvoices, isLoading: recentLoading } = useRecentInvoices(client?.id);
 
   return (
     <div dir="rtl" className="min-h-screen bg-background font-sans">
@@ -98,9 +96,9 @@ export default function Dashboard() {
       {/* Content */}
       <main className="mx-auto max-w-6xl p-4 md:p-6">
         {activeTab === "dashboard" ? (
-          <>
+          <div className="space-y-6">
             {/* Period Selector */}
-            <div className="mb-6 flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2">
               {PERIODS.map((p) => (
                 <button
                   key={p.key}
@@ -117,34 +115,17 @@ export default function Dashboard() {
             </div>
 
             {/* KPI Cards */}
-            {isLoading ? (
-              <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4">
-                {KPI_CARDS.map((c) => (
-                  <Skeleton key={c.key} className="h-[110px] rounded-xl" />
-                ))}
-              </div>
-            ) : kpis && (kpis.count > 0 || kpis.totalExpenses > 0) ? (
-              <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4">
-                {KPI_CARDS.map((card) => {
-                  const value = kpis[card.key as keyof typeof kpis];
-                  return (
-                    <div
-                      key={card.key}
-                      className="rounded-xl bg-card p-5 shadow-card"
-                      style={{ borderRight: `4px solid ${card.color}` }}
-                    >
-                      <p className="mb-2 text-[13px] text-muted-foreground">{card.label}</p>
-                      <p className="text-2xl font-bold text-foreground">
-                        {card.format ? formatCurrency(value as number) : value}
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="py-16 text-center text-muted-foreground">אין נתונים לתקופה זו</p>
-            )}
-          </>
+            <KPICards kpis={kpis} prevKpis={prevKpis} isLoading={kpisLoading} />
+
+            {/* Charts */}
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[3fr_2fr]">
+              <ExpenseChart data={timeline} isLoading={timelineLoading} />
+              <CategoryPieChart data={categories} isLoading={categoriesLoading} />
+            </div>
+
+            {/* Recent Invoices */}
+            <RecentInvoicesTable invoices={recentInvoices} isLoading={recentLoading} />
+          </div>
         ) : (
           <p className="py-16 text-center text-muted-foreground">בקרוב...</p>
         )}
