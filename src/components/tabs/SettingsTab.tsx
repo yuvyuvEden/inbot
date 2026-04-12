@@ -621,7 +621,7 @@ export default function SettingsTab() {
 
                 {/* Invoice Platforms */}
                 <div style={subCard}>
-                  <div style={subCardHeader}><FileText size={14} /> פלטפורמות חשבוניות</div>
+                  <div style={subCardHeader}><FileText size={14} /> פלטפורמות חשבוניות <SubCardTooltip text={"חברות שמנפיקות חשבוניות בשם הספק (כמו morning, iCount, חשבונית ירוקה).\nה-AI יודע שהן רק צינור — ולא ירשום אותן כספק."} /></div>
                   <div style={{ padding: 12 }}>
                     <div style={{ fontSize: 11, color: "#64748b", marginBottom: 8 }}>חברות שמנפיקות חשבוניות בשם הספק — ה-AI לא ירשום אותן כספק.</div>
                     <ListManager field="invoicePlatforms" placeholder="דומיין פלטפורמה (למשל morning.co)" />
