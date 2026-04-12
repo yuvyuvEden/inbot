@@ -178,15 +178,19 @@ export default function InvoicesTab() {
   const sel = "h-[36px] shrink-0 rounded-md border border-[#e2e8f0] bg-white px-2 text-[13px] outline-none focus:ring-1 focus:ring-primary";
   const dateCls = "h-[36px] w-[130px] shrink-0 rounded-md border border-[#e2e8f0] bg-white px-2 text-[13px] outline-none focus:ring-1 focus:ring-primary cursor-pointer";
 
+  const actionBtn = "p-1.5 rounded-md border-none bg-transparent cursor-pointer transition-all duration-150";
   const renderActions = (inv: Invoice) => (
-    <div className="flex items-center justify-center gap-2">
+    <div className="flex items-center justify-center gap-1">
       {inv.drive_file_url ? (
-        <a href={inv.drive_file_url} target="_blank" rel="noopener noreferrer" className="text-red-500 hover:text-red-700 transition-colors"><ExternalLink size={15} /></a>
+        <a href={inv.drive_file_url} target="_blank" rel="noopener noreferrer"
+          className={`${actionBtn} text-[#dc2626] hover:bg-[#fee2e2]`}><ExternalLink size={16} /></a>
       ) : (
-        <span className="text-gray-300"><ExternalLink size={15} /></span>
+        <span className={`${actionBtn} text-[#dc2626]/30 cursor-default`}><ExternalLink size={16} /></span>
       )}
-      <button onClick={() => { setEditModal(inv); setEditCatValue(inv.category || ALL_CATEGORIES[0]); }} className="text-gray-400 hover:text-[#1e3a5f] transition-colors"><Pencil size={14} /></button>
-      <button onClick={() => setDeleteModal(inv)} className="text-gray-400 hover:text-red-600 transition-colors"><Trash2 size={14} /></button>
+      <button onClick={() => { setEditModal(inv); setEditCatValue(inv.category || ALL_CATEGORIES[0]); }}
+        className={`${actionBtn} text-[#64748b] hover:bg-[#f1f5f9] hover:text-[#1e3a5f]`}><Pencil size={16} /></button>
+      <button onClick={() => setDeleteModal(inv)}
+        className={`${actionBtn} text-[#dc2626] hover:bg-[#fee2e2]`}><Trash2 size={16} /></button>
     </div>
   );
 
