@@ -231,13 +231,13 @@ export default function InvoicesTab({ clientId }: Props) {
           <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(0); }} className={sel}>
             {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
-          <input ref={dateFromRef} type="date" lang="he" value={dateFrom}
-            onChange={e => { setDateFrom(e.target.value); setQuickFilter(""); setPage(0); }}
-            onClick={() => dateFromRef.current?.showPicker?.()} className={dateCls} title="מ-תאריך" />
+          <input ref={dateFromRef} type="text" inputMode="numeric" placeholder="dd/mm/yyyy" value={dateFrom}
+            onChange={e => { const v = formatDateInput(e.target.value); setDateFrom(v); setQuickFilter(""); setPage(0); }}
+            maxLength={10} className={dateCls} title="מ-תאריך" style={{ width: 95, textAlign: "center" }} />
           <span className="shrink-0 text-[12px] text-gray-400">עד</span>
-          <input ref={dateToRef} type="date" lang="he" value={dateTo}
-            onChange={e => { setDateTo(e.target.value); setQuickFilter(""); setPage(0); }}
-            onClick={() => dateToRef.current?.showPicker?.()} className={dateCls} title="עד-תאריך" />
+          <input ref={dateToRef} type="text" inputMode="numeric" placeholder="dd/mm/yyyy" value={dateTo}
+            onChange={e => { const v = formatDateInput(e.target.value); setDateTo(v); setQuickFilter(""); setPage(0); }}
+            maxLength={10} className={dateCls} title="עד-תאריך" style={{ width: 95, textAlign: "center" }} />
           <span className="shrink-0 text-gray-300 text-[16px]">|</span>
           {QUICK_FILTERS.map(qf => (
             <button key={qf.key} onClick={() => { setQuickFilter(qf.key); setDateFrom(""); setDateTo(""); setPage(0); }}
