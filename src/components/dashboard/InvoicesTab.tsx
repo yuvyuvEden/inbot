@@ -149,8 +149,10 @@ export default function InvoicesTab({ clientId }: Props) {
       if (dateFrom || dateTo) {
         const parsed = parseDMY(inv.invoice_date);
         if (!parsed) return false;
-        if (dateFrom && parsed < new Date(dateFrom)) return false;
-        if (dateTo && parsed > new Date(dateTo + "T23:59:59")) return false;
+        const fromDate = parseDMY(dateFrom);
+        const toDate = parseDMY(dateTo);
+        if (fromDate && parsed < fromDate) return false;
+        if (toDate && parsed > toDate) return false;
       }
       return true;
     });
