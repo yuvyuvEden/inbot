@@ -1,0 +1,1 @@
+ALTER TABLE public.invoice_comments ADD COLUMN is_read boolean NOT NULL DEFAULT false;
