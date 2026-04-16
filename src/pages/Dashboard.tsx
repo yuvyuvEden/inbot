@@ -145,6 +145,7 @@ export default function Dashboard() {
                 invoices={recentInvoices}
                 isLoading={recentLoading}
                 onViewAll={() => setActiveTab("invoices")}
+                hasAccountant={!!hasAccountant}
               />
 
               {/* 4. Charts — Pie right (40%), Bar left (60%) */}

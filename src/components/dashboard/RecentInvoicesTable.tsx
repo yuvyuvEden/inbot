@@ -27,9 +27,10 @@ interface RecentInvoicesTableProps {
   invoices: Invoice[] | undefined;
   isLoading: boolean;
   onViewAll?: () => void;
+  hasAccountant?: boolean;
 }
 
-export default function RecentInvoicesTable({ invoices, isLoading, onViewAll }: RecentInvoicesTableProps) {
+export default function RecentInvoicesTable({ invoices, isLoading, onViewAll, hasAccountant = false }: RecentInvoicesTableProps) {
   if (isLoading) {
     return (
       <div className="rounded-xl bg-card p-5 shadow-[0_4px_12px_rgba(0,0,0,.08)]">
@@ -68,7 +69,7 @@ export default function RecentInvoicesTable({ invoices, isLoading, onViewAll }: 
             <th className="pb-2 text-right font-medium">ספק</th>
             <th className="pb-2 text-right font-medium">סכום</th>
             <th className="pb-2 text-right font-medium">קטגוריה</th>
-            <th className="pb-2 text-right font-medium">סטטוס</th>
+            {hasAccountant && <th className="pb-2 text-right font-medium">סטטוס</th>}
           </tr>
         </thead>
         <tbody>
@@ -82,14 +83,16 @@ export default function RecentInvoicesTable({ invoices, isLoading, onViewAll }: 
                   {inv.total != null ? `₪${inv.total.toLocaleString("he-IL")}` : "—"}
                 </td>
                 <td className="py-3">{inv.category || "—"}</td>
-                <td className="py-3">
-                  <span
-                    className="inline-block rounded-full px-2.5 py-0.5 text-[11px] font-medium"
-                    style={{ backgroundColor: st.bg, color: st.text }}
-                  >
-                    {st.label}
-                  </span>
-                </td>
+                {hasAccountant && (
+                  <td className="py-3">
+                    <span
+                      className="inline-block rounded-full px-2.5 py-0.5 text-[11px] font-medium"
+                      style={{ backgroundColor: st.bg, color: st.text }}
+                    >
+                      {st.label}
+                    </span>
+                  </td>
+                )}
               </tr>
             );
           })}
