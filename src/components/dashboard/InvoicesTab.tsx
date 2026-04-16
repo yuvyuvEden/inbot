@@ -209,7 +209,7 @@ export default function InvoicesTab({ clientId }: Props) {
       ) : (
         <span style={{ color: '#dc2626', opacity: 0.3, padding: '6px', borderRadius: '6px' }}><ExternalLink size={16} /></span>
       )}
-      <button onClick={() => { setEditModal(inv); setEditCatValue(inv.category || ALL_CATEGORIES[0]); }}
+      <button onClick={() => setEditPickerModal(inv)}
         style={{ color: '#1e3a5f', background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '6px' }}
         onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#f1f5f9')}
         onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
