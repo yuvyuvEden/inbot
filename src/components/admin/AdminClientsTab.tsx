@@ -164,14 +164,33 @@ export default function AdminClientsTab() {
                   <td className="p-3">{c.has_accountant ? "✓" : "—"}</td>
                   <td className="p-3">
                     <button
+                      dir="ltr"
                       onClick={() => toggleActive.mutate({ id: c.id, is_active: !c.is_active })}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                        c.is_active ? 'bg-[#1f3c61]' : 'bg-gray-300'
-                      }`}
+                      style={{
+                        position: 'relative',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        width: '44px',
+                        height: '24px',
+                        borderRadius: '9999px',
+                        backgroundColor: c.is_active ? '#e8941a' : '#d1d5db',
+                        cursor: 'pointer',
+                        border: 'none',
+                        padding: '2px',
+                        transition: 'background-color 0.2s',
+                        flexShrink: 0,
+                      }}
                     >
-                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        c.is_active ? 'translate-x-6' : 'translate-x-1'
-                      }`} />
+                      <span style={{
+                        display: 'block',
+                        width: '18px',
+                        height: '18px',
+                        borderRadius: '9999px',
+                        backgroundColor: '#ffffff',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                        marginLeft: c.is_active ? 'auto' : '0',
+                        transition: 'margin 0.2s',
+                      }} />
                     </button>
                   </td>
                   <td className="p-3 space-x-2 space-x-reverse">
