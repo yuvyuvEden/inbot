@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
+
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -245,7 +245,35 @@ export default function AdminClientsTab() {
 
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">פעיל</span>
-                <Switch checked={editClient.is_active} onCheckedChange={(v) => setEditClient({ ...editClient, is_active: v })} />
+                <button
+                  dir="ltr"
+                  onClick={() => setEditClient({ ...editClient, is_active: !editClient.is_active })}
+                  style={{
+                    position: 'relative',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    width: '44px',
+                    height: '24px',
+                    borderRadius: '9999px',
+                    backgroundColor: editClient.is_active ? '#e8941a' : '#d1d5db',
+                    cursor: 'pointer',
+                    border: 'none',
+                    padding: '2px',
+                    transition: 'background-color 0.2s',
+                    flexShrink: 0,
+                  }}
+                >
+                  <span style={{
+                    display: 'block',
+                    width: '18px',
+                    height: '18px',
+                    borderRadius: '9999px',
+                    backgroundColor: '#ffffff',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                    marginLeft: editClient.is_active ? 'auto' : '0',
+                    transition: 'margin 0.2s',
+                  }} />
+                </button>
               </div>
 
               <label className="block space-y-1">
