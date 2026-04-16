@@ -50,6 +50,18 @@ export default function Dashboard() {
   const { data: categories, isLoading: categoriesLoading } = useCategoryBreakdown(client?.id, period);
   const { data: recentInvoices, isLoading: recentLoading } = useRecentInvoices(client?.id);
 
+  const { data: hasAccountant } = useQuery({
+    queryKey: ["has-accountant", client?.id],
+    enabled: !!client?.id,
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("accountant_clients")
+        .select("id", { count: "exact", head: true })
+        .eq("client_id", client!.id);
+      return (count ?? 0) > 0;
+    },
+  });
+
   return (
     <div dir="rtl" className="min-h-screen bg-background font-sans">
       {/* Navbar */}
