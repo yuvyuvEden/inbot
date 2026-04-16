@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+
 interface ClientRow {
   id: string;
   brand_name: string;
@@ -37,6 +38,7 @@ export default function AdminClientsTab() {
   const [search, setSearch] = useState("");
   const [editClient, setEditClient] = useState<ClientRow | null>(null);
   const [drawerAccountant, setDrawerAccountant] = useState<string>("");
+  const [drawerAccountantName, setDrawerAccountantName] = useState("");
 
   const { data: clients, isLoading } = useQuery({
     queryKey: ["admin-clients"],
@@ -182,20 +184,26 @@ export default function AdminClientsTab() {
                       }}
                     >
                       <span style={{
-                        display: 'block',
+                        position: 'absolute',
+                        top: '3px',
+                        left: c.is_active ? '23px' : '3px',
                         width: '18px',
                         height: '18px',
                         borderRadius: '9999px',
                         backgroundColor: '#ffffff',
                         boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-                        marginLeft: c.is_active ? 'auto' : '0',
-                        transition: 'margin 0.2s',
+                        transition: 'left 0.2s',
                       }} />
                     </button>
                   </td>
                   <td className="p-3 space-x-2 space-x-reverse">
                     <button
-                      onClick={() => { setEditClient(c); setDrawerAccountant(c.accountant_id || ""); }}
+                      onClick={() => {
+                        setEditClient(c);
+                        setDrawerAccountant(c.accountant_id || "");
+                        const found = (accountants || []).find(a => a.id === c.accountant_id);
+                        setDrawerAccountantName(found?.name || "ללא");
+                      }}
                       className="rounded bg-primary px-3 py-1 text-xs text-primary-foreground hover:bg-primary/90"
                     >
                       ערוך
@@ -264,14 +272,15 @@ export default function AdminClientsTab() {
                   }}
                 >
                   <span style={{
-                    display: 'block',
+                    position: 'absolute',
+                    top: '3px',
+                    left: editClient.is_active ? '23px' : '3px',
                     width: '18px',
                     height: '18px',
                     borderRadius: '9999px',
                     backgroundColor: '#ffffff',
                     boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-                    marginLeft: editClient.is_active ? 'auto' : '0',
-                    transition: 'margin 0.2s',
+                    transition: 'left 0.2s',
                   }} />
                 </button>
               </div>
@@ -287,15 +296,25 @@ export default function AdminClientsTab() {
 
               <label className="block space-y-1">
                 <span className="text-sm font-medium">רו"ח משויך</span>
-                <Select value={drawerAccountant || "__none__"} onValueChange={setDrawerAccountant}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">ללא</SelectItem>
-                    {(accountants || []).map((a) => (
-                      <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <input
+                  type="text"
+                  placeholder="חפש רו&quot;ח..."
+                  list="accountants-list"
+                  value={drawerAccountantName}
+                  onChange={(e) => {
+                    setDrawerAccountantName(e.target.value);
+                    const found = (accountants || []).find(a => a.name === e.target.value);
+                    if (found) setDrawerAccountant(found.id);
+                    else if (e.target.value === "" || e.target.value === "ללא") setDrawerAccountant("__none__");
+                  }}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+                <datalist id="accountants-list">
+                  <option value="ללא" />
+                  {(accountants || []).map((a) => (
+                    <option key={a.id} value={a.name} />
+                  ))}
+                </datalist>
               </label>
 
               <button
