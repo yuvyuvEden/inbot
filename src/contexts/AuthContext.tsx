@@ -40,15 +40,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     );
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if (session?.user) {
-        await fetchRole(session.user.id);
-      }
-      setLoading(false);
-    });
+      if (session?.user) fetchRole(session.user.id);
+    }).finally(() => setLoading(false));
 
     return () => subscription.unsubscribe();
+  }, []);
+
+  // Safety timeout — אם אחרי 5 שניות עדיין loading, כבה אותו
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 5000);
+    return () => clearTimeout(timer);
   }, []);
 
   const signOut = async () => {
