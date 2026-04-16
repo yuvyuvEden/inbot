@@ -19,12 +19,15 @@ export function useClientRecord() {
   });
 }
 
-/** Parse DD/MM/YYYY text to { day, month, year } or null */
-function parseDMY(dateStr: string | null): { day: number; month: number; year: number } | null {
+/** Parse date string — supports YYYY-MM-DD and DD/MM/YYYY */
+function parseDate(dateStr: string | null): { day: number; month: number; year: number } | null {
   if (!dateStr) return null;
-  const m = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (!m) return null;
-  return { day: parseInt(m[1]), month: parseInt(m[2]), year: parseInt(m[3]) };
+  // תומך בשני פורמטים: YYYY-MM-DD ו-DD/MM/YYYY
+  const iso = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (iso) return { year: parseInt(iso[1]), month: parseInt(iso[2]), day: parseInt(iso[3]) };
+  const dmy = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (dmy) return { day: parseInt(dmy[1]), month: parseInt(dmy[2]), year: parseInt(dmy[3]) };
+  return null;
 }
 
 function getPeriodFilter(period: string): (dateStr: string | null) => boolean {
@@ -34,26 +37,26 @@ function getPeriodFilter(period: string): (dateStr: string | null) => boolean {
 
   switch (period) {
     case "this_month":
-      return (d) => { const p = parseDMY(d); return !!p && p.month === m && p.year === y; };
+      return (d) => { const p = parseDate(d); return !!p && p.month === m && p.year === y; };
     case "last_month": {
       const lm = m === 1 ? 12 : m - 1;
       const ly = m === 1 ? y - 1 : y;
-      return (d) => { const p = parseDMY(d); return !!p && p.month === lm && p.year === ly; };
+      return (d) => { const p = parseDate(d); return !!p && p.month === lm && p.year === ly; };
     }
     case "this_quarter": {
       const qStart = Math.floor((m - 1) / 3) * 3 + 1;
       const qEnd = qStart + 2;
-      return (d) => { const p = parseDMY(d); return !!p && p.year === y && p.month >= qStart && p.month <= qEnd; };
+      return (d) => { const p = parseDate(d); return !!p && p.year === y && p.month >= qStart && p.month <= qEnd; };
     }
     case "last_quarter": {
       let qStart = Math.floor((m - 1) / 3) * 3 + 1 - 3;
       let qYear = y;
       if (qStart < 1) { qStart += 12; qYear--; }
       const qEnd = qStart + 2;
-      return (d) => { const p = parseDMY(d); return !!p && p.year === qYear && p.month >= qStart && p.month <= qEnd; };
+      return (d) => { const p = parseDate(d); return !!p && p.year === qYear && p.month >= qStart && p.month <= qEnd; };
     }
     case "this_year":
-      return (d) => { const p = parseDMY(d); return !!p && p.year === y; };
+      return (d) => { const p = parseDate(d); return !!p && p.year === y; };
     default:
       return () => true;
   }
@@ -78,7 +81,12 @@ async function fetchAllInvoices(clientId: string) {
 }
 
 function computeKPIs(invoices: any[], periodFilter: (d: string | null) => boolean) {
-  const filtered = invoices.filter((i) => i.status === "approved" && periodFilter(i.invoice_date));
+  // כלול חשבוניות שאינן בארכיון (is_archived=false כבר מסונן ב-fetchAllInvoices)
+  // סנן רק archived — שאר הסטטוסים נכללים
+  const filtered = invoices.filter((i) =>
+    i.status !== "archived" &&
+    periodFilter(i.invoice_date)
+  );
   return {
     totalExpenses: filtered.reduce((s, i) => s + (i.total || 0), 0),
     totalVat: filtered.reduce((s, i) => s + (i.vat_deductible || 0), 0),
@@ -124,7 +132,7 @@ export function useExpenseTimeline(clientId: string | undefined, period: string)
 
       const grouped: Record<string, number> = {};
       filtered.forEach((inv) => {
-        const p = parseDMY(inv.invoice_date);
+        const p = parseDate(inv.invoice_date);
         if (!p) return;
         const key = isYearView
           ? `${p.year}-${String(p.month).padStart(2, "0")}`
