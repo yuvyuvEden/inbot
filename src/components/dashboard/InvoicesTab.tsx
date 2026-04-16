@@ -73,23 +73,21 @@ const QUICK_FILTERS = [
   { key: "all", label: "הכל" },
 ];
 
-/** Auto-format typed digits into dd/mm/yyyy */
-function formatDateInput(raw: string): string {
-  const digits = raw.replace(/\D/g, "").slice(0, 8);
-  if (digits.length <= 2) return digits;
-  if (digits.length <= 4) return digits.slice(0, 2) + "/" + digits.slice(2);
-  return digits.slice(0, 2) + "/" + digits.slice(2, 4) + "/" + digits.slice(4);
+/** Format ISO date (YYYY-MM-DD) to DD/MM/YYYY for display */
+function formatDate(d: string | null): string {
+  if (!d) return "—";
+  const [y, m, day] = d.split("-");
+  return `${day}/${m}/${y}`;
 }
 
-function parseDMY(d: string | null): Date | null {
+function parseISODate(d: string | null): Date | null {
   if (!d) return null;
-  const m = d.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (!m) return null;
-  return new Date(parseInt(m[3]), parseInt(m[2]) - 1, parseInt(m[1]));
+  const dt = new Date(d + "T00:00:00");
+  return isNaN(dt.getTime()) ? null : dt;
 }
 function matchesQuickFilter(dateStr: string | null, qf: string): boolean {
   if (qf === "all" || !qf) return true;
-  const parsed = parseDMY(dateStr);
+  const parsed = parseISODate(dateStr);
   if (!parsed) return false;
   const now = new Date(), y = now.getFullYear(), mo = now.getMonth();
   switch (qf) {
@@ -101,7 +99,7 @@ function matchesQuickFilter(dateStr: string | null, qf: string): boolean {
 }
 function getCatColor(cat: string | null) { return cat ? (CATEGORY_COLORS[cat] || DEFAULT_CAT_COLOR) : DEFAULT_CAT_COLOR; }
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 50;
 interface Invoice { id: string; invoice_date: string | null; vendor: string | null; invoice_number: string | null; total: number | null; vat_original: number | null; vat_deductible: number | null; category: string | null; document_type: string | null; status: string; drive_file_url: string | null; }
 
 interface Props { clientId?: string; }
@@ -130,19 +128,10 @@ export default function InvoicesTab({ clientId }: Props) {
     queryFn: async () => {
       const { data, error } = await supabase.from("invoices")
         .select("id, invoice_date, vendor, invoice_number, total, vat_original, vat_deductible, category, document_type, status, drive_file_url")
-        .eq("client_id", clientId!).eq("is_archived", false);
+        .eq("client_id", clientId!).eq("is_archived", false)
+        .order("invoice_date", { ascending: false });
       if (error) throw error;
-      const rows = (data || []) as Invoice[];
-      // Sort client-side because invoice_date is DD/MM/YYYY text
-      rows.sort((a, b) => {
-        if (!a.invoice_date && !b.invoice_date) return 0;
-        if (!a.invoice_date) return 1;
-        if (!b.invoice_date) return -1;
-        const [da, ma, ya] = a.invoice_date.split("/").map(Number);
-        const [db, mb, yb] = b.invoice_date.split("/").map(Number);
-        return (yb * 10000 + mb * 100 + db) - (ya * 10000 + ma * 100 + da);
-      });
-      return rows;
+      return (data || []) as Invoice[];
     },
   });
 
@@ -163,7 +152,7 @@ export default function InvoicesTab({ clientId }: Props) {
       if (statusFilter && inv.status !== statusFilter) return false;
       if (quickFilter && quickFilter !== "all" && !matchesQuickFilter(inv.invoice_date, quickFilter)) return false;
       if (dateFrom || dateTo) {
-        const parsed = parseDMY(inv.invoice_date);
+        const parsed = parseISODate(inv.invoice_date);
         if (!parsed) return false;
         if (dateFrom && parsed < dateFrom) return false;
         if (dateTo) { const end = new Date(dateTo); end.setHours(23, 59, 59); if (parsed > end) return false; }
@@ -198,7 +187,7 @@ export default function InvoicesTab({ clientId }: Props) {
   const exportCSV = () => {
     if (!filtered.length) return;
     const headers = ["תאריך","ספק","מספר חשבונית","סכום","מע״מ בפועל","מע״מ מוכר","קטגוריה","סוג","סטטוס"];
-    const rows = filtered.map(inv => [inv.invoice_date||"",inv.vendor||"",inv.invoice_number||"",inv.total??"",inv.vat_original??"",inv.vat_deductible??"",inv.category||"",inv.document_type||"",STATUS_MAP[inv.status]?.label||inv.status]);
+    const rows = filtered.map(inv => [formatDate(inv.invoice_date),inv.vendor||"",inv.invoice_number||"",inv.total??"",inv.vat_original??"",inv.vat_deductible??"",inv.category||"",inv.document_type||"",STATUS_MAP[inv.status]?.label||inv.status]);
     const csv = "\uFEFF" + [headers.join(","), ...rows.map(r => r.map(c => `"${c}"`).join(","))].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -346,7 +335,7 @@ export default function InvoicesTab({ clientId }: Props) {
                   const cc = getCatColor(inv.category);
                   return (
                     <tr key={inv.id} className="border-b border-[#e2e8f0]/60 hover:bg-[#f8fafc] transition-colors">
-                      <td className="px-3 py-3 whitespace-nowrap">{inv.invoice_date || "—"}</td>
+                      <td className="px-3 py-3 whitespace-nowrap">{formatDate(inv.invoice_date)}</td>
                       <td className="px-3 py-3 truncate" title={inv.vendor || ""}>{inv.vendor || "—"}</td>
                       <td className="px-3 py-3 truncate">{inv.invoice_number || "—"}</td>
                       <td className="px-3 py-3 text-left font-mono tabular-nums whitespace-nowrap">{inv.total != null ? `₪${inv.total.toLocaleString("he-IL")}` : "—"}</td>
@@ -375,7 +364,7 @@ export default function InvoicesTab({ clientId }: Props) {
                     <span className="font-bold text-[14px] font-mono">{inv.total != null ? `₪${inv.total.toLocaleString("he-IL")}` : "—"}</span>
                   </div>
                   <div className="flex items-center justify-between mt-2">
-                    <span className="text-[12px] text-gray-400">{inv.invoice_date || "—"}</span>
+                    <span className="text-[12px] text-gray-400">{formatDate(inv.invoice_date)}</span>
                     <span className="rounded-full px-2.5 py-0.5 text-[11px] font-medium" style={{ backgroundColor: cc.bg, color: cc.text }}>{inv.category || "—"}</span>
                   </div>
                   <div className="flex items-center justify-between mt-1.5">
