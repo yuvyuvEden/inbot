@@ -130,9 +130,19 @@ export default function InvoicesTab({ clientId }: Props) {
     queryFn: async () => {
       const { data, error } = await supabase.from("invoices")
         .select("id, invoice_date, vendor, invoice_number, total, vat_original, vat_deductible, category, document_type, status, drive_file_url")
-        .eq("client_id", clientId!).eq("is_archived", false).order("invoice_date", { ascending: false, nullsFirst: false });
+        .eq("client_id", clientId!).eq("is_archived", false);
       if (error) throw error;
-      return (data || []) as Invoice[];
+      const rows = (data || []) as Invoice[];
+      // Sort client-side because invoice_date is DD/MM/YYYY text
+      rows.sort((a, b) => {
+        if (!a.invoice_date && !b.invoice_date) return 0;
+        if (!a.invoice_date) return 1;
+        if (!b.invoice_date) return -1;
+        const [da, ma, ya] = a.invoice_date.split("/").map(Number);
+        const [db, mb, yb] = b.invoice_date.split("/").map(Number);
+        return (yb * 10000 + mb * 100 + db) - (ya * 10000 + ma * 100 + da);
+      });
+      return rows;
     },
   });
 
