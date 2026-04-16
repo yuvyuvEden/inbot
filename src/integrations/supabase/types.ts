@@ -52,27 +52,45 @@ export type Database = {
       }
       accountants: {
         Row: {
+          auto_renew: boolean | null
           created_at: string
           email: string
           id: string
+          is_active: boolean | null
+          monthly_fee: number | null
           name: string
           phone: string | null
+          plan_expires_at: string | null
+          plan_type: string | null
+          price_per_client: number | null
           user_id: string | null
         }
         Insert: {
+          auto_renew?: boolean | null
           created_at?: string
           email: string
           id?: string
+          is_active?: boolean | null
+          monthly_fee?: number | null
           name: string
           phone?: string | null
+          plan_expires_at?: string | null
+          plan_type?: string | null
+          price_per_client?: number | null
           user_id?: string | null
         }
         Update: {
+          auto_renew?: boolean | null
           created_at?: string
           email?: string
           id?: string
+          is_active?: boolean | null
+          monthly_fee?: number | null
           name?: string
           phone?: string | null
+          plan_expires_at?: string | null
+          plan_type?: string | null
+          price_per_client?: number | null
           user_id?: string | null
         }
         Relationships: []
