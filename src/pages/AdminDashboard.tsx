@@ -20,7 +20,11 @@ const AdminDashboard = () => {
     <div dir="rtl" lang="he" className="min-h-screen bg-background font-sans">
       {/* Navbar */}
       <nav className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-card px-6 py-3 shadow-sm">
-        <span className="text-xl font-bold text-primary">INBOT</span>
+        <img
+          src="https://jkqpkbcdtbelgpuwncam.supabase.co/storage/v1/object/public/assets//LOGO.jpeg"
+          alt="INBOT"
+          style={{ height: '36px', borderRadius: '6px' }}
+        />
 
         <div className="flex gap-1 rounded-lg bg-secondary p-1">
           {tabs.map((t) => (
