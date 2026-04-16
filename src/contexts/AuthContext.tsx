@@ -35,10 +35,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    // Safety timeouts
-    const loadingTimer = setTimeout(() => setLoading(false), 5000);
-    const roleTimer = setTimeout(() => setRoleLoading(false), 5000);
+    // טען session קיים מיד בהתחלה
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+      if (session?.user) {
+        fetchRole(session.user.id);
+      } else {
+        setRoleLoading(false);
+      }
+    });
 
+    // האזן לשינויים עתידיים
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setSession(session);
@@ -52,11 +60,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     );
 
-    return () => {
-      subscription.unsubscribe();
-      clearTimeout(loadingTimer);
-      clearTimeout(roleTimer);
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
   const signOut = async () => {
