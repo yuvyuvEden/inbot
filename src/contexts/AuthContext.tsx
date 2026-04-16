@@ -6,6 +6,7 @@ interface AuthContextType {
   session: Session | null;
   user: User | null;
   loading: boolean;
+  roleLoading: boolean;
   userRole: string | null;
   signOut: () => Promise<void>;
 }
@@ -16,15 +17,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [roleLoading, setRoleLoading] = useState(true);
 
   const fetchRole = async (userId: string) => {
+    setRoleLoading(true);
     const { data } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", userId)
       .maybeSingle();
-    if (data) setUserRole(String(data.role));
-    else setUserRole(null);
+    setUserRole(data ? String(data.role) : null);
+    setRoleLoading(false);
   };
 
   useEffect(() => {
@@ -35,6 +38,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           await fetchRole(session.user.id);
         } else {
           setUserRole(null);
+          setRoleLoading(false);
         }
         setLoading(false);
       }
@@ -42,7 +46,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if (session?.user) fetchRole(session.user.id);
+      if (session?.user) {
+        fetchRole(session.user.id);
+      } else {
+        setUserRole(null);
+        setRoleLoading(false);
+      }
     }).finally(() => setLoading(false));
 
     return () => subscription.unsubscribe();
@@ -60,7 +69,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user: session?.user ?? null, loading, userRole, signOut }}>
+    <AuthContext.Provider value={{ session, user: session?.user ?? null, loading, roleLoading, userRole, signOut }}>
       {children}
     </AuthContext.Provider>
   );

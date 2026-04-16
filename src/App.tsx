@@ -22,16 +22,16 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 const RoleRoute = ({ role, children }: { role: string; children: React.ReactNode }) => {
-  const { session, loading, userRole } = useAuth();
-  if (loading) return <div className="flex min-h-screen items-center justify-center">טוען...</div>;
+  const { session, loading, userRole, roleLoading } = useAuth();
+  if (loading || roleLoading) return <div className="flex min-h-screen items-center justify-center">טוען...</div>;
   if (!session) return <Navigate to="/login" replace />;
   if (userRole !== role) return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 };
 
 const SmartRedirect = () => {
-  const { session, loading, userRole } = useAuth();
-  if (loading) return <div className="flex min-h-screen items-center justify-center">טוען...</div>;
+  const { session, loading, userRole, roleLoading } = useAuth();
+  if (loading || roleLoading) return <div className="flex min-h-screen items-center justify-center">טוען...</div>;
   if (!session) return <Navigate to="/login" replace />;
   if (userRole === "admin") return <Navigate to="/admin" replace />;
   if (userRole === "accountant") return <Navigate to="/accountant" replace />;
