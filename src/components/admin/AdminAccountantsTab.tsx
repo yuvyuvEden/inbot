@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -192,14 +192,15 @@ export default function AdminAccountantsTab() {
                         }}
                       >
                         <span style={{
-                          display: 'block',
+                          position: 'absolute',
+                          top: '3px',
+                          left: a.is_active ? '23px' : '3px',
                           width: '18px',
                           height: '18px',
                           borderRadius: '9999px',
                           backgroundColor: '#ffffff',
                           boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-                          marginLeft: a.is_active ? 'auto' : '0',
-                          transition: 'margin 0.2s',
+                          transition: 'left 0.2s',
                         }} />
                       </button>
                     </td>
@@ -263,11 +264,67 @@ export default function AdminAccountantsTab() {
               </label>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">חידוש אוטומטי</span>
-                <Switch checked={editAcc.auto_renew ?? true} onCheckedChange={(v) => setEditAcc({ ...editAcc, auto_renew: v })} />
+                <button
+                  onClick={() => setEditAcc({ ...editAcc, auto_renew: !editAcc.auto_renew })}
+                  style={{
+                    position: 'relative',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    width: '44px',
+                    height: '24px',
+                    borderRadius: '9999px',
+                    backgroundColor: editAcc.auto_renew ? '#e8941a' : '#d1d5db',
+                    cursor: 'pointer',
+                    border: 'none',
+                    padding: '0',
+                    transition: 'background-color 0.2s',
+                    flexShrink: 0,
+                  }}
+                >
+                  <span style={{
+                    position: 'absolute',
+                    top: '3px',
+                    left: editAcc.auto_renew ? '23px' : '3px',
+                    width: '18px',
+                    height: '18px',
+                    borderRadius: '9999px',
+                    backgroundColor: '#ffffff',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                    transition: 'left 0.2s',
+                  }} />
+                </button>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">פעיל</span>
-                <Switch checked={editAcc.is_active ?? true} onCheckedChange={(v) => setEditAcc({ ...editAcc, is_active: v })} />
+                <button
+                  onClick={() => setEditAcc({ ...editAcc, is_active: !editAcc.is_active })}
+                  style={{
+                    position: 'relative',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    width: '44px',
+                    height: '24px',
+                    borderRadius: '9999px',
+                    backgroundColor: editAcc.is_active ? '#e8941a' : '#d1d5db',
+                    cursor: 'pointer',
+                    border: 'none',
+                    padding: '0',
+                    transition: 'background-color 0.2s',
+                    flexShrink: 0,
+                  }}
+                >
+                  <span style={{
+                    position: 'absolute',
+                    top: '3px',
+                    left: editAcc.is_active ? '23px' : '3px',
+                    width: '18px',
+                    height: '18px',
+                    borderRadius: '9999px',
+                    backgroundColor: '#ffffff',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                    transition: 'left 0.2s',
+                  }} />
+                </button>
               </div>
 
               <button
