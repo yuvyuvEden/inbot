@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -19,65 +19,147 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [roleLoading, setRoleLoading] = useState(true);
 
+  const currentUserIdRef = useRef<string | null>(null);
+  const pendingRoleUserIdRef = useRef<string | null>(null);
+  const resolvedRoleUserIdRef = useRef<string | null>(null);
+
+  const clearRoleState = () => {
+    currentUserIdRef.current = null;
+    pendingRoleUserIdRef.current = null;
+    resolvedRoleUserIdRef.current = null;
+    setUserRole(null);
+    setRoleLoading(false);
+  };
+
   const fetchRole = async (userId: string) => {
+    if (resolvedRoleUserIdRef.current === userId) {
+      setRoleLoading(false);
+      return;
+    }
+
+    if (pendingRoleUserIdRef.current === userId) {
+      return;
+    }
+
+    pendingRoleUserIdRef.current = userId;
+    setRoleLoading(true);
+
     try {
       const { data } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", userId)
         .maybeSingle();
+
+      if (currentUserIdRef.current !== userId) {
+        return;
+      }
+
+      resolvedRoleUserIdRef.current = userId;
       setUserRole(data ? String(data.role) : null);
     } catch {
+      if (currentUserIdRef.current !== userId) {
+        return;
+      }
+
+      resolvedRoleUserIdRef.current = null;
       setUserRole(null);
     } finally {
-      setRoleLoading(false);
+      if (pendingRoleUserIdRef.current === userId) {
+        pendingRoleUserIdRef.current = null;
+      }
+
+      if (currentUserIdRef.current === userId) {
+        setRoleLoading(false);
+      }
     }
   };
 
   useEffect(() => {
-    // טען session קיים מיד בהתחלה
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-      if (session?.user) {
-        fetchRole(session.user.id);
-      } else {
+    let isActive = true;
+
+    const loadingTimer = window.setTimeout(() => {
+      if (isActive) {
+        setLoading(false);
+      }
+    }, 5000);
+
+    const roleTimer = window.setTimeout(() => {
+      if (isActive) {
         setRoleLoading(false);
       }
+    }, 5000);
+
+    const applySession = (nextSession: Session | null) => {
+      if (!isActive) {
+        return;
+      }
+
+      const previousUserId = currentUserIdRef.current;
+      const nextUserId = nextSession?.user?.id ?? null;
+
+      currentUserIdRef.current = nextUserId;
+      setSession(nextSession);
+      setLoading(false);
+
+      if (!nextUserId) {
+        clearRoleState();
+        return;
+      }
+
+      if (nextUserId !== previousUserId) {
+        pendingRoleUserIdRef.current = null;
+        resolvedRoleUserIdRef.current = null;
+        setUserRole(null);
+      }
+
+      void fetchRole(nextUserId);
+    };
+
+    void supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        applySession(session);
+      })
+      .catch(() => {
+        if (!isActive) {
+          return;
+        }
+
+        setLoading(false);
+        setRoleLoading(false);
+      });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      applySession(nextSession);
     });
 
-    // האזן לשינויים עתידיים
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setSession(session);
-        setLoading(false);
-        if (session?.user) {
-          fetchRole(session.user.id);
-        } else {
-          setUserRole(null);
-          setRoleLoading(false);
-        }
-      }
-    );
-
-    return () => subscription.unsubscribe();
+    return () => {
+      isActive = false;
+      subscription.unsubscribe();
+      window.clearTimeout(loadingTimer);
+      window.clearTimeout(roleTimer);
+    };
   }, []);
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    setUserRole(null);
-    setRoleLoading(false);
+    clearRoleState();
   };
 
   return (
-    <AuthContext.Provider value={{
-      session,
-      user: session?.user ?? null,
-      loading,
-      roleLoading,
-      userRole,
-      signOut
-    }}>
+    <AuthContext.Provider
+      value={{
+        session,
+        user: session?.user ?? null,
+        loading,
+        roleLoading,
+        userRole,
+        signOut,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
