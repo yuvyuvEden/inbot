@@ -187,7 +187,7 @@ export default function InvoicesTab({ clientId }: Props) {
   const exportCSV = () => {
     if (!filtered.length) return;
     const headers = ["תאריך","ספק","מספר חשבונית","סכום","מע״מ בפועל","מע״מ מוכר","קטגוריה","סוג","סטטוס"];
-    const rows = filtered.map(inv => [inv.invoice_date||"",inv.vendor||"",inv.invoice_number||"",inv.total??"",inv.vat_original??"",inv.vat_deductible??"",inv.category||"",inv.document_type||"",STATUS_MAP[inv.status]?.label||inv.status]);
+    const rows = filtered.map(inv => [formatDate(inv.invoice_date),inv.vendor||"",inv.invoice_number||"",inv.total??"",inv.vat_original??"",inv.vat_deductible??"",inv.category||"",inv.document_type||"",STATUS_MAP[inv.status]?.label||inv.status]);
     const csv = "\uFEFF" + [headers.join(","), ...rows.map(r => r.map(c => `"${c}"`).join(","))].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
