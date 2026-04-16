@@ -85,7 +85,10 @@ export default function Dashboard() {
       {/* Tab Bar */}
       <div className="border-b border-border bg-card">
         <div className="flex gap-1 overflow-x-auto px-4">
-          {TABS.map((tab) => {
+          {TABS.filter((tab) => {
+            if (tab.key === "messages" || tab.key === "archive") return !!hasAccountant;
+            return true;
+          }).map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.key;
             return (
