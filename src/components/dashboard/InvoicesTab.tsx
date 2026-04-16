@@ -102,10 +102,10 @@ function getCatColor(cat: string | null) { return cat ? (CATEGORY_COLORS[cat] ||
 const PAGE_SIZE = 50;
 interface Invoice { id: string; invoice_date: string | null; vendor: string | null; invoice_number: string | null; total: number | null; vat_original: number | null; vat_deductible: number | null; category: string | null; document_type: string | null; status: string; drive_file_url: string | null; }
 
-interface Props { clientId?: string; }
+interface Props { clientId?: string; hasAccountant?: boolean; }
 
 /* ─── Component ─── */
-export default function InvoicesTab({ clientId }: Props) {
+export default function InvoicesTab({ clientId, hasAccountant = false }: Props) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -247,9 +247,11 @@ export default function InvoicesTab({ clientId }: Props) {
           <select value={docTypeFilter} onChange={e => { setDocTypeFilter(e.target.value); setPage(0); }} className={sel}>
             {DOC_TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
-          <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(0); }} className={sel}>
-            {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
+          {hasAccountant && (
+            <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(0); }} className={sel}>
+              {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          )}
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" className={cn("h-[36px] shrink-0 gap-1 text-[12px] font-normal", !dateFrom && "text-muted-foreground")} style={{ minWidth: 120 }}>
@@ -325,7 +327,7 @@ export default function InvoicesTab({ clientId }: Props) {
                   <th className="px-3 py-3 text-left">מע״מ מוכר</th>
                   <th className="px-3 py-3 text-right">קטגוריה</th>
                   <th className="px-3 py-3 text-right">סוג</th>
-                  <th className="px-3 py-3 text-right">סטטוס</th>
+                  {hasAccountant && <th className="px-3 py-3 text-right">סטטוס</th>}
                   <th className="px-3 py-3 text-center">פעולות</th>
                 </tr>
               </thead>
@@ -343,7 +345,7 @@ export default function InvoicesTab({ clientId }: Props) {
                       <td className="px-3 py-3 text-left font-mono tabular-nums whitespace-nowrap">{inv.vat_deductible != null ? `₪${inv.vat_deductible.toLocaleString("he-IL")}` : "—"}</td>
                       <td className="px-3 py-3"><span className="inline-block max-w-full truncate rounded-full px-2.5 py-0.5 text-[11px] font-medium" style={{ backgroundColor: cc.bg, color: cc.text }}>{inv.category || "—"}</span></td>
                       <td className="px-3 py-3 text-[12px] truncate">{inv.document_type || "—"}</td>
-                      <td className="px-3 py-3"><span className="inline-block rounded-full px-2.5 py-0.5 text-[11px] font-medium" style={{ backgroundColor: st.bg, color: st.text }}>{st.label}</span></td>
+                      {hasAccountant && <td className="px-3 py-3"><span className="inline-block rounded-full px-2.5 py-0.5 text-[11px] font-medium" style={{ backgroundColor: st.bg, color: st.text }}>{st.label}</span></td>}
                       <td className="px-3 py-3">{renderActions(inv)}</td>
                     </tr>
                   );
@@ -369,7 +371,7 @@ export default function InvoicesTab({ clientId }: Props) {
                   </div>
                   <div className="flex items-center justify-between mt-1.5">
                     <span className="text-[12px] text-gray-400">{inv.document_type || "—"}</span>
-                    <span className="rounded-full px-2.5 py-0.5 text-[11px] font-medium" style={{ backgroundColor: st.bg, color: st.text }}>{st.label}</span>
+                    {hasAccountant && <span className="rounded-full px-2.5 py-0.5 text-[11px] font-medium" style={{ backgroundColor: st.bg, color: st.text }}>{st.label}</span>}
                   </div>
                   <div className="mt-3 pt-3 border-t border-[#e2e8f0]">{renderActions(inv)}</div>
                 </div>

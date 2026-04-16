@@ -154,7 +154,7 @@ export default function Dashboard() {
               </div>
             </div>
           ) : activeTab === "invoices" ? (
-            <InvoicesTab clientId={client?.id} />
+            <InvoicesTab clientId={client?.id} hasAccountant={!!hasAccountant} />
           ) : activeTab === "export" ? (
             <ExportTab />
           ) : activeTab === "ai" ? (
