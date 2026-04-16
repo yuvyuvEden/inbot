@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 interface ClientRow {
   id: string;
   brand_name: string;
+  legal_name: string | null;
+  vat_number: string | null;
   plan_type: string;
   plan_expires_at: string | null;
   is_active: boolean;
@@ -41,7 +43,7 @@ export default function AdminClientsTab() {
     queryFn: async () => {
       const { data: clientsData, error } = await supabase
         .from("clients")
-        .select("id, brand_name, plan_type, plan_expires_at, is_active, telegram_chat_id")
+        .select("id, brand_name, legal_name, vat_number, plan_type, plan_expires_at, is_active, telegram_chat_id")
         .order("created_at", { ascending: false });
       if (error) throw error;
 
@@ -112,13 +114,15 @@ export default function AdminClientsTab() {
   });
 
   const filtered = (clients || []).filter((c) =>
-    c.brand_name.toLowerCase().includes(search.toLowerCase())
+    c.brand_name?.toLowerCase().includes(search.toLowerCase()) ||
+    c.legal_name?.toLowerCase().includes(search.toLowerCase()) ||
+    c.vat_number?.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
     <div className="space-y-4">
       <Input
-        placeholder="חיפוש לפי שם עסק..."
+        placeholder="חיפוש לפי שם עסק, שם חברה, ח.פ..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         className="max-w-sm"
@@ -159,10 +163,16 @@ export default function AdminClientsTab() {
                   </td>
                   <td className="p-3">{c.has_accountant ? "✓" : "—"}</td>
                   <td className="p-3">
-                    <Switch
-                      checked={c.is_active}
-                      onCheckedChange={(v) => toggleActive.mutate({ id: c.id, is_active: v })}
-                    />
+                    <button
+                      onClick={() => toggleActive.mutate({ id: c.id, is_active: !c.is_active })}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                        c.is_active ? 'bg-[#e8941a]' : 'bg-gray-300'
+                      }`}
+                    >
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        c.is_active ? 'translate-x-1' : 'translate-x-6'
+                      }`} />
+                    </button>
                   </td>
                   <td className="p-3 space-x-2 space-x-reverse">
                     <button
