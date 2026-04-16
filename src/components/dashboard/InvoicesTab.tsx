@@ -173,6 +173,12 @@ export default function InvoicesTab({ clientId }: Props) {
     if (error) toast.error("שגיאה בעדכון קטגוריה"); else { toast.success("הקטגוריה עודכנה"); queryClient.invalidateQueries({ queryKey: ["all-invoices"] }); }
     setEditModal(null);
   };
+  const updateVendor = async () => {
+    if (!editVendorModal) return;
+    const { error } = await supabase.from("invoices").update({ vendor: editVendorValue }).eq("id", editVendorModal.id);
+    if (error) toast.error("שגיאה בעדכון שם עסק"); else { toast.success("שם העסק עודכן"); queryClient.invalidateQueries({ queryKey: ["all-invoices"] }); }
+    setEditVendorModal(null);
+  };
   const deleteInvoice = async () => {
     if (!deleteModal) return;
     const { error } = await supabase.from("invoices").delete().eq("id", deleteModal.id);
