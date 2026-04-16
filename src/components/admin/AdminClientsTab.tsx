@@ -166,7 +166,7 @@ export default function AdminClientsTab() {
                     <button
                       onClick={() => toggleActive.mutate({ id: c.id, is_active: !c.is_active })}
                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                        c.is_active ? 'bg-[#e8941a]' : 'bg-gray-300'
+                        c.is_active ? 'bg-[#1f3c61]' : 'bg-gray-300'
                       }`}
                     >
                       <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
