@@ -117,8 +117,11 @@ export default function InvoicesTab({ clientId }: Props) {
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [quickFilter, setQuickFilter] = useState("all");
   const [page, setPage] = useState(0);
+  const [editPickerModal, setEditPickerModal] = useState<Invoice | null>(null);
   const [editModal, setEditModal] = useState<Invoice | null>(null);
   const [editCatValue, setEditCatValue] = useState("");
+  const [editVendorModal, setEditVendorModal] = useState<Invoice | null>(null);
+  const [editVendorValue, setEditVendorValue] = useState("");
   const [deleteModal, setDeleteModal] = useState<Invoice | null>(null);
 
   const { data: invoices, isLoading } = useQuery({
