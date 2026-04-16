@@ -17,6 +17,12 @@ const STATUS_MAP: Record<string, { label: string; bg: string; text: string }> = 
   archived: { label: "בארכיון", bg: "#f1f5f9", text: "#64748b" },
 };
 
+function formatDate(d: string | null): string {
+  if (!d) return "—";
+  const [y, m, day] = d.split("-");
+  return `${day}/${m}/${y}`;
+}
+
 interface RecentInvoicesTableProps {
   invoices: Invoice[] | undefined;
   isLoading: boolean;
@@ -70,7 +76,7 @@ export default function RecentInvoicesTable({ invoices, isLoading, onViewAll }: 
             const st = STATUS_MAP[inv.status] || STATUS_MAP.pending_review;
             return (
               <tr key={inv.id} className="border-b border-border/50 transition-colors hover:bg-secondary/50 cursor-pointer">
-                <td className="py-3">{inv.invoice_date || "—"}</td>
+                <td className="py-3">{formatDate(inv.invoice_date)}</td>
                 <td className="py-3">{inv.vendor || "—"}</td>
                 <td className="py-3 font-medium" style={{ fontVariantNumeric: "tabular-nums" }}>
                   {inv.total != null ? `₪${inv.total.toLocaleString("he-IL")}` : "—"}
