@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   useClientRecord, useInvoiceKPIs, useInvoiceKPIsDelta,
@@ -48,6 +50,18 @@ export default function Dashboard() {
   const { data: categories, isLoading: categoriesLoading } = useCategoryBreakdown(client?.id, period);
   const { data: recentInvoices, isLoading: recentLoading } = useRecentInvoices(client?.id);
 
+  const { data: hasAccountant } = useQuery({
+    queryKey: ["has-accountant", client?.id],
+    enabled: !!client?.id,
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("accountant_clients")
+        .select("id", { count: "exact", head: true })
+        .eq("client_id", client!.id);
+      return (count ?? 0) > 0;
+    },
+  });
+
   return (
     <div dir="rtl" className="min-h-screen bg-background font-sans">
       {/* Navbar */}
@@ -71,7 +85,10 @@ export default function Dashboard() {
       {/* Tab Bar */}
       <div className="border-b border-border bg-card">
         <div className="flex gap-1 overflow-x-auto px-4">
-          {TABS.map((tab) => {
+          {TABS.filter((tab) => {
+            if (tab.key === "messages" || tab.key === "archive") return !!hasAccountant;
+            return true;
+          }).map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.key;
             return (
