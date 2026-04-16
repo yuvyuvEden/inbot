@@ -171,17 +171,36 @@ export default function AdminAccountantsTab() {
                     </td>
                     <td className="p-3">
                       <button
+                        dir="ltr"
                         onClick={() => {
                           const payload = { ...a, is_active: !a.is_active };
                           saveMutation.mutate(payload);
                         }}
-                        className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors duration-200 ${
-                          a.is_active ? 'bg-[#1f3c61]' : 'bg-gray-300'
-                        }`}
+                        style={{
+                          position: 'relative',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          width: '44px',
+                          height: '24px',
+                          borderRadius: '9999px',
+                          backgroundColor: a.is_active ? '#e8941a' : '#d1d5db',
+                          cursor: 'pointer',
+                          border: 'none',
+                          padding: '2px',
+                          transition: 'background-color 0.2s',
+                          flexShrink: 0,
+                        }}
                       >
-                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${
-                          a.is_active ? 'translate-x-6' : 'translate-x-1'
-                        }`} />
+                        <span style={{
+                          display: 'block',
+                          width: '18px',
+                          height: '18px',
+                          borderRadius: '9999px',
+                          backgroundColor: '#ffffff',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                          marginLeft: a.is_active ? 'auto' : '0',
+                          transition: 'margin 0.2s',
+                        }} />
                       </button>
                     </td>
                     <td className="p-3">
