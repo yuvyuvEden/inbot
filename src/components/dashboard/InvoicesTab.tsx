@@ -117,8 +117,11 @@ export default function InvoicesTab({ clientId }: Props) {
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [quickFilter, setQuickFilter] = useState("all");
   const [page, setPage] = useState(0);
+  const [editPickerModal, setEditPickerModal] = useState<Invoice | null>(null);
   const [editModal, setEditModal] = useState<Invoice | null>(null);
   const [editCatValue, setEditCatValue] = useState("");
+  const [editVendorModal, setEditVendorModal] = useState<Invoice | null>(null);
+  const [editVendorValue, setEditVendorValue] = useState("");
   const [deleteModal, setDeleteModal] = useState<Invoice | null>(null);
 
   const { data: invoices, isLoading } = useQuery({
@@ -170,6 +173,12 @@ export default function InvoicesTab({ clientId }: Props) {
     if (error) toast.error("שגיאה בעדכון קטגוריה"); else { toast.success("הקטגוריה עודכנה"); queryClient.invalidateQueries({ queryKey: ["all-invoices"] }); }
     setEditModal(null);
   };
+  const updateVendor = async () => {
+    if (!editVendorModal) return;
+    const { error } = await supabase.from("invoices").update({ vendor: editVendorValue }).eq("id", editVendorModal.id);
+    if (error) toast.error("שגיאה בעדכון שם עסק"); else { toast.success("שם העסק עודכן"); queryClient.invalidateQueries({ queryKey: ["all-invoices"] }); }
+    setEditVendorModal(null);
+  };
   const deleteInvoice = async () => {
     if (!deleteModal) return;
     const { error } = await supabase.from("invoices").delete().eq("id", deleteModal.id);
@@ -200,7 +209,7 @@ export default function InvoicesTab({ clientId }: Props) {
       ) : (
         <span style={{ color: '#dc2626', opacity: 0.3, padding: '6px', borderRadius: '6px' }}><ExternalLink size={16} /></span>
       )}
-      <button onClick={() => { setEditModal(inv); setEditCatValue(inv.category || ALL_CATEGORIES[0]); }}
+      <button onClick={() => setEditPickerModal(inv)}
         style={{ color: '#1e3a5f', background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '6px' }}
         onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#f1f5f9')}
         onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
@@ -385,7 +394,28 @@ export default function InvoicesTab({ clientId }: Props) {
         </div>
       )}
 
-      {/* ── Edit Modal ── */}
+      {/* ── Edit Picker Modal ── */}
+      <Dialog open={!!editPickerModal} onOpenChange={open => !open && setEditPickerModal(null)}>
+        <DialogContent className="max-w-[360px] rounded-2xl p-8" dir="rtl">
+          <DialogHeader><DialogTitle className="text-lg font-bold" style={{ color: "#1e3a5f" }}>עריכה — {editPickerModal?.vendor || ""}</DialogTitle></DialogHeader>
+          <p className="mt-2 text-[13px] text-gray-500">מה ברצונך לעדכן?</p>
+          <div className="mt-4 flex flex-col gap-2">
+            <button
+              onClick={() => { const inv = editPickerModal!; setEditPickerModal(null); setEditModal(inv); setEditCatValue(inv.category || ALL_CATEGORIES[0]); }}
+              className="rounded-lg px-4 py-2.5 text-[13px] font-medium text-white transition-colors hover:opacity-90"
+              style={{ backgroundColor: "#1e3a5f" }}
+            >עדכון קטגוריה</button>
+            <button
+              onClick={() => { const inv = editPickerModal!; setEditPickerModal(null); setEditVendorModal(inv); setEditVendorValue(inv.vendor || ""); }}
+              className="rounded-lg px-4 py-2.5 text-[13px] font-medium text-white transition-colors hover:opacity-90"
+              style={{ backgroundColor: "#e8941a" }}
+            >עדכון שם עסק</button>
+            <button onClick={() => setEditPickerModal(null)} className="rounded-lg border border-[#e2e8f0] bg-white px-4 py-2 text-[13px] font-medium text-gray-500 hover:bg-gray-50 transition-colors">ביטול</button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Edit Category Modal ── */}
       <Dialog open={!!editModal} onOpenChange={open => !open && setEditModal(null)}>
         <DialogContent className="max-w-[400px] rounded-2xl p-8" dir="rtl">
           <DialogHeader><DialogTitle className="text-lg font-bold" style={{ color: "#1e3a5f" }}>עריכת קטגוריה — {editModal?.vendor || ""}</DialogTitle></DialogHeader>
@@ -395,6 +425,24 @@ export default function InvoicesTab({ clientId }: Props) {
           <div className="mt-6 flex justify-end gap-2">
             <button onClick={() => setEditModal(null)} className="rounded-lg border border-[#e2e8f0] bg-white px-4 py-2 text-[13px] font-medium hover:bg-gray-50 transition-colors">ביטול</button>
             <button onClick={updateCategory} className="rounded-lg px-4 py-2 text-[13px] font-medium text-white transition-colors" style={{ backgroundColor: "#1e3a5f" }}>שמור</button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Edit Vendor Modal ── */}
+      <Dialog open={!!editVendorModal} onOpenChange={open => !open && setEditVendorModal(null)}>
+        <DialogContent className="max-w-[400px] rounded-2xl p-8" dir="rtl">
+          <DialogHeader><DialogTitle className="text-lg font-bold" style={{ color: "#1e3a5f" }}>עריכת שם עסק — {editVendorModal?.vendor || ""}</DialogTitle></DialogHeader>
+          <input
+            value={editVendorValue}
+            onChange={e => setEditVendorValue(e.target.value)}
+            className="mt-4 w-full rounded-lg border border-[#e2e8f0] bg-white px-3 py-2 text-[14px] outline-none focus:ring-1 focus:ring-primary"
+            style={{ direction: "ltr" }}
+            placeholder="שם עסק חדש"
+          />
+          <div className="mt-6 flex justify-end gap-2">
+            <button onClick={() => setEditVendorModal(null)} className="rounded-lg border border-[#e2e8f0] bg-white px-4 py-2 text-[13px] font-medium hover:bg-gray-50 transition-colors">ביטול</button>
+            <button onClick={updateVendor} disabled={!editVendorValue.trim()} className="rounded-lg px-4 py-2 text-[13px] font-medium text-white transition-colors disabled:opacity-50" style={{ backgroundColor: "#1e3a5f" }}>שמור</button>
           </div>
         </DialogContent>
       </Dialog>
