@@ -20,56 +20,60 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [roleLoading, setRoleLoading] = useState(true);
 
   const fetchRole = async (userId: string) => {
-    setRoleLoading(true);
-    const { data } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .maybeSingle();
-    setUserRole(data ? String(data.role) : null);
-    setRoleLoading(false);
+    try {
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .maybeSingle();
+      setUserRole(data ? String(data.role) : null);
+    } catch {
+      setUserRole(null);
+    } finally {
+      setRoleLoading(false);
+    }
   };
 
   useEffect(() => {
+    // Safety timeouts
+    const loadingTimer = setTimeout(() => setLoading(false), 5000);
+    const roleTimer = setTimeout(() => setRoleLoading(false), 5000);
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      (_event, session) => {
         setSession(session);
+        setLoading(false);
         if (session?.user) {
-          await fetchRole(session.user.id);
+          fetchRole(session.user.id);
         } else {
           setUserRole(null);
           setRoleLoading(false);
         }
-        setLoading(false);
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session?.user) {
-        fetchRole(session.user.id);
-      } else {
-        setUserRole(null);
-        setRoleLoading(false);
-      }
-    }).finally(() => setLoading(false));
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  // Safety timeout — אם אחרי 5 שניות עדיין loading, כבה אותו
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 5000);
-    return () => clearTimeout(timer);
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(loadingTimer);
+      clearTimeout(roleTimer);
+    };
   }, []);
 
   const signOut = async () => {
     await supabase.auth.signOut();
     setUserRole(null);
+    setRoleLoading(false);
   };
 
   return (
-    <AuthContext.Provider value={{ session, user: session?.user ?? null, loading, roleLoading, userRole, signOut }}>
+    <AuthContext.Provider value={{
+      session,
+      user: session?.user ?? null,
+      loading,
+      roleLoading,
+      userRole,
+      signOut
+    }}>
       {children}
     </AuthContext.Provider>
   );
