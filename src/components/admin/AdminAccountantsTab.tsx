@@ -176,7 +176,7 @@ export default function AdminAccountantsTab() {
                           saveMutation.mutate(payload);
                         }}
                         className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors duration-200 ${
-                          a.is_active ? 'bg-[#e8941a]' : 'bg-gray-300'
+                          a.is_active ? 'bg-[#1f3c61]' : 'bg-gray-300'
                         }`}
                       >
                         <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${
