@@ -394,7 +394,28 @@ export default function InvoicesTab({ clientId }: Props) {
         </div>
       )}
 
-      {/* ── Edit Modal ── */}
+      {/* ── Edit Picker Modal ── */}
+      <Dialog open={!!editPickerModal} onOpenChange={open => !open && setEditPickerModal(null)}>
+        <DialogContent className="max-w-[360px] rounded-2xl p-8" dir="rtl">
+          <DialogHeader><DialogTitle className="text-lg font-bold" style={{ color: "#1e3a5f" }}>עריכה — {editPickerModal?.vendor || ""}</DialogTitle></DialogHeader>
+          <p className="mt-2 text-[13px] text-gray-500">מה ברצונך לעדכן?</p>
+          <div className="mt-4 flex flex-col gap-2">
+            <button
+              onClick={() => { const inv = editPickerModal!; setEditPickerModal(null); setEditModal(inv); setEditCatValue(inv.category || ALL_CATEGORIES[0]); }}
+              className="rounded-lg px-4 py-2.5 text-[13px] font-medium text-white transition-colors hover:opacity-90"
+              style={{ backgroundColor: "#1e3a5f" }}
+            >עדכון קטגוריה</button>
+            <button
+              onClick={() => { const inv = editPickerModal!; setEditPickerModal(null); setEditVendorModal(inv); setEditVendorValue(inv.vendor || ""); }}
+              className="rounded-lg px-4 py-2.5 text-[13px] font-medium text-white transition-colors hover:opacity-90"
+              style={{ backgroundColor: "#e8941a" }}
+            >עדכון שם עסק</button>
+            <button onClick={() => setEditPickerModal(null)} className="rounded-lg border border-[#e2e8f0] bg-white px-4 py-2 text-[13px] font-medium text-gray-500 hover:bg-gray-50 transition-colors">ביטול</button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Edit Category Modal ── */}
       <Dialog open={!!editModal} onOpenChange={open => !open && setEditModal(null)}>
         <DialogContent className="max-w-[400px] rounded-2xl p-8" dir="rtl">
           <DialogHeader><DialogTitle className="text-lg font-bold" style={{ color: "#1e3a5f" }}>עריכת קטגוריה — {editModal?.vendor || ""}</DialogTitle></DialogHeader>
@@ -404,6 +425,24 @@ export default function InvoicesTab({ clientId }: Props) {
           <div className="mt-6 flex justify-end gap-2">
             <button onClick={() => setEditModal(null)} className="rounded-lg border border-[#e2e8f0] bg-white px-4 py-2 text-[13px] font-medium hover:bg-gray-50 transition-colors">ביטול</button>
             <button onClick={updateCategory} className="rounded-lg px-4 py-2 text-[13px] font-medium text-white transition-colors" style={{ backgroundColor: "#1e3a5f" }}>שמור</button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Edit Vendor Modal ── */}
+      <Dialog open={!!editVendorModal} onOpenChange={open => !open && setEditVendorModal(null)}>
+        <DialogContent className="max-w-[400px] rounded-2xl p-8" dir="rtl">
+          <DialogHeader><DialogTitle className="text-lg font-bold" style={{ color: "#1e3a5f" }}>עריכת שם עסק — {editVendorModal?.vendor || ""}</DialogTitle></DialogHeader>
+          <input
+            value={editVendorValue}
+            onChange={e => setEditVendorValue(e.target.value)}
+            className="mt-4 w-full rounded-lg border border-[#e2e8f0] bg-white px-3 py-2 text-[14px] outline-none focus:ring-1 focus:ring-primary"
+            style={{ direction: "ltr" }}
+            placeholder="שם עסק חדש"
+          />
+          <div className="mt-6 flex justify-end gap-2">
+            <button onClick={() => setEditVendorModal(null)} className="rounded-lg border border-[#e2e8f0] bg-white px-4 py-2 text-[13px] font-medium hover:bg-gray-50 transition-colors">ביטול</button>
+            <button onClick={updateVendor} disabled={!editVendorValue.trim()} className="rounded-lg px-4 py-2 text-[13px] font-medium text-white transition-colors disabled:opacity-50" style={{ backgroundColor: "#1e3a5f" }}>שמור</button>
           </div>
         </DialogContent>
       </Dialog>
