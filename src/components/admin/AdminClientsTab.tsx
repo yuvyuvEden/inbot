@@ -177,7 +177,7 @@ export default function AdminClientsTab() {
                 </tr>
               ))
             ) : filtered.length === 0 ? (
-              <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">לא נמצאו לקוחות</td></tr>
+              <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">לא נמצאו לקוחות</td></tr>
             ) : (
               filtered.map((c) => (
                 <tr key={c.id} className="border-b border-border transition-colors hover:bg-secondary/50">
@@ -189,24 +189,18 @@ export default function AdminClientsTab() {
                     </span>
                   </td>
                   <td className="p-3">{c.has_accountant ? "✓" : "—"}</td>
-                  <td className="p-3">
-                    <Toggle
-                      checked={c.is_active}
-                      onChange={() => toggleActive.mutate({ id: c.id, is_active: !c.is_active })}
-                    />
-                  </td>
                   <td className="p-3 space-x-2 space-x-reverse">
-                    <button
-                      onClick={() => {
+                    <RowMenu
+                      client={c}
+                      onEdit={() => {
                         setEditClient(c);
                         setDrawerAccountant(c.accountant_id || "");
                         const found = (accountants || []).find(a => a.id === c.accountant_id);
                         setDrawerAccountantName(found?.name || "ללא");
                       }}
-                      className="rounded bg-primary px-3 py-1 text-xs text-primary-foreground hover:bg-primary/90"
-                    >
-                      ערוך
-                    </button>
+                      onDelete={() => deleteMutation.mutate(c.id)}
+                      onToggleActive={() => toggleActive.mutate({ id: c.id, is_active: !c.is_active })}
+                    />
                   </td>
                 </tr>
               ))
