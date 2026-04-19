@@ -412,7 +412,7 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
                       <td className="px-3 py-3"><span className="inline-block max-w-full truncate rounded-full px-2.5 py-0.5 text-[11px] font-medium" style={{ backgroundColor: cc.bg, color: cc.text }}>{inv.category || "—"}</span></td>
                       <td className="px-3 py-3 text-[12px] truncate">{inv.document_type || "—"}</td>
                       {hasAccountant && <td className="px-3 py-3"><span className="inline-block rounded-full px-2.5 py-0.5 text-[11px] font-medium" style={{ backgroundColor: st.bg, color: st.text }}>{st.label}</span></td>}
-                      <td className="px-3 py-3">{renderActions(inv)}</td>
+                      <td className="px-3 py-3">{renderActions(inv, showAccountantActions)}</td>
                     </tr>
                   );
                 })}
