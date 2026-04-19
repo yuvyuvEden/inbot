@@ -298,3 +298,122 @@ export default function AdminClientsTab() {
     </div>
   );
 }
+
+function RowMenu({
+  client,
+  onEdit,
+  onDelete,
+  onToggleActive,
+}: {
+  client: ClientRow;
+  onEdit: () => void;
+  onDelete: () => void;
+  onToggleActive: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (
+        menuRef.current && !menuRef.current.contains(e.target as Node) &&
+        btnRef.current && !btnRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const handleOpen = () => {
+    if (btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      setMenuPos({
+        top: rect.bottom + window.scrollY + 4,
+        left: rect.left + window.scrollX,
+      });
+    }
+    setOpen((p) => !p);
+  };
+
+  const menu = open
+    ? ReactDOM.createPortal(
+        <div
+          ref={menuRef}
+          style={{
+            position: "absolute",
+            top: menuPos.top,
+            left: menuPos.left,
+            zIndex: 9999,
+            minWidth: "160px",
+            background: "#ffffff",
+            border: "1px solid #e2e8f0",
+            borderRadius: "8px",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+            overflow: "hidden",
+          }}
+        >
+          <button
+            onClick={() => { onEdit(); setOpen(false); }}
+            style={{
+              display: "block", width: "100%", textAlign: "right",
+              padding: "8px 14px", fontSize: "13px", background: "none",
+              border: "none", cursor: "pointer", color: "#1a202c",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#f0f4f8")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+          >
+            ✏️ ערוך פרטים
+          </button>
+          <button
+            onClick={() => { onToggleActive(); setOpen(false); }}
+            style={{
+              display: "block", width: "100%", textAlign: "right",
+              padding: "8px 14px", fontSize: "13px", background: "none",
+              border: "none", cursor: "pointer", color: "#1a202c",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#f0f4f8")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+          >
+            {client.is_active ? "⏸️ השעה" : "▶️ הפעל"}
+          </button>
+          <div style={{ borderTop: "1px solid #e2e8f0", margin: "4px 0" }} />
+          <button
+            onClick={() => {
+              setOpen(false);
+              if (window.confirm(`למחוק את ${client.brand_name}? פעולה זו אינה ניתנת לביטול.`)) {
+                onDelete();
+              }
+            }}
+            style={{
+              display: "block", width: "100%", textAlign: "right",
+              padding: "8px 14px", fontSize: "13px", background: "none",
+              border: "none", cursor: "pointer", color: "#dc2626",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#fef2f2")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+          >
+            🗑️ מחק לקוח
+          </button>
+        </div>,
+        document.body
+      )
+    : null;
+
+  return (
+    <>
+      <button
+        ref={btnRef}
+        onClick={handleOpen}
+        className="rounded bg-secondary px-3 py-1 text-xs font-medium text-foreground hover:bg-secondary/80"
+      >
+        פעולות ▾
+      </button>
+      {menu}
+    </>
+  );
+}
+
