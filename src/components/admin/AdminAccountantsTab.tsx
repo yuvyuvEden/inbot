@@ -85,8 +85,27 @@ export default function AdminAccountantsTab() {
         is_active: a.is_active,
       };
       if (isNew) {
-        const { error } = await supabase.from("accountants").insert(payload);
-        if (error) throw error;
+        const { data: { session } } = await supabase.auth.getSession();
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-create-accountant`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${session?.access_token}`,
+            },
+            body: JSON.stringify({
+              name: a.name,
+              email: a.email,
+              phone: a.phone,
+              plan_type: a.plan_type,
+              price_per_client: a.price_per_client,
+              monthly_fee: a.monthly_fee,
+            }),
+          }
+        );
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "שגיאה ביצירת רו\"ח");
       } else {
         const { error } = await supabase.from("accountants").update(payload).eq("id", a.id);
         if (error) throw error;
