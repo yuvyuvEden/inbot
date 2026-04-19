@@ -235,7 +235,7 @@ export default function AdminAccountantsTab() {
       setEditAcc(null);
       setIsNew(false);
     },
-    onError: () => toast.error("שגיאה בשמירה"),
+    onError: (err: Error) => toast.error(err?.message || "שגיאה בשמירה"),
   });
 
   const deleteMutation = useMutation({
