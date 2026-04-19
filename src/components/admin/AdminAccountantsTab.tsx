@@ -119,6 +119,18 @@ export default function AdminAccountantsTab() {
     onError: () => toast.error("שגיאה בשמירה"),
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("accountants").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-accountants"] });
+      toast.success("רו\"ח נמחק בהצלחה");
+    },
+    onError: () => toast.error("שגיאה במחיקה"),
+  });
+
   const filtered = (accountants || []).filter((a) =>
     a.name.toLowerCase().includes(search.toLowerCase()) || a.email.toLowerCase().includes(search.toLowerCase())
   );
