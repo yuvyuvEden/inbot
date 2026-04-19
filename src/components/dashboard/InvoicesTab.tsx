@@ -188,6 +188,47 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
     if (error) toast.error("שגיאה במחיקת חשבונית"); else { toast.success("החשבונית נמחקה"); queryClient.invalidateQueries({ queryKey: ["all-invoices"] }); }
     setDeleteModal(null);
   };
+
+  const archiveInvoice = async () => {
+    if (!archiveModal) return;
+    const { error } = await supabase.from("invoices").update({ is_archived: true }).eq("id", archiveModal.id);
+    if (error) toast.error("שגיאה בארכוב חשבונית");
+    else { toast.success("החשבונית הועברה לארכיון"); queryClient.invalidateQueries({ queryKey: ["all-invoices"] }); }
+    setArchiveModal(null);
+  };
+
+  const approveInvoice = async () => {
+    if (!approveModal) return;
+    const { error } = await supabase.from("invoices").update({ status: "approved" }).eq("id", approveModal.id);
+    if (error) toast.error("שגיאה באישור חשבונית");
+    else { toast.success("החשבונית אושרה"); queryClient.invalidateQueries({ queryKey: ["all-invoices"] }); }
+    setApproveModal(null);
+  };
+
+  const requestClarification = async () => {
+    if (!clarifyModal || !clarifyText.trim()) return;
+    const { error: statusErr } = await supabase
+      .from("invoices")
+      .update({ status: "needs_clarification" })
+      .eq("id", clarifyModal.id);
+    if (statusErr) { toast.error("שגיאה בעדכון סטטוס"); return; }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase.from("invoice_comments").insert({
+        invoice_id: clarifyModal.id,
+        author_id: user.id,
+        author_role: "accountant",
+        body: clarifyText.trim(),
+      });
+    }
+
+    toast.success("בקשת הבהרה נשלחה");
+    queryClient.invalidateQueries({ queryKey: ["all-invoices"] });
+    setClarifyModal(null);
+    setClarifyText("");
+  };
+
   const exportCSV = () => {
     if (!filtered.length) return;
     const headers = ["תאריך","ספק","מספר חשבונית","סכום","מע״מ בפועל","מע״מ מוכר","קטגוריה","סוג","סטטוס"];
