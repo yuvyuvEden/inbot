@@ -196,6 +196,7 @@ export default function AdminAccountantsTab() {
   const [search, setSearch] = useState("");
   const [editAcc, setEditAcc] = useState<AccountantRow | null>(null);
   const [isNew, setIsNew] = useState(false);
+  const { impersonate, loading: impersonateLoading } = useImpersonate();
 
   const { data: accountants, isLoading } = useQuery({
     queryKey: ["admin-accountants"],
@@ -365,6 +366,8 @@ export default function AdminAccountantsTab() {
                           const payload = { ...a, is_active: !a.is_active };
                           saveMutation.mutate(payload);
                         }}
+                        onImpersonate={() => impersonate(a.user_id, a.name ?? a.email, "/accountant")}
+                        impersonateLoading={impersonateLoading === a.user_id}
                       />
                     </td>
                   </tr>
