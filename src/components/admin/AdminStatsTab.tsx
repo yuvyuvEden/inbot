@@ -21,7 +21,7 @@ export default function AdminStatsTab() {
       const [clientsRes, accountantsRes, acRes, invoicesRes] = await Promise.all([
         supabase.from("clients").select("id, brand_name, is_active, plan_expires_at"),
         supabase.from("accountants").select("id, name, is_active, plan_expires_at, price_per_client"),
-        supabase.from("accountant_clients").select("accountant_id"),
+        supabase.from("accountant_clients").select("accountant_id").is("unassigned_at", null),
         supabase.from("invoices").select("id, total, status, invoice_date"),
       ]);
       const invoices = invoicesRes.data || [];
@@ -72,6 +72,17 @@ export default function AdminStatsTab() {
         (inv) => inv.status === "pending_review"
       ).length;
 
+      const top5 = accountants
+        .filter((a) => a.is_active)
+        .map((a) => ({
+          id: a.id,
+          name: a.name,
+          clientCount: acCountMap.get(a.id) || 0,
+          monthlyRevenue: (a.price_per_client || 0) * (acCountMap.get(a.id) || 0),
+        }))
+        .sort((a, b) => b.clientCount - a.clientCount)
+        .slice(0, 5);
+
       return {
         activeClients,
         activeAccountants,
@@ -81,6 +92,7 @@ export default function AdminStatsTab() {
         totalExpensesThisMonth,
         pendingClarification,
         pendingReview,
+        top5,
       };
     },
   });
@@ -144,6 +156,64 @@ export default function AdminStatsTab() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {stats.top5.length > 0 && (
+        <div className="rounded-lg border border-border bg-card shadow-card overflow-hidden">
+          <div
+            style={{
+              padding: "14px 20px",
+              borderBottom: "1px solid #e2e8f0",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              fontSize: "14px",
+              fontWeight: 700,
+              color: "#1e3a5f",
+            }}
+          >
+            🏆 Top 5 רואי חשבון
+          </div>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-secondary text-right text-xs font-semibold text-muted-foreground border-b border-border">
+                <th className="p-3">דירוג</th>
+                <th className="p-3">שם</th>
+                <th className="p-3">לקוחות פעילים</th>
+                <th className="p-3">הכנסה חודשית</th>
+              </tr>
+            </thead>
+            <tbody>
+              {stats.top5.map((a, i) => (
+                <tr key={a.id} className="border-b border-border hover:bg-secondary/50 transition-colors">
+                  <td className="p-3">
+                    <span style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: "24px",
+                      height: "24px",
+                      borderRadius: "9999px",
+                      fontSize: "12px",
+                      fontWeight: 700,
+                      background: i === 0 ? "#fef3e2" : i === 1 ? "#f0f4f8" : "#f8fafc",
+                      color: i === 0 ? "#e8941a" : "#64748b",
+                    }}>
+                      {i + 1}
+                    </span>
+                  </td>
+                  <td className="p-3 font-medium">{a.name}</td>
+                  <td className="p-3">{a.clientCount}</td>
+                  <td className="p-3">
+                    {a.monthlyRevenue > 0
+                      ? `₪${a.monthlyRevenue.toLocaleString("he-IL")}`
+                      : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
