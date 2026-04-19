@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
     }
 
     // קבל את ה-user_id שרוצים להתחזות אליו
-    const { target_user_id } = await req.json();
+    const { target_user_id, redirect_path = "/" } = await req.json();
     if (!target_user_id) {
       return new Response(JSON.stringify({ error: "Missing target_user_id" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
       type: "magiclink",
       email: targetUser.user.email,
       options: {
-        redirectTo: `${Deno.env.get("SITE_URL") ?? "https://app.inbot.app"}/`,
+        redirectTo: `${Deno.env.get("SITE_URL") ?? "https://app.inbot.app"}${redirect_path}`,
       },
     });
 
