@@ -14,6 +14,8 @@ import InvoicesTab from "@/components/dashboard/InvoicesTab";
 import ExportTab from "@/components/tabs/ExportTab";
 import AiChatTab from "@/components/tabs/AiChatTab";
 import SettingsTab from "@/components/tabs/SettingsTab";
+import { AccountantTab } from "@/components/tabs/AccountantTab";
+import { ArchiveTab } from "@/components/tabs/ArchiveTab";
 import {
   BarChart2, FileText, MessageSquare, Archive, Download, Bot, Settings, LogOut,
 } from "lucide-react";

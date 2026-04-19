@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import AccountantDashboard from "./pages/AccountantDashboard";
+import AccountantClientView from "./pages/AccountantClientView";
 import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
@@ -63,6 +64,7 @@ const App = () => (
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/admin" element={<RoleRoute role="admin"><AdminDashboard /></RoleRoute>} />
             <Route path="/accountant" element={<RoleRoute role="accountant"><AccountantDashboard /></RoleRoute>} />
+            <Route path="/accountant/client/:clientId" element={<RoleRoute role="accountant"><AccountantClientView /></RoleRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
