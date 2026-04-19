@@ -104,12 +104,15 @@ Deno.serve(async (req) => {
     }
 
     const { error: resetError } = await supabaseAdmin.auth.admin.generateLink({
-      type: "recovery",
+      type: "invite",
       email,
+      options: {
+        redirectTo: `${Deno.env.get("SUPABASE_URL")?.replace(".supabase.co", "")}/accountant`,
+      },
     });
 
     if (resetError) {
-      console.error("Failed to send reset email:", resetError.message);
+      console.error("Failed to send invite email:", resetError.message);
     }
 
     return new Response(
