@@ -56,7 +56,32 @@ export default function AdminStatsTab() {
         }
       });
 
-      return { activeClients, activeAccountants, estimatedRevenue, expired };
+      const invoicesThisMonth = invoices.filter(
+        (inv) => inv.invoice_date && inv.invoice_date >= startOfMonthISO
+      ).length;
+
+      const totalExpensesThisMonth = invoices
+        .filter((inv) => inv.invoice_date && inv.invoice_date >= startOfMonthISO)
+        .reduce((sum, inv) => sum + (inv.total || 0), 0);
+
+      const pendingClarification = invoices.filter(
+        (inv) => inv.status === "needs_clarification"
+      ).length;
+
+      const pendingReview = invoices.filter(
+        (inv) => inv.status === "pending_review"
+      ).length;
+
+      return {
+        activeClients,
+        activeAccountants,
+        estimatedRevenue,
+        expired,
+        invoicesThisMonth,
+        totalExpensesThisMonth,
+        pendingClarification,
+        pendingReview,
+      };
     },
   });
 
