@@ -242,8 +242,29 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
   const sel = "h-[36px] shrink-0 rounded-md border border-[#e2e8f0] bg-white px-2 text-[13px] outline-none focus:ring-1 focus:ring-primary";
   const dateCls = "h-[36px] w-[130px] shrink-0 rounded-md border border-[#e2e8f0] bg-white px-2 text-[13px] outline-none focus:ring-1 focus:ring-primary cursor-pointer";
 
-  const renderActions = (inv: Invoice) => (
+  const renderActions = (inv: Invoice, isAccountantView = false) => (
     <div className="flex items-center justify-center gap-1">
+      {isAccountantView && inv.status !== "approved" && (
+        <button onClick={() => setApproveModal(inv)} title="אשר"
+          style={{ color: '#16a34a', background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '6px' }}
+          onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#dcfce7')}
+          onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+        ><CheckCircle size={16} /></button>
+      )}
+      {isAccountantView && inv.status !== "needs_clarification" && (
+        <button onClick={() => { setClarifyModal(inv); setClarifyText(""); }} title="בקש הבהרה"
+          style={{ color: '#e8941a', background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '6px' }}
+          onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#fef3c7')}
+          onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+        ><MessageSquare size={16} /></button>
+      )}
+      {isAccountantView && (
+        <button onClick={() => setArchiveModal(inv)} title="ארכב"
+          style={{ color: '#64748b', background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '6px' }}
+          onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#f1f5f9')}
+          onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+        ><Archive size={16} /></button>
+      )}
       {inv.drive_file_url ? (
         <a href={inv.drive_file_url} target="_blank" rel="noopener noreferrer"
           style={{ color: '#dc2626', background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '6px' }}
