@@ -80,7 +80,6 @@ export default function AdminAccountantsTab() {
         plan_type: a.plan_type,
         plan_expires_at: a.plan_expires_at,
         price_per_client: a.price_per_client,
-        monthly_fee: a.monthly_fee,
         auto_renew: a.auto_renew,
         is_active: a.is_active,
       };
@@ -222,19 +221,23 @@ export default function AdminAccountantsTab() {
           {editAcc && (
             <div className="mt-6 space-y-4">
               <label className="block space-y-1">
-                <span className="text-sm font-medium">שם</span>
+                <span className="text-sm font-medium">
+                  שם <span style={{ color: '#dc2626' }}>*</span>
+                </span>
                 <Input value={editAcc.name} onChange={(e) => setEditAcc({ ...editAcc, name: e.target.value })} />
               </label>
               <label className="block space-y-1">
-                <span className="text-sm font-medium">מייל</span>
+                <span className="text-sm font-medium">
+                  מייל <span style={{ color: '#dc2626' }}>*</span>
+                </span>
                 <Input dir="ltr" type="email" value={editAcc.email} onChange={(e) => setEditAcc({ ...editAcc, email: e.target.value })} />
               </label>
               <label className="block space-y-1">
-                <span className="text-sm font-medium">טלפון</span>
+                <span className="text-sm font-medium">טלפון <span style={{ color: '#94a3b8', fontSize: '11px' }}>(אופציונלי)</span></span>
                 <Input dir="ltr" value={editAcc.phone || ""} onChange={(e) => setEditAcc({ ...editAcc, phone: e.target.value || null })} />
               </label>
               <label className="block space-y-1">
-                <span className="text-sm font-medium">סוג מנוי</span>
+                <span className="text-sm font-medium">סוג מנוי <span style={{ color: '#94a3b8', fontSize: '11px' }}>(אופציונלי)</span></span>
                 <Select value={editAcc.plan_type || "accountant_monthly"} onValueChange={(v) => setEditAcc({ ...editAcc, plan_type: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -244,16 +247,12 @@ export default function AdminAccountantsTab() {
                 </Select>
               </label>
               <label className="block space-y-1">
-                <span className="text-sm font-medium">תפוגה</span>
+                <span className="text-sm font-medium">תפוגה <span style={{ color: '#94a3b8', fontSize: '11px' }}>(אופציונלי)</span></span>
                 <Input type="date" value={editAcc.plan_expires_at?.slice(0, 10) || ""} onChange={(e) => setEditAcc({ ...editAcc, plan_expires_at: e.target.value || null })} />
               </label>
               <label className="block space-y-1">
-                <span className="text-sm font-medium">מחיר ללקוח</span>
+                <span className="text-sm font-medium">מחיר ללקוח ₪ <span style={{ color: '#94a3b8', fontSize: '11px' }}>(אופציונלי)</span></span>
                 <Input dir="ltr" type="number" value={editAcc.price_per_client ?? 0} onChange={(e) => setEditAcc({ ...editAcc, price_per_client: Number(e.target.value) })} />
-              </label>
-              <label className="block space-y-1">
-                <span className="text-sm font-medium">תשלום חודשי</span>
-                <Input dir="ltr" type="number" value={editAcc.monthly_fee ?? 0} onChange={(e) => setEditAcc({ ...editAcc, monthly_fee: Number(e.target.value) })} />
               </label>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">חידוש אוטומטי</span>
@@ -271,7 +270,17 @@ export default function AdminAccountantsTab() {
               </div>
 
               <button
-                onClick={() => saveMutation.mutate(editAcc)}
+                onClick={() => {
+                  if (!editAcc.name.trim()) {
+                    toast.error("שם הוא שדה חובה");
+                    return;
+                  }
+                  if (!editAcc.email.trim()) {
+                    toast.error("מייל הוא שדה חובה");
+                    return;
+                  }
+                  saveMutation.mutate(editAcc);
+                }}
                 disabled={saveMutation.isPending}
                 className="w-full rounded-lg bg-primary py-2 text-sm font-bold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
               >
