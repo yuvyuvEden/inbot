@@ -99,6 +99,7 @@ export default function AdminClientsTab() {
           plan_expires_at: c.plan_expires_at,
           is_active: c.is_active,
           telegram_chat_id: c.telegram_chat_id,
+          gemini_api_key: c.gemini_api_key || null,
         })
         .eq("id", c.id);
       if (error) throw error;
