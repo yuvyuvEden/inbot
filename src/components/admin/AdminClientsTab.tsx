@@ -45,6 +45,8 @@ export default function AdminClientsTab() {
   const [editClient, setEditClient] = useState<ClientRow | null>(null);
   const [drawerAccountant, setDrawerAccountant] = useState<string>("");
   const [drawerAccountantName, setDrawerAccountantName] = useState("");
+  const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
+  const [editingAccountantId, setEditingAccountantId] = useState<string | null>(null);
 
   const { data: clients, isLoading } = useQuery({
     queryKey: ["admin-clients"],
@@ -143,6 +145,44 @@ export default function AdminClientsTab() {
       toast.success("לקוח נמחק בהצלחה");
     },
     onError: (err: Error) => toast.error(err.message || "שגיאה במחיקה"),
+  });
+
+  const updatePlan = useMutation({
+    mutationFn: async ({ id, plan_type }: { id: string; plan_type: string }) => {
+      const { error } = await supabase.from("clients").update({ plan_type }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-clients"] });
+      toast.success("מנוי עודכן");
+      setEditingPlanId(null);
+    },
+    onError: () => toast.error("שגיאה בעדכון מנוי"),
+  });
+
+  const updateAccountant = useMutation({
+    mutationFn: async ({ clientId, accountantId }: { clientId: string; accountantId: string }) => {
+      // סימון שיוך קיים כלא פעיל
+      await supabase
+        .from("accountant_clients")
+        .update({ unassigned_at: new Date().toISOString() })
+        .eq("client_id", clientId)
+        .is("unassigned_at", null);
+
+      // שיוך חדש
+      if (accountantId !== "__none__") {
+        const { error } = await supabase
+          .from("accountant_clients")
+          .insert({ client_id: clientId, accountant_id: accountantId });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-clients"] });
+      toast.success("רו\"ח עודכן");
+      setEditingAccountantId(null);
+    },
+    onError: () => toast.error("שגיאה בעדכון רו\"ח"),
   });
 
   const allFiltered = (clients || []).filter((c) =>
