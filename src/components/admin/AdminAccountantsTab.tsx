@@ -45,6 +45,101 @@ const emptyAccountant: Omit<AccountantRow, "active_clients_count"> = {
   is_active: true,
 };
 
+function RowMenu({
+  accountant,
+  onEdit,
+  onDelete,
+  onToggleActive,
+}: {
+  accountant: AccountantRow;
+  onEdit: () => void;
+  onDelete: () => void;
+  onToggleActive: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
+      <button
+        onClick={() => setOpen((p) => !p)}
+        className="rounded bg-secondary px-3 py-1 text-xs font-medium text-foreground hover:bg-secondary/80"
+      >
+        פעולות ▾
+      </button>
+      {open && (
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            top: "110%",
+            zIndex: 50,
+            minWidth: "160px",
+            background: "#ffffff",
+            border: "1px solid #e2e8f0",
+            borderRadius: "8px",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+            overflow: "hidden",
+          }}
+        >
+          <button
+            onClick={() => { onEdit(); setOpen(false); }}
+            style={{
+              display: "block", width: "100%", textAlign: "right",
+              padding: "8px 14px", fontSize: "13px", background: "none",
+              border: "none", cursor: "pointer", color: "#1a202c",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#f0f4f8")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+          >
+            ✏️ ערוך פרטים
+          </button>
+          <button
+            onClick={() => { onToggleActive(); setOpen(false); }}
+            style={{
+              display: "block", width: "100%", textAlign: "right",
+              padding: "8px 14px", fontSize: "13px", background: "none",
+              border: "none", cursor: "pointer", color: "#1a202c",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#f0f4f8")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+          >
+            {accountant.is_active ? "⏸️ השעה" : "▶️ הפעל"}
+          </button>
+          <div style={{ borderTop: "1px solid #e2e8f0", margin: "4px 0" }} />
+          <button
+            onClick={() => {
+              if (window.confirm(`למחוק את ${accountant.name}? פעולה זו אינה ניתנת לביטול.`)) {
+                onDelete();
+              }
+              setOpen(false);
+            }}
+            style={{
+              display: "block", width: "100%", textAlign: "right",
+              padding: "8px 14px", fontSize: "13px", background: "none",
+              border: "none", cursor: "pointer", color: "#dc2626",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#fef2f2")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+          >
+            🗑️ מחק רו"ח
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AdminAccountantsTab() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
