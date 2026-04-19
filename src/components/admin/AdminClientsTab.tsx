@@ -99,6 +99,7 @@ export default function AdminClientsTab() {
           plan_expires_at: c.plan_expires_at,
           is_active: c.is_active,
           telegram_chat_id: c.telegram_chat_id,
+          gemini_api_key: c.gemini_api_key || null,
         })
         .eq("id", c.id);
       if (error) throw error;
@@ -502,6 +503,19 @@ export default function AdminClientsTab() {
                   dir="ltr"
                   value={editClient.telegram_chat_id || ""}
                   onChange={(e) => setEditClient({ ...editClient, telegram_chat_id: e.target.value || null })}
+                />
+              </label>
+
+              <label className="block space-y-1">
+                <span className="text-sm font-medium">
+                  Gemini API Key
+                  <span style={{ color: '#94a3b8', fontSize: '11px', marginRight: '6px' }}>(נדרש לעיבוד חשבוניות)</span>
+                </span>
+                <Input
+                  dir="ltr"
+                  placeholder="AIza..."
+                  value={editClient.gemini_api_key || ""}
+                  onChange={(e) => setEditClient({ ...editClient, gemini_api_key: e.target.value || null })}
                 />
               </label>
 
