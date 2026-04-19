@@ -385,7 +385,7 @@ export default function AdminClientsTab() {
                           setEditClient(c);
                           setDrawerAccountant(c.accountant_id || "");
                           const found = (accountants || []).find(a => a.id === c.accountant_id);
-                          setDrawerAccountantName(found?.name || "ללא");
+                          setDrawerAccountantName(found?.name || "");
                         }}
                         onDelete={() => deleteMutation.mutate(c.id)}
                         onToggleActive={() => toggleActive.mutate({ id: c.id, is_active: !c.is_active })}
@@ -439,7 +439,7 @@ export default function AdminClientsTab() {
                             setEditClient(c);
                             setDrawerAccountant(c.accountant_id || "");
                             const found = (accountants || []).find(a => a.id === c.accountant_id);
-                            setDrawerAccountantName(found?.name || "ללא");
+                            setDrawerAccountantName(found?.name || "");
                           }}
                           onDelete={() => deleteMutation.mutate(c.id)}
                           onToggleActive={() => toggleActive.mutate({ id: c.id, is_active: !c.is_active })}
@@ -523,7 +523,7 @@ export default function AdminClientsTab() {
                 <span className="text-sm font-medium">רו"ח משויך</span>
                 <input
                   type="text"
-                  placeholder="חפש רו&quot;ח..."
+                  placeholder='ללא — התחל להקליד לחיפוש'
                   list="accountants-list"
                   value={drawerAccountantName}
                   onChange={(e) => {
