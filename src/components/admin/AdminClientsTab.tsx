@@ -164,7 +164,6 @@ export default function AdminClientsTab() {
               <th className="p-3">מנוי</th>
               <th className="p-3">תפוגה</th>
               <th className="p-3">רו"ח משויך</th>
-              <th className="p-3">פעיל</th>
               <th className="p-3">פעולות</th>
             </tr>
           </thead>
@@ -172,7 +171,7 @@ export default function AdminClientsTab() {
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <tr key={i} className="border-b border-border">
-                  {Array.from({ length: 6 }).map((_, j) => (
+                  {Array.from({ length: 5 }).map((_, j) => (
                     <td key={j} className="p-3"><Skeleton className="h-4 w-20" /></td>
                   ))}
                 </tr>
