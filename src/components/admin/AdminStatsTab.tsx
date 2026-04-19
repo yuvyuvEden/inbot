@@ -13,11 +13,18 @@ export default function AdminStatsTab() {
   const { data, isLoading } = useQuery({
     queryKey: ["admin-stats"],
     queryFn: async () => {
-      const [clientsRes, accountantsRes, acRes] = await Promise.all([
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+      const startOfMonthISO = startOfMonth.toISOString().slice(0, 10);
+
+      const [clientsRes, accountantsRes, acRes, invoicesRes] = await Promise.all([
         supabase.from("clients").select("id, brand_name, is_active, plan_expires_at"),
         supabase.from("accountants").select("id, name, is_active, plan_expires_at, price_per_client"),
         supabase.from("accountant_clients").select("accountant_id"),
+        supabase.from("invoices").select("id, total, status, invoice_date"),
       ]);
+      const invoices = invoicesRes.data || [];
 
       const clients = clientsRes.data || [];
       const accountants = accountantsRes.data || [];
