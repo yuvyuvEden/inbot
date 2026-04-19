@@ -8,6 +8,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Toggle } from "@/components/shared/Toggle";
+import { useImpersonate } from "@/hooks/useImpersonate";
+import { UserCheck } from "lucide-react";
 
 interface AccountantRow {
   id: string;
@@ -20,6 +22,7 @@ interface AccountantRow {
   monthly_fee: number | null;
   auto_renew: boolean | null;
   is_active: boolean | null;
+  user_id: string | null;
   active_clients_count: number;
 }
 
@@ -175,7 +178,7 @@ export default function AdminAccountantsTab() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("accountants")
-        .select("id, name, email, phone, plan_type, plan_expires_at, price_per_client, monthly_fee, auto_renew, is_active")
+        .select("id, name, email, phone, plan_type, plan_expires_at, price_per_client, monthly_fee, auto_renew, is_active, user_id")
         .order("created_at", { ascending: false });
       if (error) throw error;
 
