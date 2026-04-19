@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Search, ExternalLink, X, ChevronLeft, ChevronRight, FileText, Pencil, Trash2, Download, CalendarIcon } from "lucide-react";
+import { Search, ExternalLink, X, ChevronLeft, ChevronRight, FileText, Pencil, Trash2, Download, CalendarIcon, CheckCircle, MessageSquare, Archive } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -102,10 +102,10 @@ function getCatColor(cat: string | null) { return cat ? (CATEGORY_COLORS[cat] ||
 const PAGE_SIZE = 50;
 interface Invoice { id: string; invoice_date: string | null; vendor: string | null; invoice_number: string | null; total: number | null; vat_original: number | null; vat_deductible: number | null; category: string | null; document_type: string | null; status: string; drive_file_url: string | null; }
 
-interface Props { clientId?: string; hasAccountant?: boolean; }
+interface Props { clientId?: string; hasAccountant?: boolean; showAccountantActions?: boolean; }
 
 /* ─── Component ─── */
-export default function InvoicesTab({ clientId, hasAccountant = false }: Props) {
+export default function InvoicesTab({ clientId, hasAccountant = false, showAccountantActions = false }: Props) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -121,6 +121,10 @@ export default function InvoicesTab({ clientId, hasAccountant = false }: Props) 
   const [editVendorModal, setEditVendorModal] = useState<Invoice | null>(null);
   const [editVendorValue, setEditVendorValue] = useState("");
   const [deleteModal, setDeleteModal] = useState<Invoice | null>(null);
+  const [archiveModal, setArchiveModal] = useState<Invoice | null>(null);
+  const [approveModal, setApproveModal] = useState<Invoice | null>(null);
+  const [clarifyModal, setClarifyModal] = useState<Invoice | null>(null);
+  const [clarifyText, setClarifyText] = useState("");
 
   const { data: invoices, isLoading } = useQuery({
     queryKey: ["all-invoices", clientId],
@@ -184,6 +188,47 @@ export default function InvoicesTab({ clientId, hasAccountant = false }: Props) 
     if (error) toast.error("שגיאה במחיקת חשבונית"); else { toast.success("החשבונית נמחקה"); queryClient.invalidateQueries({ queryKey: ["all-invoices"] }); }
     setDeleteModal(null);
   };
+
+  const archiveInvoice = async () => {
+    if (!archiveModal) return;
+    const { error } = await supabase.from("invoices").update({ is_archived: true }).eq("id", archiveModal.id);
+    if (error) toast.error("שגיאה בארכוב חשבונית");
+    else { toast.success("החשבונית הועברה לארכיון"); queryClient.invalidateQueries({ queryKey: ["all-invoices"] }); }
+    setArchiveModal(null);
+  };
+
+  const approveInvoice = async () => {
+    if (!approveModal) return;
+    const { error } = await supabase.from("invoices").update({ status: "approved" }).eq("id", approveModal.id);
+    if (error) toast.error("שגיאה באישור חשבונית");
+    else { toast.success("החשבונית אושרה"); queryClient.invalidateQueries({ queryKey: ["all-invoices"] }); }
+    setApproveModal(null);
+  };
+
+  const requestClarification = async () => {
+    if (!clarifyModal || !clarifyText.trim()) return;
+    const { error: statusErr } = await supabase
+      .from("invoices")
+      .update({ status: "needs_clarification" })
+      .eq("id", clarifyModal.id);
+    if (statusErr) { toast.error("שגיאה בעדכון סטטוס"); return; }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase.from("invoice_comments").insert({
+        invoice_id: clarifyModal.id,
+        author_id: user.id,
+        author_role: "accountant",
+        body: clarifyText.trim(),
+      });
+    }
+
+    toast.success("בקשת הבהרה נשלחה");
+    queryClient.invalidateQueries({ queryKey: ["all-invoices"] });
+    setClarifyModal(null);
+    setClarifyText("");
+  };
+
   const exportCSV = () => {
     if (!filtered.length) return;
     const headers = ["תאריך","ספק","מספר חשבונית","סכום","מע״מ בפועל","מע״מ מוכר","קטגוריה","סוג","סטטוס"];
@@ -197,8 +242,29 @@ export default function InvoicesTab({ clientId, hasAccountant = false }: Props) 
   const sel = "h-[36px] shrink-0 rounded-md border border-[#e2e8f0] bg-white px-2 text-[13px] outline-none focus:ring-1 focus:ring-primary";
   const dateCls = "h-[36px] w-[130px] shrink-0 rounded-md border border-[#e2e8f0] bg-white px-2 text-[13px] outline-none focus:ring-1 focus:ring-primary cursor-pointer";
 
-  const renderActions = (inv: Invoice) => (
+  const renderActions = (inv: Invoice, isAccountantView = false) => (
     <div className="flex items-center justify-center gap-1">
+      {isAccountantView && inv.status !== "approved" && (
+        <button onClick={() => setApproveModal(inv)} title="אשר"
+          style={{ color: '#16a34a', background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '6px' }}
+          onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#dcfce7')}
+          onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+        ><CheckCircle size={16} /></button>
+      )}
+      {isAccountantView && inv.status !== "needs_clarification" && (
+        <button onClick={() => { setClarifyModal(inv); setClarifyText(""); }} title="בקש הבהרה"
+          style={{ color: '#e8941a', background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '6px' }}
+          onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#fef3c7')}
+          onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+        ><MessageSquare size={16} /></button>
+      )}
+      {isAccountantView && (
+        <button onClick={() => setArchiveModal(inv)} title="ארכב"
+          style={{ color: '#64748b', background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '6px' }}
+          onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#f1f5f9')}
+          onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+        ><Archive size={16} /></button>
+      )}
       {inv.drive_file_url ? (
         <a href={inv.drive_file_url} target="_blank" rel="noopener noreferrer"
           style={{ color: '#dc2626', background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '6px' }}
@@ -346,7 +412,7 @@ export default function InvoicesTab({ clientId, hasAccountant = false }: Props) 
                       <td className="px-3 py-3"><span className="inline-block max-w-full truncate rounded-full px-2.5 py-0.5 text-[11px] font-medium" style={{ backgroundColor: cc.bg, color: cc.text }}>{inv.category || "—"}</span></td>
                       <td className="px-3 py-3 text-[12px] truncate">{inv.document_type || "—"}</td>
                       {hasAccountant && <td className="px-3 py-3"><span className="inline-block rounded-full px-2.5 py-0.5 text-[11px] font-medium" style={{ backgroundColor: st.bg, color: st.text }}>{st.label}</span></td>}
-                      <td className="px-3 py-3">{renderActions(inv)}</td>
+                      <td className="px-3 py-3">{renderActions(inv, showAccountantActions)}</td>
                     </tr>
                   );
                 })}
@@ -373,7 +439,7 @@ export default function InvoicesTab({ clientId, hasAccountant = false }: Props) 
                     <span className="text-[12px] text-gray-400">{inv.document_type || "—"}</span>
                     {hasAccountant && <span className="rounded-full px-2.5 py-0.5 text-[11px] font-medium" style={{ backgroundColor: st.bg, color: st.text }}>{st.label}</span>}
                   </div>
-                  <div className="mt-3 pt-3 border-t border-[#e2e8f0]">{renderActions(inv)}</div>
+                  <div className="mt-3 pt-3 border-t border-[#e2e8f0]">{renderActions(inv, showAccountantActions)}</div>
                 </div>
               );
             })}
@@ -456,6 +522,58 @@ export default function InvoicesTab({ clientId, hasAccountant = false }: Props) 
           <div className="mt-6 flex justify-end gap-2">
             <button onClick={() => setDeleteModal(null)} className="rounded-lg border border-[#e2e8f0] bg-white px-4 py-2 text-[13px] font-medium hover:bg-gray-50 transition-colors">ביטול</button>
             <button onClick={deleteInvoice} className="rounded-lg px-4 py-2 text-[13px] font-medium text-white transition-colors" style={{ backgroundColor: "#dc2626" }}>מחק</button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Archive Modal ── */}
+      <Dialog open={!!archiveModal} onOpenChange={open => !open && setArchiveModal(null)}>
+        <DialogContent className="max-w-[400px] rounded-2xl p-8" dir="rtl">
+          <DialogHeader><DialogTitle className="text-lg font-bold" style={{ color: "#1e3a5f" }}>העברה לארכיון</DialogTitle></DialogHeader>
+          <p className="mt-4 text-[14px] text-gray-500 leading-relaxed">להעביר את חשבונית <strong className="text-[#1a202c]">{archiveModal?.vendor}</strong> לארכיון?</p>
+          <div className="mt-6 flex justify-end gap-2">
+            <button onClick={() => setArchiveModal(null)} className="rounded-lg border border-[#e2e8f0] bg-white px-4 py-2 text-[13px] font-medium hover:bg-gray-50 transition-colors">ביטול</button>
+            <button onClick={archiveInvoice} className="rounded-lg px-4 py-2 text-[13px] font-medium text-white transition-colors" style={{ backgroundColor: "#64748b" }}>העבר לארכיון</button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Approve Modal ── */}
+      <Dialog open={!!approveModal} onOpenChange={open => !open && setApproveModal(null)}>
+        <DialogContent className="max-w-[400px] rounded-2xl p-8" dir="rtl">
+          <DialogHeader><DialogTitle className="text-lg font-bold" style={{ color: "#1e3a5f" }}>אישור חשבונית</DialogTitle></DialogHeader>
+          <p className="mt-4 text-[14px] text-gray-500 leading-relaxed">לאשר את חשבונית <strong className="text-[#1a202c]">{approveModal?.vendor}</strong>?</p>
+          <div className="mt-6 flex justify-end gap-2">
+            <button onClick={() => setApproveModal(null)} className="rounded-lg border border-[#e2e8f0] bg-white px-4 py-2 text-[13px] font-medium hover:bg-gray-50 transition-colors">ביטול</button>
+            <button onClick={approveInvoice} className="rounded-lg px-4 py-2 text-[13px] font-medium text-white transition-colors" style={{ backgroundColor: "#16a34a" }}>אשר חשבונית</button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Clarify Modal ── */}
+      <Dialog open={!!clarifyModal} onOpenChange={open => { if (!open) { setClarifyModal(null); setClarifyText(""); } }}>
+        <DialogContent className="max-w-[480px] rounded-2xl p-8" dir="rtl">
+          <DialogHeader><DialogTitle className="text-lg font-bold" style={{ color: "#1e3a5f" }}>בקשת הבהרה — {clarifyModal?.vendor}</DialogTitle></DialogHeader>
+          <p className="mt-2 text-[13px] text-gray-500">כתוב הודעה ללקוח. ההודעה תישמר בתיק החשבונית.</p>
+          <textarea
+            value={clarifyText}
+            onChange={e => setClarifyText(e.target.value)}
+            placeholder="לדוגמה: האם זו הוצאה עסקית? לאיזה פרויקט שייכת ההוצאה?"
+            rows={4}
+            className="mt-4 w-full rounded-lg border border-[#e2e8f0] bg-white px-3 py-2 text-[14px] outline-none focus:ring-1 focus:ring-primary resize-none"
+            style={{ fontFamily: "Heebo, sans-serif" }}
+          />
+          <div className="mt-4 flex justify-end gap-2">
+            <button
+              onClick={() => { setClarifyModal(null); setClarifyText(""); }}
+              className="rounded-lg border border-[#e2e8f0] bg-white px-4 py-2 text-[13px] font-medium hover:bg-gray-50 transition-colors"
+            >ביטול</button>
+            <button
+              onClick={requestClarification}
+              disabled={!clarifyText.trim()}
+              className="rounded-lg px-4 py-2 text-[13px] font-medium text-white transition-colors disabled:opacity-50"
+              style={{ backgroundColor: "#e8941a" }}
+            >שלח בקשת הבהרה</button>
           </div>
         </DialogContent>
       </Dialog>
