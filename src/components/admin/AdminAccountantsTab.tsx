@@ -199,21 +199,15 @@ export default function AdminAccountantsTab() {
                       </span>
                     </td>
                     <td className="p-3">
-                      <Toggle
-                        checked={!!a.is_active}
-                        onChange={() => {
+                      <RowMenu
+                        accountant={a}
+                        onEdit={() => { setIsNew(false); setEditAcc(a); }}
+                        onDelete={() => deleteMutation.mutate(a.id)}
+                        onToggleActive={() => {
                           const payload = { ...a, is_active: !a.is_active };
                           saveMutation.mutate(payload);
                         }}
                       />
-                    </td>
-                    <td className="p-3">
-                      <button
-                        onClick={() => { setIsNew(false); setEditAcc(a); }}
-                        className="rounded bg-primary px-3 py-1 text-xs text-primary-foreground hover:bg-primary/90"
-                      >
-                        ערוך
-                      </button>
                     </td>
                   </tr>
                 );
