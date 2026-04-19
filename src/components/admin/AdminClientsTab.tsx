@@ -280,13 +280,103 @@ export default function AdminClientsTab() {
                 activeClients.map((c) => (
                   <tr key={c.id} className="border-b border-border transition-colors hover:bg-secondary/50">
                     <td className="p-3 font-medium">{c.brand_name}</td>
-                    <td className="p-3">{c.plan_type}</td>
+                    <td className="p-3" onClick={() => setEditingPlanId(c.id)} style={{ cursor: "pointer" }}>
+                      {editingPlanId === c.id ? (
+                        <select
+                          autoFocus
+                          defaultValue={c.plan_type}
+                          onBlur={(e) => {
+                            if (e.target.value !== c.plan_type) {
+                              updatePlan.mutate({ id: c.id, plan_type: e.target.value });
+                            } else {
+                              setEditingPlanId(null);
+                            }
+                          }}
+                          onChange={(e) => {
+                            updatePlan.mutate({ id: c.id, plan_type: e.target.value });
+                          }}
+                          style={{
+                            fontFamily: "Heebo, sans-serif",
+                            fontSize: "13px",
+                            border: "1px solid #1e3a5f",
+                            borderRadius: "6px",
+                            padding: "3px 6px",
+                            background: "#fff",
+                            outline: "none",
+                          }}
+                        >
+                          <option value="free">free</option>
+                          <option value="trial">trial</option>
+                          <option value="basic">basic</option>
+                          <option value="pro">pro</option>
+                        </select>
+                      ) : (
+                        <span style={{
+                          borderBottom: "1px dashed #94a3b8",
+                          paddingBottom: "1px",
+                          cursor: "pointer",
+                        }}>
+                          {c.plan_type}
+                        </span>
+                      )}
+                    </td>
                     <td className="p-3">
                       <span className={isExpiringSoon(c.plan_expires_at) ? "rounded bg-accent/20 px-2 py-0.5 text-accent" : ""}>
                         {formatDate(c.plan_expires_at)}
                       </span>
                     </td>
-                    <td className="p-3">{c.has_accountant ? "✓" : "—"}</td>
+                    <td className="p-3" onClick={() => setEditingAccountantId(c.id)} style={{ cursor: "pointer" }}>
+                      {editingAccountantId === c.id ? (
+                        <div style={{ position: "relative" }}>
+                          <input
+                            autoFocus
+                            list="inline-accountants-list"
+                            placeholder="חפש רו״ח..."
+                            defaultValue={
+                              c.accountant_id
+                                ? (accountants || []).find(a => a.id === c.accountant_id)?.name || ""
+                                : ""
+                            }
+                            onBlur={(e) => {
+                              const match = (accountants || []).find(a => a.name === e.target.value);
+                              if (match) {
+                                updateAccountant.mutate({ clientId: c.id, accountantId: match.id });
+                              } else if (e.target.value === "" || e.target.value === "ללא") {
+                                updateAccountant.mutate({ clientId: c.id, accountantId: "__none__" });
+                              } else {
+                                setEditingAccountantId(null);
+                              }
+                            }}
+                            style={{
+                              fontFamily: "Heebo, sans-serif",
+                              fontSize: "13px",
+                              border: "1px solid #1e3a5f",
+                              borderRadius: "6px",
+                              padding: "3px 6px",
+                              background: "#fff",
+                              outline: "none",
+                              width: "130px",
+                            }}
+                          />
+                          <datalist id="inline-accountants-list">
+                            <option value="ללא" />
+                            {(accountants || []).map((a) => (
+                              <option key={a.id} value={a.name} />
+                            ))}
+                          </datalist>
+                        </div>
+                      ) : (
+                        <span style={{
+                          borderBottom: "1px dashed #94a3b8",
+                          paddingBottom: "1px",
+                          cursor: "pointer",
+                        }}>
+                          {c.has_accountant
+                            ? (accountants || []).find(a => a.id === c.accountant_id)?.name || "✓"
+                            : "—"}
+                        </span>
+                      )}
+                    </td>
                     <td className="p-3">
                       <RowMenu
                         client={c}
