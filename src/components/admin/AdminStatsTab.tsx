@@ -109,11 +109,22 @@ export default function AdminStatsTab() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {kpis.map((k, i) => (
-          <div key={i} className="rounded-lg border border-border bg-card p-5 shadow-card">
-            <p className="text-sm text-muted-foreground">{k.label}</p>
-            <p className="mt-1 text-2xl font-bold text-foreground">{k.value}</p>
+          <div
+            key={i}
+            className="rounded-lg border border-border bg-card p-5 shadow-card"
+            style={{
+              borderRight: `4px solid ${
+                k.color === "green" ? "#16a34a"
+                : k.color === "red" ? "#dc2626"
+                : k.color === "orange" ? "#e8941a"
+                : "#1e3a5f"
+              }`,
+            }}
+          >
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{k.label}</p>
+            <p className="mt-2 text-2xl font-black text-foreground">{k.value}</p>
           </div>
         ))}
       </div>
