@@ -240,14 +240,26 @@ export default function AdminAccountantsTab() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("accountants").delete().eq("id", id);
-      if (error) throw error;
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-delete-accountant`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({ accountant_id: id }),
+        }
+      );
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "שגיאה במחיקה");
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-accountants"] });
       toast.success("רו\"ח נמחק בהצלחה");
     },
-    onError: () => toast.error("שגיאה במחיקה"),
+    onError: (err: Error) => toast.error(err.message || "שגיאה במחיקה"),
   });
 
   const filtered = (accountants || []).filter((a) =>
