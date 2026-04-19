@@ -507,6 +507,19 @@ export default function AdminClientsTab() {
               </label>
 
               <label className="block space-y-1">
+                <span className="text-sm font-medium">
+                  Gemini API Key
+                  <span style={{ color: '#94a3b8', fontSize: '11px', marginRight: '6px' }}>(נדרש לעיבוד חשבוניות)</span>
+                </span>
+                <Input
+                  dir="ltr"
+                  placeholder="AIza..."
+                  value={editClient.gemini_api_key || ""}
+                  onChange={(e) => setEditClient({ ...editClient, gemini_api_key: e.target.value || null })}
+                />
+              </label>
+
+              <label className="block space-y-1">
                 <span className="text-sm font-medium">רו"ח משויך</span>
                 <input
                   type="text"
