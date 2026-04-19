@@ -439,7 +439,7 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
                     <span className="text-[12px] text-gray-400">{inv.document_type || "—"}</span>
                     {hasAccountant && <span className="rounded-full px-2.5 py-0.5 text-[11px] font-medium" style={{ backgroundColor: st.bg, color: st.text }}>{st.label}</span>}
                   </div>
-                  <div className="mt-3 pt-3 border-t border-[#e2e8f0]">{renderActions(inv)}</div>
+                  <div className="mt-3 pt-3 border-t border-[#e2e8f0]">{renderActions(inv, showAccountantActions)}</div>
                 </div>
               );
             })}
@@ -522,6 +522,58 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
           <div className="mt-6 flex justify-end gap-2">
             <button onClick={() => setDeleteModal(null)} className="rounded-lg border border-[#e2e8f0] bg-white px-4 py-2 text-[13px] font-medium hover:bg-gray-50 transition-colors">ביטול</button>
             <button onClick={deleteInvoice} className="rounded-lg px-4 py-2 text-[13px] font-medium text-white transition-colors" style={{ backgroundColor: "#dc2626" }}>מחק</button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Archive Modal ── */}
+      <Dialog open={!!archiveModal} onOpenChange={open => !open && setArchiveModal(null)}>
+        <DialogContent className="max-w-[400px] rounded-2xl p-8" dir="rtl">
+          <DialogHeader><DialogTitle className="text-lg font-bold" style={{ color: "#1e3a5f" }}>העברה לארכיון</DialogTitle></DialogHeader>
+          <p className="mt-4 text-[14px] text-gray-500 leading-relaxed">להעביר את חשבונית <strong className="text-[#1a202c]">{archiveModal?.vendor}</strong> לארכיון?</p>
+          <div className="mt-6 flex justify-end gap-2">
+            <button onClick={() => setArchiveModal(null)} className="rounded-lg border border-[#e2e8f0] bg-white px-4 py-2 text-[13px] font-medium hover:bg-gray-50 transition-colors">ביטול</button>
+            <button onClick={archiveInvoice} className="rounded-lg px-4 py-2 text-[13px] font-medium text-white transition-colors" style={{ backgroundColor: "#64748b" }}>העבר לארכיון</button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Approve Modal ── */}
+      <Dialog open={!!approveModal} onOpenChange={open => !open && setApproveModal(null)}>
+        <DialogContent className="max-w-[400px] rounded-2xl p-8" dir="rtl">
+          <DialogHeader><DialogTitle className="text-lg font-bold" style={{ color: "#1e3a5f" }}>אישור חשבונית</DialogTitle></DialogHeader>
+          <p className="mt-4 text-[14px] text-gray-500 leading-relaxed">לאשר את חשבונית <strong className="text-[#1a202c]">{approveModal?.vendor}</strong>?</p>
+          <div className="mt-6 flex justify-end gap-2">
+            <button onClick={() => setApproveModal(null)} className="rounded-lg border border-[#e2e8f0] bg-white px-4 py-2 text-[13px] font-medium hover:bg-gray-50 transition-colors">ביטול</button>
+            <button onClick={approveInvoice} className="rounded-lg px-4 py-2 text-[13px] font-medium text-white transition-colors" style={{ backgroundColor: "#16a34a" }}>אשר חשבונית</button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Clarify Modal ── */}
+      <Dialog open={!!clarifyModal} onOpenChange={open => { if (!open) { setClarifyModal(null); setClarifyText(""); } }}>
+        <DialogContent className="max-w-[480px] rounded-2xl p-8" dir="rtl">
+          <DialogHeader><DialogTitle className="text-lg font-bold" style={{ color: "#1e3a5f" }}>בקשת הבהרה — {clarifyModal?.vendor}</DialogTitle></DialogHeader>
+          <p className="mt-2 text-[13px] text-gray-500">כתוב הודעה ללקוח. ההודעה תישמר בתיק החשבונית.</p>
+          <textarea
+            value={clarifyText}
+            onChange={e => setClarifyText(e.target.value)}
+            placeholder="לדוגמה: האם זו הוצאה עסקית? לאיזה פרויקט שייכת ההוצאה?"
+            rows={4}
+            className="mt-4 w-full rounded-lg border border-[#e2e8f0] bg-white px-3 py-2 text-[14px] outline-none focus:ring-1 focus:ring-primary resize-none"
+            style={{ fontFamily: "Heebo, sans-serif" }}
+          />
+          <div className="mt-4 flex justify-end gap-2">
+            <button
+              onClick={() => { setClarifyModal(null); setClarifyText(""); }}
+              className="rounded-lg border border-[#e2e8f0] bg-white px-4 py-2 text-[13px] font-medium hover:bg-gray-50 transition-colors"
+            >ביטול</button>
+            <button
+              onClick={requestClarification}
+              disabled={!clarifyText.trim()}
+              className="rounded-lg px-4 py-2 text-[13px] font-medium text-white transition-colors disabled:opacity-50"
+              style={{ backgroundColor: "#e8941a" }}
+            >שלח בקשת הבהרה</button>
           </div>
         </DialogContent>
       </Dialog>
