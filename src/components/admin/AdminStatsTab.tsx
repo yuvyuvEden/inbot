@@ -97,10 +97,14 @@ export default function AdminStatsTab() {
 
   const stats = data!;
   const kpis = [
-    { label: "סה\"כ לקוחות פעילים", value: stats.activeClients },
-    { label: "סה\"כ רו\"חים פעילים", value: stats.activeAccountants },
-    { label: "הכנסה חודשית משוערת", value: `₪${stats.estimatedRevenue.toLocaleString()}` },
-    { label: "התראות פתוחות", value: stats.expired.length },
+    { label: "לקוחות פעילים", value: stats.activeClients, color: "blue" },
+    { label: "רו\"חים פעילים", value: stats.activeAccountants, color: "blue" },
+    { label: "הכנסה חודשית משוערת", value: `₪${stats.estimatedRevenue.toLocaleString("he-IL")}`, color: "green" },
+    { label: "התראות פתוחות", value: stats.expired.length, color: "red" },
+    { label: "חשבוניות החודש", value: stats.invoicesThisMonth, color: "blue" },
+    { label: "סה\"כ הוצאות החודש", value: `₪${stats.totalExpensesThisMonth.toLocaleString("he-IL")}`, color: "green" },
+    { label: "ממתינות לבדיקה", value: stats.pendingReview, color: "orange" },
+    { label: "בקשות הבהרה פתוחות", value: stats.pendingClarification, color: "orange" },
   ];
 
   return (
