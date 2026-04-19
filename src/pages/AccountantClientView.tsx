@@ -107,7 +107,13 @@ export default function AccountantClientView() {
       {/* Navbar */}
       <nav style={{ height: "60px", backgroundColor: "#1e3a5f", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <span style={{ color: "#ffffff", fontWeight: 700, fontSize: "18px" }}>INBOT</span>
+          <img
+            src="https://jkqpkbcdtbelgpuwncam.supabase.co/storage/v1/object/public/assets//LOGO.jpeg"
+            alt="INBOT"
+            style={{ height: "36px", borderRadius: "4px" }}
+            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+          />
+          <span style={{ color: "#e8941a", fontSize: "13px", fontWeight: 600 }}>רו"ח</span>
           <button
             onClick={() => navigate("/accountant")}
             style={{ background: "none", border: "1px solid #475569", borderRadius: "6px", padding: "6px 12px", color: "#cbd5e1", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", fontFamily: "Heebo, sans-serif" }}

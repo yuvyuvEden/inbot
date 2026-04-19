@@ -45,7 +45,6 @@ export default function AccountantDashboard() {
             style={{ height: "36px", borderRadius: "4px" }}
             onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
           />
-          <span style={{ color: "#ffffff", fontSize: "18px", fontWeight: 700 }}>INBOT</span>
           <span style={{ color: "#e8941a", fontSize: "13px", fontWeight: 600 }}>רו"ח</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
