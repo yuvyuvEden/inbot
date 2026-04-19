@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Toggle } from "@/components/shared/Toggle";
 
 interface AccountantRow {
   id: string;
@@ -169,39 +170,13 @@ export default function AdminAccountantsTab() {
                       </span>
                     </td>
                     <td className="p-3">
-                      <button
-                        dir="ltr"
-                        onClick={() => {
+                      <Toggle
+                        checked={!!a.is_active}
+                        onChange={() => {
                           const payload = { ...a, is_active: !a.is_active };
                           saveMutation.mutate(payload);
                         }}
-                        style={{
-                          position: 'relative',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          width: '44px',
-                          height: '24px',
-                          borderRadius: '9999px',
-                          backgroundColor: a.is_active ? '#e8941a' : '#d1d5db',
-                          cursor: 'pointer',
-                          border: 'none',
-                          padding: '2px',
-                          transition: 'background-color 0.2s',
-                          flexShrink: 0,
-                        }}
-                      >
-                        <span style={{
-                          position: 'absolute',
-                          top: '3px',
-                          left: a.is_active ? '23px' : '3px',
-                          width: '18px',
-                          height: '18px',
-                          borderRadius: '9999px',
-                          backgroundColor: '#ffffff',
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-                          transition: 'left 0.2s',
-                        }} />
-                      </button>
+                      />
                     </td>
                     <td className="p-3">
                       <button
@@ -263,67 +238,17 @@ export default function AdminAccountantsTab() {
               </label>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">חידוש אוטומטי</span>
-                <button
-                  onClick={() => setEditAcc({ ...editAcc, auto_renew: !editAcc.auto_renew })}
-                  style={{
-                    position: 'relative',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    width: '44px',
-                    height: '24px',
-                    borderRadius: '9999px',
-                    backgroundColor: editAcc.auto_renew ? '#e8941a' : '#d1d5db',
-                    cursor: 'pointer',
-                    border: 'none',
-                    padding: '0',
-                    transition: 'background-color 0.2s',
-                    flexShrink: 0,
-                  }}
-                >
-                  <span style={{
-                    position: 'absolute',
-                    top: '3px',
-                    left: editAcc.auto_renew ? '23px' : '3px',
-                    width: '18px',
-                    height: '18px',
-                    borderRadius: '9999px',
-                    backgroundColor: '#ffffff',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-                    transition: 'left 0.2s',
-                  }} />
-                </button>
+                <Toggle
+                  checked={!!editAcc.auto_renew}
+                  onChange={(v) => setEditAcc({ ...editAcc, auto_renew: v })}
+                />
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">פעיל</span>
-                <button
-                  onClick={() => setEditAcc({ ...editAcc, is_active: !editAcc.is_active })}
-                  style={{
-                    position: 'relative',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    width: '44px',
-                    height: '24px',
-                    borderRadius: '9999px',
-                    backgroundColor: editAcc.is_active ? '#e8941a' : '#d1d5db',
-                    cursor: 'pointer',
-                    border: 'none',
-                    padding: '0',
-                    transition: 'background-color 0.2s',
-                    flexShrink: 0,
-                  }}
-                >
-                  <span style={{
-                    position: 'absolute',
-                    top: '3px',
-                    left: editAcc.is_active ? '23px' : '3px',
-                    width: '18px',
-                    height: '18px',
-                    borderRadius: '9999px',
-                    backgroundColor: '#ffffff',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-                    transition: 'left 0.2s',
-                  }} />
-                </button>
+                <Toggle
+                  checked={!!editAcc.is_active}
+                  onChange={(v) => setEditAcc({ ...editAcc, is_active: v })}
+                />
               </div>
 
               <button
