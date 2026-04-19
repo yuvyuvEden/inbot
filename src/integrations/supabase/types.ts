@@ -20,18 +20,24 @@ export type Database = {
           assigned_at: string
           client_id: string
           id: string
+          unassigned_at: string | null
+          unassigned_by: string | null
         }
         Insert: {
           accountant_id: string
           assigned_at?: string
           client_id: string
           id?: string
+          unassigned_at?: string | null
+          unassigned_by?: string | null
         }
         Update: {
           accountant_id?: string
           assigned_at?: string
           client_id?: string
           id?: string
+          unassigned_at?: string | null
+          unassigned_by?: string | null
         }
         Relationships: [
           {
@@ -63,6 +69,8 @@ export type Database = {
           plan_expires_at: string | null
           plan_type: string | null
           price_per_client: number | null
+          updated_at: string
+          updated_by: string | null
           user_id: string | null
         }
         Insert: {
@@ -77,6 +85,8 @@ export type Database = {
           plan_expires_at?: string | null
           plan_type?: string | null
           price_per_client?: number | null
+          updated_at?: string
+          updated_by?: string | null
           user_id?: string | null
         }
         Update: {
@@ -91,6 +101,8 @@ export type Database = {
           plan_expires_at?: string | null
           plan_type?: string | null
           price_per_client?: number | null
+          updated_at?: string
+          updated_by?: string | null
           user_id?: string | null
         }
         Relationships: []
@@ -126,6 +138,8 @@ export type Database = {
           tax_rules: Json
           telegram_chat_id: string | null
           thread_limit: number
+          updated_at: string
+          updated_by: string | null
           user_id: string | null
           vat_number: string | null
           vat_rate: number
@@ -160,6 +174,8 @@ export type Database = {
           tax_rules?: Json
           telegram_chat_id?: string | null
           thread_limit?: number
+          updated_at?: string
+          updated_by?: string | null
           user_id?: string | null
           vat_number?: string | null
           vat_rate?: number
@@ -194,6 +210,8 @@ export type Database = {
           tax_rules?: Json
           telegram_chat_id?: string | null
           thread_limit?: number
+          updated_at?: string
+          updated_by?: string | null
           user_id?: string | null
           vat_number?: string | null
           vat_rate?: number
@@ -258,6 +276,8 @@ export type Database = {
           status: string
           tax_deductible: number | null
           total: number | null
+          updated_at: string
+          updated_by: string | null
           vat_deductible: number | null
           vat_original: number | null
           vendor: string | null
@@ -278,6 +298,8 @@ export type Database = {
           status?: string
           tax_deductible?: number | null
           total?: number | null
+          updated_at?: string
+          updated_by?: string | null
           vat_deductible?: number | null
           vat_original?: number | null
           vendor?: string | null
@@ -298,6 +320,8 @@ export type Database = {
           status?: string
           tax_deductible?: number | null
           total?: number | null
+          updated_at?: string
+          updated_by?: string | null
           vat_deductible?: number | null
           vat_original?: number | null
           vendor?: string | null
@@ -452,7 +476,48 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_active_assignments: {
+        Row: {
+          accountant_id: string | null
+          assigned_at: string | null
+          client_id: string | null
+          id: string | null
+          unassigned_at: string | null
+          unassigned_by: string | null
+        }
+        Insert: {
+          accountant_id?: string | null
+          assigned_at?: string | null
+          client_id?: string | null
+          id?: string | null
+          unassigned_at?: string | null
+          unassigned_by?: string | null
+        }
+        Update: {
+          accountant_id?: string | null
+          assigned_at?: string | null
+          client_id?: string | null
+          id?: string | null
+          unassigned_at?: string | null
+          unassigned_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accountant_clients_accountant_id_fkey"
+            columns: ["accountant_id"]
+            isOneToOne: false
+            referencedRelation: "accountants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accountant_clients_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       has_role: {

@@ -13,11 +13,18 @@ export default function AdminStatsTab() {
   const { data, isLoading } = useQuery({
     queryKey: ["admin-stats"],
     queryFn: async () => {
-      const [clientsRes, accountantsRes, acRes] = await Promise.all([
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+      const startOfMonthISO = startOfMonth.toISOString().slice(0, 10);
+
+      const [clientsRes, accountantsRes, acRes, invoicesRes] = await Promise.all([
         supabase.from("clients").select("id, brand_name, is_active, plan_expires_at"),
         supabase.from("accountants").select("id, name, is_active, plan_expires_at, price_per_client"),
         supabase.from("accountant_clients").select("accountant_id"),
+        supabase.from("invoices").select("id, total, status, invoice_date"),
       ]);
+      const invoices = invoicesRes.data || [];
 
       const clients = clientsRes.data || [];
       const accountants = accountantsRes.data || [];
@@ -49,7 +56,32 @@ export default function AdminStatsTab() {
         }
       });
 
-      return { activeClients, activeAccountants, estimatedRevenue, expired };
+      const invoicesThisMonth = invoices.filter(
+        (inv) => inv.invoice_date && inv.invoice_date >= startOfMonthISO
+      ).length;
+
+      const totalExpensesThisMonth = invoices
+        .filter((inv) => inv.invoice_date && inv.invoice_date >= startOfMonthISO)
+        .reduce((sum, inv) => sum + (inv.total || 0), 0);
+
+      const pendingClarification = invoices.filter(
+        (inv) => inv.status === "needs_clarification"
+      ).length;
+
+      const pendingReview = invoices.filter(
+        (inv) => inv.status === "pending_review"
+      ).length;
+
+      return {
+        activeClients,
+        activeAccountants,
+        estimatedRevenue,
+        expired,
+        invoicesThisMonth,
+        totalExpensesThisMonth,
+        pendingClarification,
+        pendingReview,
+      };
     },
   });
 
@@ -65,19 +97,34 @@ export default function AdminStatsTab() {
 
   const stats = data!;
   const kpis = [
-    { label: "סה\"כ לקוחות פעילים", value: stats.activeClients },
-    { label: "סה\"כ רו\"חים פעילים", value: stats.activeAccountants },
-    { label: "הכנסה חודשית משוערת", value: `₪${stats.estimatedRevenue.toLocaleString()}` },
-    { label: "התראות פתוחות", value: stats.expired.length },
+    { label: "לקוחות פעילים", value: stats.activeClients, color: "blue" },
+    { label: "רו\"חים פעילים", value: stats.activeAccountants, color: "blue" },
+    { label: "הכנסה חודשית משוערת", value: `₪${stats.estimatedRevenue.toLocaleString("he-IL")}`, color: "green" },
+    { label: "התראות פתוחות", value: stats.expired.length, color: "red" },
+    { label: "חשבוניות החודש", value: stats.invoicesThisMonth, color: "blue" },
+    { label: "סה\"כ הוצאות החודש", value: `₪${stats.totalExpensesThisMonth.toLocaleString("he-IL")}`, color: "green" },
+    { label: "ממתינות לבדיקה", value: stats.pendingReview, color: "orange" },
+    { label: "בקשות הבהרה פתוחות", value: stats.pendingClarification, color: "orange" },
   ];
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {kpis.map((k, i) => (
-          <div key={i} className="rounded-lg border border-border bg-card p-5 shadow-card">
-            <p className="text-sm text-muted-foreground">{k.label}</p>
-            <p className="mt-1 text-2xl font-bold text-foreground">{k.value}</p>
+          <div
+            key={i}
+            className="rounded-lg border border-border bg-card p-5 shadow-card"
+            style={{
+              borderRight: `4px solid ${
+                k.color === "green" ? "#16a34a"
+                : k.color === "red" ? "#dc2626"
+                : k.color === "orange" ? "#e8941a"
+                : "#1e3a5f"
+              }`,
+            }}
+          >
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{k.label}</p>
+            <p className="mt-2 text-2xl font-black text-foreground">{k.value}</p>
           </div>
         ))}
       </div>
