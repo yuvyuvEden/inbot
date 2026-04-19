@@ -8,6 +8,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Toggle } from "@/components/shared/Toggle";
+import { useImpersonate } from "@/hooks/useImpersonate";
+import { UserCheck } from "lucide-react";
 
 interface AccountantRow {
   id: string;
@@ -20,6 +22,7 @@ interface AccountantRow {
   monthly_fee: number | null;
   auto_renew: boolean | null;
   is_active: boolean | null;
+  user_id: string | null;
   active_clients_count: number;
 }
 
@@ -44,6 +47,7 @@ const emptyAccountant: Omit<AccountantRow, "active_clients_count"> = {
   monthly_fee: 0,
   auto_renew: true,
   is_active: true,
+  user_id: null,
 };
 
 function RowMenu({
@@ -51,11 +55,15 @@ function RowMenu({
   onEdit,
   onDelete,
   onToggleActive,
+  onImpersonate,
+  impersonateLoading,
 }: {
   accountant: AccountantRow;
   onEdit: () => void;
   onDelete: () => void;
   onToggleActive: () => void;
+  onImpersonate: () => void;
+  impersonateLoading: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
@@ -103,6 +111,25 @@ function RowMenu({
             overflow: "hidden",
           }}
         >
+          <button
+            onClick={() => { if (accountant.user_id) { onImpersonate(); setOpen(false); } }}
+            disabled={impersonateLoading || !accountant.user_id}
+            style={{
+              display: "flex", alignItems: "center", gap: "10px",
+              width: "100%", padding: "10px 16px",
+              background: "none", border: "none",
+              cursor: accountant.user_id ? "pointer" : "not-allowed",
+              fontSize: "14px", color: "#1e3a5f",
+              fontFamily: "Heebo, sans-serif", textAlign: "right",
+              opacity: !accountant.user_id ? 0.4 : 1,
+            }}
+            onMouseEnter={(e) => { if (accountant.user_id) e.currentTarget.style.background = "#f0f4f8"; }}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+          >
+            <UserCheck size={16} />
+            {impersonateLoading ? "מתחבר..." : "התחבר כרו\"ח"}
+          </button>
+          <div style={{ borderTop: "1px solid #e2e8f0", margin: "4px 0" }} />
           <button
             onClick={() => { onEdit(); setOpen(false); }}
             style={{
@@ -169,13 +196,14 @@ export default function AdminAccountantsTab() {
   const [search, setSearch] = useState("");
   const [editAcc, setEditAcc] = useState<AccountantRow | null>(null);
   const [isNew, setIsNew] = useState(false);
+  const { impersonate, loading: impersonateLoading } = useImpersonate();
 
   const { data: accountants, isLoading } = useQuery({
     queryKey: ["admin-accountants"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("accountants")
-        .select("id, name, email, phone, plan_type, plan_expires_at, price_per_client, monthly_fee, auto_renew, is_active")
+        .select("id, name, email, phone, plan_type, plan_expires_at, price_per_client, monthly_fee, auto_renew, is_active, user_id")
         .order("created_at", { ascending: false });
       if (error) throw error;
 
@@ -338,6 +366,8 @@ export default function AdminAccountantsTab() {
                           const payload = { ...a, is_active: !a.is_active };
                           saveMutation.mutate(payload);
                         }}
+                        onImpersonate={() => impersonate(a.user_id, a.name ?? a.email, "/accountant")}
+                        impersonateLoading={impersonateLoading === a.user_id}
                       />
                     </td>
                   </tr>

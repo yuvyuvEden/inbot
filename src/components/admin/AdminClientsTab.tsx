@@ -9,6 +9,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Toggle } from "@/components/shared/Toggle";
+import { useImpersonate } from "@/hooks/useImpersonate";
+import { UserCheck } from "lucide-react";
 
 
 interface ClientRow {
@@ -47,6 +49,7 @@ export default function AdminClientsTab() {
   const [drawerAccountantName, setDrawerAccountantName] = useState("");
   const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
   const [editingAccountantId, setEditingAccountantId] = useState<string | null>(null);
+  const { impersonate, loading: impersonateLoading } = useImpersonate();
 
   const { data: clients, isLoading } = useQuery({
     queryKey: ["admin-clients"],
@@ -389,6 +392,8 @@ export default function AdminClientsTab() {
                         }}
                         onDelete={() => deleteMutation.mutate(c.id)}
                         onToggleActive={() => toggleActive.mutate({ id: c.id, is_active: !c.is_active })}
+                        onImpersonate={() => impersonate(c.user_id, c.brand_name ?? c.legal_name ?? "לקוח", "/dashboard")}
+                        impersonateLoading={impersonateLoading === c.user_id}
                       />
                     </td>
                   </tr>
@@ -443,6 +448,8 @@ export default function AdminClientsTab() {
                           }}
                           onDelete={() => deleteMutation.mutate(c.id)}
                           onToggleActive={() => toggleActive.mutate({ id: c.id, is_active: !c.is_active })}
+                          onImpersonate={() => impersonate(c.user_id, c.brand_name ?? c.legal_name ?? "לקוח", "/dashboard")}
+                          impersonateLoading={impersonateLoading === c.user_id}
                         />
                       </td>
                     </tr>
@@ -581,11 +588,15 @@ function RowMenu({
   onEdit,
   onDelete,
   onToggleActive,
+  onImpersonate,
+  impersonateLoading,
 }: {
   client: ClientRow;
   onEdit: () => void;
   onDelete: () => void;
   onToggleActive: () => void;
+  onImpersonate: () => void;
+  impersonateLoading: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
@@ -633,6 +644,25 @@ function RowMenu({
             overflow: "hidden",
           }}
         >
+          <button
+            onClick={() => { if (client.user_id) { onImpersonate(); setOpen(false); } }}
+            disabled={impersonateLoading || !client.user_id}
+            style={{
+              display: "flex", alignItems: "center", gap: "10px",
+              width: "100%", padding: "10px 16px",
+              background: "none", border: "none",
+              cursor: client.user_id ? "pointer" : "not-allowed",
+              fontSize: "14px", color: "#1e3a5f",
+              fontFamily: "Heebo, sans-serif", textAlign: "right",
+              opacity: !client.user_id ? 0.4 : 1,
+            }}
+            onMouseEnter={(e) => { if (client.user_id) e.currentTarget.style.background = "#f0f4f8"; }}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+          >
+            <UserCheck size={16} />
+            {impersonateLoading ? "מתחבר..." : "התחבר כלקוח"}
+          </button>
+          <div style={{ borderTop: "1px solid #e2e8f0", margin: "4px 0" }} />
           <button
             onClick={() => { onEdit(); setOpen(false); }}
             style={{
