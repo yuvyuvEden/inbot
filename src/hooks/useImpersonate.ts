@@ -27,18 +27,14 @@ export function useImpersonate() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${session.access_token}`,
           },
-          body: JSON.stringify({ target_user_id }),
+          body: JSON.stringify({ target_user_id, redirect_path: redirectPath }),
         }
       );
 
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "שגיאה לא ידועה");
 
-      const actionLink = json.action_link as string;
-      const url = new URL(actionLink);
-      url.searchParams.set("redirect_to", `${window.location.origin}${redirectPath}`);
-
-      window.open(url.toString(), "_blank");
+      window.open(json.action_link as string, "_blank");
       toast.success(`נפתח טאב חדש כ-${target_name}`);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
