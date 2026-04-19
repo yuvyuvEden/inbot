@@ -158,6 +158,10 @@ export default function Dashboard() {
             </div>
           ) : activeTab === "invoices" ? (
             <InvoicesTab clientId={client?.id} hasAccountant={!!hasAccountant} />
+          ) : activeTab === "messages" ? (
+            client?.id ? <AccountantTab clientId={client.id} /> : null
+          ) : activeTab === "archive" ? (
+            client?.id ? <ArchiveTab clientId={client.id} /> : null
           ) : activeTab === "export" ? (
             <ExportTab />
           ) : activeTab === "ai" ? (
