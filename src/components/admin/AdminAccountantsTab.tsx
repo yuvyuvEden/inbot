@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -44,6 +44,101 @@ const emptyAccountant: Omit<AccountantRow, "active_clients_count"> = {
   auto_renew: true,
   is_active: true,
 };
+
+function RowMenu({
+  accountant,
+  onEdit,
+  onDelete,
+  onToggleActive,
+}: {
+  accountant: AccountantRow;
+  onEdit: () => void;
+  onDelete: () => void;
+  onToggleActive: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
+      <button
+        onClick={() => setOpen((p) => !p)}
+        className="rounded bg-secondary px-3 py-1 text-xs font-medium text-foreground hover:bg-secondary/80"
+      >
+        פעולות ▾
+      </button>
+      {open && (
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            top: "110%",
+            zIndex: 50,
+            minWidth: "160px",
+            background: "#ffffff",
+            border: "1px solid #e2e8f0",
+            borderRadius: "8px",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+            overflow: "hidden",
+          }}
+        >
+          <button
+            onClick={() => { onEdit(); setOpen(false); }}
+            style={{
+              display: "block", width: "100%", textAlign: "right",
+              padding: "8px 14px", fontSize: "13px", background: "none",
+              border: "none", cursor: "pointer", color: "#1a202c",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#f0f4f8")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+          >
+            ✏️ ערוך פרטים
+          </button>
+          <button
+            onClick={() => { onToggleActive(); setOpen(false); }}
+            style={{
+              display: "block", width: "100%", textAlign: "right",
+              padding: "8px 14px", fontSize: "13px", background: "none",
+              border: "none", cursor: "pointer", color: "#1a202c",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#f0f4f8")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+          >
+            {accountant.is_active ? "⏸️ השעה" : "▶️ הפעל"}
+          </button>
+          <div style={{ borderTop: "1px solid #e2e8f0", margin: "4px 0" }} />
+          <button
+            onClick={() => {
+              if (window.confirm(`למחוק את ${accountant.name}? פעולה זו אינה ניתנת לביטול.`)) {
+                onDelete();
+              }
+              setOpen(false);
+            }}
+            style={{
+              display: "block", width: "100%", textAlign: "right",
+              padding: "8px 14px", fontSize: "13px", background: "none",
+              border: "none", cursor: "pointer", color: "#dc2626",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#fef2f2")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+          >
+            🗑️ מחק רו"ח
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function AdminAccountantsTab() {
   const qc = useQueryClient();
@@ -119,6 +214,18 @@ export default function AdminAccountantsTab() {
     onError: () => toast.error("שגיאה בשמירה"),
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("accountants").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-accountants"] });
+      toast.success("רו\"ח נמחק בהצלחה");
+    },
+    onError: () => toast.error("שגיאה במחיקה"),
+  });
+
   const filtered = (accountants || []).filter((a) =>
     a.name.toLowerCase().includes(search.toLowerCase()) || a.email.toLowerCase().includes(search.toLowerCase())
   );
@@ -156,7 +263,6 @@ export default function AdminAccountantsTab() {
               <th className="p-3">מחיר/לקוח</th>
               <th className="p-3">הכנסה חודשית</th>
               <th className="p-3">תפוגה</th>
-              <th className="p-3">פעיל</th>
               <th className="p-3">פעולות</th>
             </tr>
           </thead>
@@ -164,13 +270,13 @@ export default function AdminAccountantsTab() {
             {isLoading ? (
               Array.from({ length: 4 }).map((_, i) => (
                 <tr key={i} className="border-b border-border">
-                  {Array.from({ length: 9 }).map((_, j) => (
+                  {Array.from({ length: 8 }).map((_, j) => (
                     <td key={j} className="p-3"><Skeleton className="h-4 w-16" /></td>
                   ))}
                 </tr>
               ))
             ) : filtered.length === 0 ? (
-              <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">לא נמצאו רואי חשבון</td></tr>
+              <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">לא נמצאו רואי חשבון</td></tr>
             ) : (
               filtered.map((a) => {
                 const revenue = (a.price_per_client || 0) * a.active_clients_count;
@@ -188,21 +294,15 @@ export default function AdminAccountantsTab() {
                       </span>
                     </td>
                     <td className="p-3">
-                      <Toggle
-                        checked={!!a.is_active}
-                        onChange={() => {
+                      <RowMenu
+                        accountant={a}
+                        onEdit={() => { setIsNew(false); setEditAcc(a); }}
+                        onDelete={() => deleteMutation.mutate(a.id)}
+                        onToggleActive={() => {
                           const payload = { ...a, is_active: !a.is_active };
                           saveMutation.mutate(payload);
                         }}
                       />
-                    </td>
-                    <td className="p-3">
-                      <button
-                        onClick={() => { setIsNew(false); setEditAcc(a); }}
-                        className="rounded bg-primary px-3 py-1 text-xs text-primary-foreground hover:bg-primary/90"
-                      >
-                        ערוך
-                      </button>
                     </td>
                   </tr>
                 );
