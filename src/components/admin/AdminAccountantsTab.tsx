@@ -168,7 +168,6 @@ export default function AdminAccountantsTab() {
               <th className="p-3">מחיר/לקוח</th>
               <th className="p-3">הכנסה חודשית</th>
               <th className="p-3">תפוגה</th>
-              <th className="p-3">פעיל</th>
               <th className="p-3">פעולות</th>
             </tr>
           </thead>
