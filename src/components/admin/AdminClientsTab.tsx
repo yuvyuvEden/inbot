@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import ReactDOM from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -116,6 +117,30 @@ export default function AdminClientsTab() {
     onError: () => toast.error("שגיאה בשמירה"),
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-delete-client`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({ client_id: id }),
+        }
+      );
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "שגיאה במחיקה");
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-clients"] });
+      toast.success("לקוח נמחק בהצלחה");
+    },
+    onError: (err: Error) => toast.error(err.message || "שגיאה במחיקה"),
+  });
+
   const filtered = (clients || []).filter((c) =>
     c.brand_name?.toLowerCase().includes(search.toLowerCase()) ||
     c.legal_name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -139,7 +164,6 @@ export default function AdminClientsTab() {
               <th className="p-3">מנוי</th>
               <th className="p-3">תפוגה</th>
               <th className="p-3">רו"ח משויך</th>
-              <th className="p-3">פעיל</th>
               <th className="p-3">פעולות</th>
             </tr>
           </thead>
@@ -147,13 +171,13 @@ export default function AdminClientsTab() {
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <tr key={i} className="border-b border-border">
-                  {Array.from({ length: 6 }).map((_, j) => (
+                  {Array.from({ length: 5 }).map((_, j) => (
                     <td key={j} className="p-3"><Skeleton className="h-4 w-20" /></td>
                   ))}
                 </tr>
               ))
             ) : filtered.length === 0 ? (
-              <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">לא נמצאו לקוחות</td></tr>
+              <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">לא נמצאו לקוחות</td></tr>
             ) : (
               filtered.map((c) => (
                 <tr key={c.id} className="border-b border-border transition-colors hover:bg-secondary/50">
@@ -165,24 +189,18 @@ export default function AdminClientsTab() {
                     </span>
                   </td>
                   <td className="p-3">{c.has_accountant ? "✓" : "—"}</td>
-                  <td className="p-3">
-                    <Toggle
-                      checked={c.is_active}
-                      onChange={() => toggleActive.mutate({ id: c.id, is_active: !c.is_active })}
-                    />
-                  </td>
                   <td className="p-3 space-x-2 space-x-reverse">
-                    <button
-                      onClick={() => {
+                    <RowMenu
+                      client={c}
+                      onEdit={() => {
                         setEditClient(c);
                         setDrawerAccountant(c.accountant_id || "");
                         const found = (accountants || []).find(a => a.id === c.accountant_id);
                         setDrawerAccountantName(found?.name || "ללא");
                       }}
-                      className="rounded bg-primary px-3 py-1 text-xs text-primary-foreground hover:bg-primary/90"
-                    >
-                      ערוך
-                    </button>
+                      onDelete={() => deleteMutation.mutate(c.id)}
+                      onToggleActive={() => toggleActive.mutate({ id: c.id, is_active: !c.is_active })}
+                    />
                   </td>
                 </tr>
               ))
@@ -280,3 +298,122 @@ export default function AdminClientsTab() {
     </div>
   );
 }
+
+function RowMenu({
+  client,
+  onEdit,
+  onDelete,
+  onToggleActive,
+}: {
+  client: ClientRow;
+  onEdit: () => void;
+  onDelete: () => void;
+  onToggleActive: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (
+        menuRef.current && !menuRef.current.contains(e.target as Node) &&
+        btnRef.current && !btnRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const handleOpen = () => {
+    if (btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      setMenuPos({
+        top: rect.bottom + window.scrollY + 4,
+        left: rect.left + window.scrollX,
+      });
+    }
+    setOpen((p) => !p);
+  };
+
+  const menu = open
+    ? ReactDOM.createPortal(
+        <div
+          ref={menuRef}
+          style={{
+            position: "absolute",
+            top: menuPos.top,
+            left: menuPos.left,
+            zIndex: 9999,
+            minWidth: "160px",
+            background: "#ffffff",
+            border: "1px solid #e2e8f0",
+            borderRadius: "8px",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+            overflow: "hidden",
+          }}
+        >
+          <button
+            onClick={() => { onEdit(); setOpen(false); }}
+            style={{
+              display: "block", width: "100%", textAlign: "right",
+              padding: "8px 14px", fontSize: "13px", background: "none",
+              border: "none", cursor: "pointer", color: "#1a202c",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#f0f4f8")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+          >
+            ✏️ ערוך פרטים
+          </button>
+          <button
+            onClick={() => { onToggleActive(); setOpen(false); }}
+            style={{
+              display: "block", width: "100%", textAlign: "right",
+              padding: "8px 14px", fontSize: "13px", background: "none",
+              border: "none", cursor: "pointer", color: "#1a202c",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#f0f4f8")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+          >
+            {client.is_active ? "⏸️ השעה" : "▶️ הפעל"}
+          </button>
+          <div style={{ borderTop: "1px solid #e2e8f0", margin: "4px 0" }} />
+          <button
+            onClick={() => {
+              setOpen(false);
+              if (window.confirm(`למחוק את ${client.brand_name}? פעולה זו אינה ניתנת לביטול.`)) {
+                onDelete();
+              }
+            }}
+            style={{
+              display: "block", width: "100%", textAlign: "right",
+              padding: "8px 14px", fontSize: "13px", background: "none",
+              border: "none", cursor: "pointer", color: "#dc2626",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#fef2f2")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+          >
+            🗑️ מחק לקוח
+          </button>
+        </div>,
+        document.body
+      )
+    : null;
+
+  return (
+    <>
+      <button
+        ref={btnRef}
+        onClick={handleOpen}
+        className="rounded bg-secondary px-3 py-1 text-xs font-medium text-foreground hover:bg-secondary/80"
+      >
+        פעולות ▾
+      </button>
+      {menu}
+    </>
+  );
+}
+
