@@ -34,7 +34,10 @@ const AdminDashboard = () => {
           {tabs.map((t) => (
             <button
               key={t.key}
-              onClick={() => setActiveTab(t.key)}
+              onClick={() => {
+                setActiveTab(t.key);
+                localStorage.setItem("admin-active-tab", t.key);
+              }}
               className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
                 activeTab === t.key
                   ? "bg-primary text-primary-foreground"
