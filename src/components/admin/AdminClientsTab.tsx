@@ -22,6 +22,9 @@ interface ClientRow {
   telegram_chat_id: string | null;
   has_accountant: boolean;
   accountant_id: string | null;
+  user_id: string | null;
+  gemini_api_key: string | null;
+  created_at: string;
 }
 
 const isExpiringSoon = (d: string | null) => {
@@ -38,6 +41,7 @@ const formatDate = (d: string | null) => {
 export default function AdminClientsTab() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
+  const [innerTab, setInnerTab] = useState<"active" | "pending">("active");
   const [editClient, setEditClient] = useState<ClientRow | null>(null);
   const [drawerAccountant, setDrawerAccountant] = useState<string>("");
   const [drawerAccountantName, setDrawerAccountantName] = useState("");
@@ -47,7 +51,7 @@ export default function AdminClientsTab() {
     queryFn: async () => {
       const { data: clientsData, error } = await supabase
         .from("clients")
-        .select("id, brand_name, legal_name, vat_number, plan_type, plan_expires_at, is_active, telegram_chat_id")
+        .select("id, brand_name, legal_name, vat_number, plan_type, plan_expires_at, is_active, telegram_chat_id, user_id, gemini_api_key, created_at")
         .order("created_at", { ascending: false });
       if (error) throw error;
 
@@ -141,30 +145,83 @@ export default function AdminClientsTab() {
     onError: (err: Error) => toast.error(err.message || "שגיאה במחיקה"),
   });
 
-  const filtered = (clients || []).filter((c) =>
+  const allFiltered = (clients || []).filter((c) =>
     c.brand_name?.toLowerCase().includes(search.toLowerCase()) ||
     c.legal_name?.toLowerCase().includes(search.toLowerCase()) ||
     c.vat_number?.toLowerCase().includes(search.toLowerCase())
   );
+  const activeClients = allFiltered.filter((c) => !isPending(c));
+  const pendingClients = allFiltered.filter((c) => isPending(c));
 
   return (
     <div className="space-y-4">
-      <Input
-        placeholder="חיפוש לפי שם עסק, שם חברה, ח.פ..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="max-w-sm"
-      />
+      <div className="flex items-center gap-4 flex-wrap">
+        <Input
+          placeholder="חיפוש לפי שם עסק, שם חברה, ח.פ..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="max-w-sm"
+        />
+        <div className="flex gap-1 rounded-lg bg-secondary p-1">
+          <button
+            onClick={() => setInnerTab("active")}
+            className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
+              innerTab === "active"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            פעילים ({activeClients.length})
+          </button>
+          <button
+            onClick={() => setInnerTab("pending")}
+            className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
+              innerTab === "pending"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            בהמתנה
+            {pendingClients.length > 0 && (
+              <span
+                style={{
+                  marginRight: "6px",
+                  background: "#dc2626",
+                  color: "#fff",
+                  borderRadius: "9999px",
+                  fontSize: "10px",
+                  fontWeight: 700,
+                  padding: "1px 6px",
+                }}
+              >
+                {pendingClients.length}
+              </span>
+            )}
+          </button>
+        </div>
+      </div>
 
       <div className="overflow-x-auto rounded-lg border border-border bg-card shadow-card">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-secondary text-right text-xs font-semibold text-muted-foreground">
-              <th className="p-3">שם עסק</th>
-              <th className="p-3">מנוי</th>
-              <th className="p-3">תפוגה</th>
-              <th className="p-3">רו"ח משויך</th>
-              <th className="p-3">פעולות</th>
+              {innerTab === "active" ? (
+                <>
+                  <th className="p-3">שם עסק</th>
+                  <th className="p-3">מנוי</th>
+                  <th className="p-3">תפוגה</th>
+                  <th className="p-3">רו"ח משויך</th>
+                  <th className="p-3">פעולות</th>
+                </>
+              ) : (
+                <>
+                  <th className="p-3">שם עסק</th>
+                  <th className="p-3">Telegram Chat ID</th>
+                  <th className="p-3">שדות חסרים</th>
+                  <th className="p-3">נרשם</th>
+                  <th className="p-3">פעולות</th>
+                </>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -176,34 +233,91 @@ export default function AdminClientsTab() {
                   ))}
                 </tr>
               ))
-            ) : filtered.length === 0 ? (
-              <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">לא נמצאו לקוחות</td></tr>
+            ) : innerTab === "active" ? (
+              activeClients.length === 0 ? (
+                <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">לא נמצאו לקוחות</td></tr>
+              ) : (
+                activeClients.map((c) => (
+                  <tr key={c.id} className="border-b border-border transition-colors hover:bg-secondary/50">
+                    <td className="p-3 font-medium">{c.brand_name}</td>
+                    <td className="p-3">{c.plan_type}</td>
+                    <td className="p-3">
+                      <span className={isExpiringSoon(c.plan_expires_at) ? "rounded bg-accent/20 px-2 py-0.5 text-accent" : ""}>
+                        {formatDate(c.plan_expires_at)}
+                      </span>
+                    </td>
+                    <td className="p-3">{c.has_accountant ? "✓" : "—"}</td>
+                    <td className="p-3">
+                      <RowMenu
+                        client={c}
+                        onEdit={() => {
+                          setEditClient(c);
+                          setDrawerAccountant(c.accountant_id || "");
+                          const found = (accountants || []).find(a => a.id === c.accountant_id);
+                          setDrawerAccountantName(found?.name || "ללא");
+                        }}
+                        onDelete={() => deleteMutation.mutate(c.id)}
+                        onToggleActive={() => toggleActive.mutate({ id: c.id, is_active: !c.is_active })}
+                      />
+                    </td>
+                  </tr>
+                ))
+              )
             ) : (
-              filtered.map((c) => (
-                <tr key={c.id} className="border-b border-border transition-colors hover:bg-secondary/50">
-                  <td className="p-3 font-medium">{c.brand_name}</td>
-                  <td className="p-3">{c.plan_type}</td>
-                  <td className="p-3">
-                    <span className={isExpiringSoon(c.plan_expires_at) ? "rounded bg-accent/20 px-2 py-0.5 text-accent" : ""}>
-                      {formatDate(c.plan_expires_at)}
-                    </span>
-                  </td>
-                  <td className="p-3">{c.has_accountant ? "✓" : "—"}</td>
-                  <td className="p-3 space-x-2 space-x-reverse">
-                    <RowMenu
-                      client={c}
-                      onEdit={() => {
-                        setEditClient(c);
-                        setDrawerAccountant(c.accountant_id || "");
-                        const found = (accountants || []).find(a => a.id === c.accountant_id);
-                        setDrawerAccountantName(found?.name || "ללא");
+              pendingClients.length === 0 ? (
+                <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">אין לקוחות בהמתנה</td></tr>
+              ) : (
+                pendingClients.map((c) => {
+                  const age = getPendingAge(c.created_at);
+                  return (
+                    <tr
+                      key={c.id}
+                      className="border-b border-border transition-colors"
+                      style={{
+                        background: age === "danger" ? "#fef2f2" : age === "warning" ? "#fffbeb" : undefined,
                       }}
-                      onDelete={() => deleteMutation.mutate(c.id)}
-                      onToggleActive={() => toggleActive.mutate({ id: c.id, is_active: !c.is_active })}
-                    />
-                  </td>
-                </tr>
-              ))
+                    >
+                      <td className="p-3 font-medium">{c.brand_name || "—"}</td>
+                      <td className="p-3 text-xs" dir="ltr">{c.telegram_chat_id || "—"}</td>
+                      <td className="p-3">
+                        <div className="flex flex-wrap gap-1">
+                          {getMissingFields(c).map((f) => (
+                            <span
+                              key={f}
+                              style={{
+                                background: "#fef2f2",
+                                color: "#dc2626",
+                                borderRadius: "4px",
+                                fontSize: "11px",
+                                padding: "1px 6px",
+                                border: "1px solid #fecaca",
+                              }}
+                            >
+                              {f}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="p-3 text-xs text-muted-foreground">
+                        {new Date(c.created_at).toLocaleDateString("he-IL")}
+                      </td>
+                      <td className="p-3">
+                        <RowMenu
+                          client={c}
+                          onEdit={() => {
+                            setEditClient(c);
+                            setDrawerAccountant(c.accountant_id || "");
+                            const found = (accountants || []).find(a => a.id === c.accountant_id);
+                            setDrawerAccountantName(found?.name || "ללא");
+                          }}
+                          onDelete={() => deleteMutation.mutate(c.id)}
+                          onToggleActive={() => toggleActive.mutate({ id: c.id, is_active: !c.is_active })}
+                        />
+                      </td>
+                    </tr>
+                  );
+                })
+              )
             )}
           </tbody>
         </table>
@@ -298,6 +412,25 @@ export default function AdminClientsTab() {
     </div>
   );
 }
+
+const isPending = (c: ClientRow) =>
+  !c.user_id || !c.brand_name || !c.vat_number || !c.gemini_api_key;
+
+const getMissingFields = (c: ClientRow): string[] => {
+  const missing: string[] = [];
+  if (!c.user_id) missing.push("משתמש");
+  if (!c.brand_name) missing.push("שם עסק");
+  if (!c.vat_number) missing.push("ח.פ");
+  if (!c.gemini_api_key) missing.push("Gemini Key");
+  return missing;
+};
+
+const getPendingAge = (created_at: string): "normal" | "warning" | "danger" => {
+  const days = (Date.now() - new Date(created_at).getTime()) / 86400000;
+  if (days > 14) return "danger";
+  if (days > 5) return "warning";
+  return "normal";
+};
 
 function RowMenu({
   client,
