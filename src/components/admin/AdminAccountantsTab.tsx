@@ -47,6 +47,7 @@ const emptyAccountant: Omit<AccountantRow, "active_clients_count"> = {
   monthly_fee: 0,
   auto_renew: true,
   is_active: true,
+  user_id: null,
 };
 
 function RowMenu({
