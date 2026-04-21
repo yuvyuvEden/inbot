@@ -60,8 +60,24 @@ export function useUpdatePlan() {
         .eq("id", id);
       if (error) throw error;
 
-      if (applyToExisting && updates.monthly_price !== undefined) {
-        toast.info("המחיר עודכן — יחול על כל הלקוחות בחידוש הבא");
+      if (applyToExisting) {
+        // עדכן מחיר נעול לכל הלקוחות עם אותה חבילה
+        const { data: affectedClients } = await supabase
+          .from("clients")
+          .select("id")
+          .eq("plan_id", id);
+
+        if (affectedClients && affectedClients.length > 0) {
+          await supabase
+            .from("clients")
+            .update({
+              locked_monthly_price: Number(updates.monthly_price ?? 0),
+              locked_yearly_price: Number(updates.yearly_price ?? 0),
+            })
+            .eq("plan_id", id);
+
+          toast.success(`המחיר עודכן ל-${affectedClients.length} לקוחות ותיקים`);
+        }
       }
     },
     onSuccess: () => {

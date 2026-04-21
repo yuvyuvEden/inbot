@@ -238,6 +238,8 @@ export type Database = {
           known_domains: Json
           learned_words: Json
           legal_name: string | null
+          locked_monthly_price: number | null
+          locked_yearly_price: number | null
           lookback_rows: number
           max_distance: number
           max_logo_bytes: number
@@ -282,6 +284,8 @@ export type Database = {
           known_domains?: Json
           learned_words?: Json
           legal_name?: string | null
+          locked_monthly_price?: number | null
+          locked_yearly_price?: number | null
           lookback_rows?: number
           max_distance?: number
           max_logo_bytes?: number
@@ -326,6 +330,8 @@ export type Database = {
           known_domains?: Json
           learned_words?: Json
           legal_name?: string | null
+          locked_monthly_price?: number | null
+          locked_yearly_price?: number | null
           lookback_rows?: number
           max_distance?: number
           max_logo_bytes?: number

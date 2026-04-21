@@ -12,6 +12,7 @@ import { Toggle } from "@/components/shared/Toggle";
 import { useImpersonate } from "@/hooks/useImpersonate";
 import { UserCheck, Users } from "lucide-react";
 import { ClientUsersModal } from "@/components/admin/ClientUsersModal";
+import { ChangePlanModal } from "@/components/admin/ChangePlanModal";
 
 
 interface ClientRow {
@@ -51,6 +52,7 @@ export default function AdminClientsTab() {
   const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
   const [editingAccountantId, setEditingAccountantId] = useState<string | null>(null);
   const [usersModal, setUsersModal] = useState<any>(null);
+  const [planModal, setPlanModal] = useState<any>(null);
   const { impersonate, loading: impersonateLoading } = useImpersonate();
 
   const { data: clients, isLoading } = useQuery({
@@ -58,7 +60,7 @@ export default function AdminClientsTab() {
     queryFn: async () => {
       const { data: clientsData, error } = await supabase
         .from("clients")
-        .select("id, brand_name, legal_name, vat_number, plan_type, plan_expires_at, is_active, telegram_chat_id, user_id, gemini_api_key, created_at, plan_id, invoice_limit_override, extra_invoice_price, plans(name, invoice_limit, user_limit, monthly_price)")
+        .select("id, brand_name, legal_name, vat_number, plan_type, plan_expires_at, is_active, telegram_chat_id, user_id, gemini_api_key, created_at, plan_id, invoice_limit_override, extra_invoice_price, locked_monthly_price, locked_yearly_price, plans(id, name, invoice_limit, user_limit, monthly_price, yearly_price)")
         .order("created_at", { ascending: false });
       if (error) throw error;
 
@@ -255,6 +257,7 @@ export default function AdminClientsTab() {
                 <>
                   <th className="p-3">שם עסק</th>
                   <th className="p-3">מנוי</th>
+                  <th className="p-3">חבילה</th>
                   <th className="p-3">תפוגה</th>
                   <th className="p-3">רו"ח משויך</th>
                   <th className="p-3">פעולות</th>
@@ -274,14 +277,14 @@ export default function AdminClientsTab() {
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <tr key={i} className="border-b border-border">
-                  {Array.from({ length: 5 }).map((_, j) => (
+                  {Array.from({ length: 6 }).map((_, j) => (
                     <td key={j} className="p-3"><Skeleton className="h-4 w-20" /></td>
                   ))}
                 </tr>
               ))
             ) : innerTab === "active" ? (
               activeClients.length === 0 ? (
-                <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">לא נמצאו לקוחות</td></tr>
+                <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">לא נמצאו לקוחות</td></tr>
               ) : (
                 activeClients.map((c) => (
                   <tr key={c.id} className="border-b border-border transition-colors hover:bg-secondary/50">
@@ -325,6 +328,9 @@ export default function AdminClientsTab() {
                           {c.plan_type}
                         </span>
                       )}
+                    </td>
+                    <td className="p-3">
+                      {(c as any).plans?.name ?? c.plan_type ?? "—"}
                     </td>
                     <td className="p-3">
                       <span className={isExpiringSoon(c.plan_expires_at) ? "rounded bg-accent/20 px-2 py-0.5 text-accent" : ""}>
@@ -508,6 +514,34 @@ export default function AdminClientsTab() {
                 />
               </div>
 
+              {/* שדרוג חבילה */}
+              <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: "12px" }}>
+                <div style={{ fontSize: "13px", fontWeight: 600, color: "#1e3a5f", marginBottom: "8px", fontFamily: "Heebo, sans-serif" }}>
+                  חבילה נוכחית
+                </div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
+                  <div style={{ fontSize: "13px", color: "#1a202c", fontFamily: "Heebo, sans-serif" }}>
+                    {(editClient as any)?.plans?.name ?? editClient?.plan_type ?? "—"}
+                  </div>
+                  <button
+                    onClick={() => setPlanModal(editClient)}
+                    style={{
+                      padding: "5px 12px", borderRadius: "6px", fontSize: "12px",
+                      backgroundColor: "#e8941a", color: "#ffffff",
+                      border: "none", cursor: "pointer", fontFamily: "Heebo, sans-serif"
+                    }}
+                  >
+                    שנה חבילה
+                  </button>
+                </div>
+                {(editClient as any)?.locked_monthly_price != null && (
+                  <div style={{ fontSize: "11px", color: "#64748b", marginTop: "6px", fontFamily: "Heebo, sans-serif" }}>
+                    מחיר נעול: ₪{(editClient as any).locked_monthly_price}/חודש
+                    {" "}(החבילה עולה ₪{(editClient as any).plans?.monthly_price ?? 0})
+                  </div>
+                )}
+              </div>
+
               <label className="block space-y-1">
                 <span className="text-sm font-medium">Telegram Chat ID</span>
                 <Input
@@ -567,6 +601,17 @@ export default function AdminClientsTab() {
 
       {usersModal && (
         <ClientUsersModal client={usersModal} onClose={() => setUsersModal(null)} />
+      )}
+
+      {planModal && (
+        <ChangePlanModal
+          client={planModal}
+          onClose={() => setPlanModal(null)}
+          onSaved={() => {
+            setPlanModal(null);
+            qc.invalidateQueries({ queryKey: ["admin-clients"] });
+          }}
+        />
       )}
     </div>
   );

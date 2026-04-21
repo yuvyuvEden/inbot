@@ -23,10 +23,15 @@ export function calcAccountantBill(
 // חישוב סכום חיוב ללקוח ישיר
 export function calcClientBill(
   billingCycle: string,
-  monthlyPrice: number,
-  yearlyPrice: number
+  lockedMonthlyPrice: number | null,
+  lockedYearlyPrice: number | null,
+  planMonthlyPrice: number,
+  planYearlyPrice: number
 ) {
-  const amount = billingCycle === "yearly" ? yearlyPrice : monthlyPrice;
+  // השתמש במחיר נעול אם קיים, אחרת מחיר החבילה
+  const monthly = lockedMonthlyPrice ?? planMonthlyPrice;
+  const yearly = lockedYearlyPrice ?? planYearlyPrice;
+  const amount = billingCycle === "yearly" ? yearly : monthly;
   const vatAmount = Math.round(amount * VAT * 100) / 100;
   const totalWithVat = Math.round((amount + vatAmount) * 100) / 100;
   return { baseAmount: amount, vatAmount, totalWithVat };
