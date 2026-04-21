@@ -102,10 +102,10 @@ function getCatColor(cat: string | null) { return cat ? (CATEGORY_COLORS[cat] ||
 const PAGE_SIZE = 50;
 interface Invoice { id: string; invoice_date: string | null; vendor: string | null; invoice_number: string | null; total: number | null; vat_original: number | null; vat_deductible: number | null; category: string | null; document_type: string | null; status: string; drive_file_url: string | null; }
 
-interface Props { clientId?: string; hasAccountant?: boolean; showAccountantActions?: boolean; }
+interface Props { clientId?: string; hasAccountant?: boolean; showAccountantActions?: boolean; isReadOnly?: boolean; }
 
 /* ─── Component ─── */
-export default function InvoicesTab({ clientId, hasAccountant = false, showAccountantActions = false }: Props) {
+export default function InvoicesTab({ clientId, hasAccountant = false, showAccountantActions = false, isReadOnly = false }: Props) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
