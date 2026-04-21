@@ -132,8 +132,8 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
     enabled: !!clientId,
     queryFn: async () => {
       const { data, error } = await supabase.from("invoices")
-        .select("id, invoice_date, vendor, invoice_number, total, vat_original, vat_deductible, category, document_type, status, drive_file_url, archived_at, archived_by, updated_at")
-        .eq("client_id", clientId!).eq("is_archived", false)
+        .select("id, invoice_date, vendor, invoice_number, total, vat_original, vat_deductible, category, document_type, status, drive_file_url, archived_at, archived_by, updated_at, deleted_at")
+        .eq("client_id", clientId!).eq("is_archived", false).is("deleted_at", null)
         .order("invoice_date", { ascending: false });
       if (error) throw error;
       return (data || []) as Invoice[];
