@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import { optimisticUpdate, ConflictError } from "@/hooks/useOptimisticLock";
 
 const STATUS_OPTIONS = [
   { value: "", label: "סטטוס: הכל" },
@@ -100,7 +101,7 @@ function matchesQuickFilter(dateStr: string | null, qf: string): boolean {
 function getCatColor(cat: string | null) { return cat ? (CATEGORY_COLORS[cat] || DEFAULT_CAT_COLOR) : DEFAULT_CAT_COLOR; }
 
 const PAGE_SIZE = 50;
-interface Invoice { id: string; invoice_date: string | null; vendor: string | null; invoice_number: string | null; total: number | null; vat_original: number | null; vat_deductible: number | null; category: string | null; document_type: string | null; status: string; drive_file_url: string | null; }
+interface Invoice { id: string; invoice_date: string | null; vendor: string | null; invoice_number: string | null; total: number | null; vat_original: number | null; vat_deductible: number | null; category: string | null; document_type: string | null; status: string; drive_file_url: string | null; updated_at: string; }
 
 interface Props { clientId?: string; hasAccountant?: boolean; showAccountantActions?: boolean; isReadOnly?: boolean; }
 
@@ -131,7 +132,7 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
     enabled: !!clientId,
     queryFn: async () => {
       const { data, error } = await supabase.from("invoices")
-        .select("id, invoice_date, vendor, invoice_number, total, vat_original, vat_deductible, category, document_type, status, drive_file_url, archived_at, archived_by")
+        .select("id, invoice_date, vendor, invoice_number, total, vat_original, vat_deductible, category, document_type, status, drive_file_url, archived_at, archived_by, updated_at")
         .eq("client_id", clientId!).eq("is_archived", false)
         .order("invoice_date", { ascending: false });
       if (error) throw error;
@@ -172,15 +173,37 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
 
   const updateCategory = async () => {
     if (!editModal) return;
-    const { error } = await supabase.from("invoices").update({ category: editCatValue }).eq("id", editModal.id);
-    if (error) toast.error("שגיאה בעדכון קטגוריה"); else { toast.success("הקטגוריה עודכנה"); queryClient.invalidateQueries({ queryKey: ["all-invoices"] }); }
-    setEditModal(null);
+    try {
+      await optimisticUpdate("invoices", editModal.id, editModal.updated_at, { category: editCatValue });
+      toast.success("הקטגוריה עודכנה");
+      queryClient.invalidateQueries({ queryKey: ["all-invoices"] });
+      setEditModal(null);
+    } catch (e) {
+      if (e instanceof ConflictError) {
+        toast.error("החשבונית עודכנה על ידי משתמש אחר — מרענן נתונים");
+        queryClient.invalidateQueries({ queryKey: ["all-invoices"] });
+        setEditModal(null);
+      } else {
+        toast.error("שגיאה בעדכון קטגוריה");
+      }
+    }
   };
   const updateVendor = async () => {
     if (!editVendorModal) return;
-    const { error } = await supabase.from("invoices").update({ vendor: editVendorValue }).eq("id", editVendorModal.id);
-    if (error) toast.error("שגיאה בעדכון שם עסק"); else { toast.success("שם העסק עודכן"); queryClient.invalidateQueries({ queryKey: ["all-invoices"] }); }
-    setEditVendorModal(null);
+    try {
+      await optimisticUpdate("invoices", editVendorModal.id, editVendorModal.updated_at, { vendor: editVendorValue });
+      toast.success("שם העסק עודכן");
+      queryClient.invalidateQueries({ queryKey: ["all-invoices"] });
+      setEditVendorModal(null);
+    } catch (e) {
+      if (e instanceof ConflictError) {
+        toast.error("החשבונית עודכנה על ידי משתמש אחר — מרענן נתונים");
+        queryClient.invalidateQueries({ queryKey: ["all-invoices"] });
+        setEditVendorModal(null);
+      } else {
+        toast.error("שגיאה בעדכון שם עסק");
+      }
+    }
   };
   const deleteInvoice = async () => {
     if (!deleteModal) return;
@@ -199,34 +222,49 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
 
   const approveInvoice = async () => {
     if (!approveModal) return;
-    const { error } = await supabase.from("invoices").update({ status: "approved" }).eq("id", approveModal.id);
-    if (error) toast.error("שגיאה באישור חשבונית");
-    else { toast.success("החשבונית אושרה"); queryClient.invalidateQueries({ queryKey: ["all-invoices"] }); }
-    setApproveModal(null);
+    try {
+      await optimisticUpdate("invoices", approveModal.id, approveModal.updated_at, { status: "approved" });
+      toast.success("החשבונית אושרה");
+      queryClient.invalidateQueries({ queryKey: ["all-invoices"] });
+      setApproveModal(null);
+    } catch (e) {
+      if (e instanceof ConflictError) {
+        toast.error("החשבונית עודכנה על ידי משתמש אחר — מרענן נתונים");
+        queryClient.invalidateQueries({ queryKey: ["all-invoices"] });
+        setApproveModal(null);
+      } else {
+        toast.error("שגיאה באישור חשבונית");
+      }
+    }
   };
 
   const requestClarification = async () => {
     if (!clarifyModal || !clarifyText.trim()) return;
-    const { error: statusErr } = await supabase
-      .from("invoices")
-      .update({ status: "needs_clarification" })
-      .eq("id", clarifyModal.id);
-    if (statusErr) { toast.error("שגיאה בעדכון סטטוס"); return; }
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      await supabase.from("invoice_comments").insert({
-        invoice_id: clarifyModal.id,
-        author_id: user.id,
-        author_role: "accountant",
-        body: clarifyText.trim(),
-      });
+    try {
+      await optimisticUpdate("invoices", clarifyModal.id, clarifyModal.updated_at, { status: "needs_clarification" });
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from("invoice_comments").insert({
+          invoice_id: clarifyModal.id,
+          author_id: user.id,
+          author_role: "accountant",
+          body: clarifyText.trim(),
+        });
+      }
+      toast.success("בקשת הבהרה נשלחה");
+      queryClient.invalidateQueries({ queryKey: ["all-invoices"] });
+      setClarifyModal(null);
+      setClarifyText("");
+    } catch (e) {
+      if (e instanceof ConflictError) {
+        toast.error("החשבונית עודכנה על ידי משתמש אחר — מרענן נתונים");
+        queryClient.invalidateQueries({ queryKey: ["all-invoices"] });
+        setClarifyModal(null);
+        setClarifyText("");
+      } else {
+        toast.error("שגיאה בעדכון סטטוס");
+      }
     }
-
-    toast.success("בקשת הבהרה נשלחה");
-    queryClient.invalidateQueries({ queryKey: ["all-invoices"] });
-    setClarifyModal(null);
-    setClarifyText("");
   };
 
   const exportCSV = () => {
