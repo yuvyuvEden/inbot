@@ -1,6 +1,7 @@
 import { useAccountantKPIs, useClientInvoiceCounts } from "@/hooks/useAccountantData";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { Users, Clock, MessageSquare, Archive, Wallet } from "lucide-react";
 
 interface Props {
   clients: any[];
@@ -16,11 +17,36 @@ export function AccountantHomeTab({ clients, clientIds }: Props) {
   const fmt = (n: number) => "₪" + n.toLocaleString("he-IL", { maximumFractionDigits: 0 });
 
   const kpiCards = [
-    { label: "לקוחות פעילים", value: clients.filter((c: any) => c.is_active).length, color: "#1e3a5f" },
-    { label: "חשבוניות לבדיקה", value: kpis?.pendingReview ?? 0, color: "#dc2626" },
-    { label: "הבהרות פתוחות", value: kpis?.needsClarification ?? 0, color: "#d97706" },
-    { label: "בארכיון החודש", value: kpis?.archivedThisMonth ?? 0, color: "#16a34a" },
-    { label: "סה\"כ הוצאות החודש", value: fmt(kpis?.totalExpenses ?? 0), color: "#1e3a5f", isText: true },
+    {
+      label: "סה״כ לקוחות",
+      value: clients.filter((c: any) => c.is_active).length,
+      gradient: "linear-gradient(135deg, #1e3a5f 0%, #2d5a8e 100%)",
+      Icon: Users,
+    },
+    {
+      label: "לבדיקה",
+      value: kpis?.pendingReview ?? 0,
+      gradient: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+      Icon: Clock,
+    },
+    {
+      label: "הבהרות",
+      value: kpis?.needsClarification ?? 0,
+      gradient: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)",
+      Icon: MessageSquare,
+    },
+    {
+      label: "בארכיון החודש",
+      value: kpis?.archivedThisMonth ?? 0,
+      gradient: "linear-gradient(135deg, #64748b 0%, #475569 100%)",
+      Icon: Archive,
+    },
+    {
+      label: "סה״כ הוצאות החודש",
+      value: fmt(kpis?.totalExpenses ?? 0),
+      gradient: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+      Icon: Wallet,
+    },
   ];
 
   const displayedClients = filterUrgent
@@ -30,97 +56,254 @@ export function AccountantHomeTab({ clients, clientIds }: Props) {
       })
     : clients;
 
+  const chip = (label: string, count: number, kind: "orange" | "red" | "gray") => {
+    const active = count > 0 && kind !== "gray";
+    let bg = "#f1f5f9";
+    let color = "#64748b";
+    if (active && kind === "orange") {
+      bg = "#fef3e2";
+      color = "#d97706";
+    } else if (active && kind === "red") {
+      bg = "#fef2f2";
+      color = "#dc2626";
+    }
+    return (
+      <span
+        style={{
+          background: bg,
+          color,
+          fontSize: "12px",
+          fontWeight: active ? 700 : 500,
+          padding: "4px 10px",
+          borderRadius: "9999px",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {label} {count}
+      </span>
+    );
+  };
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+    <div
+      dir="rtl"
+      style={{ display: "flex", flexDirection: "column", gap: "24px", fontFamily: "Heebo, sans-serif" }}
+    >
       {/* KPI Cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "16px" }}>
-        {kpiCards.map((k, i) => (
-          <div
-            key={i}
-            style={{
-              backgroundColor: "#ffffff",
-              borderRadius: "12px",
-              padding: "18px",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
-              border: "1px solid #e2e8f0",
-            }}
-          >
-            <div style={{ fontSize: "12px", color: "#64748b", marginBottom: "8px" }}>{k.label}</div>
-            <div style={{ fontSize: k.isText ? "20px" : "28px", fontWeight: 700, color: k.color }}>
-              {kpisLoading ? "..." : k.value}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
+          gap: "16px",
+        }}
+      >
+        {kpiCards.map((k, i) => {
+          const Icon = k.Icon;
+          return (
+            <div
+              key={i}
+              style={{
+                position: "relative",
+                overflow: "hidden",
+                background: k.gradient,
+                borderRadius: "16px",
+                padding: "20px",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+                color: "#fff",
+                minHeight: "120px",
+              }}
+            >
+              <p style={{ margin: 0, fontSize: "13px", fontWeight: 500, opacity: 0.85 }}>
+                {k.label}
+              </p>
+              <p
+                style={{
+                  margin: "8px 0 0 0",
+                  fontSize: "28px",
+                  fontWeight: 900,
+                  lineHeight: 1.1,
+                  position: "relative",
+                  zIndex: 1,
+                }}
+              >
+                {kpisLoading ? "…" : k.value}
+              </p>
+              <Icon
+                size={64}
+                style={{
+                  position: "absolute",
+                  bottom: "-8px",
+                  left: "-8px",
+                  opacity: 0.15,
+                  pointerEvents: "none",
+                }}
+              />
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
-      {/* Clients Table */}
-      <div style={{ backgroundColor: "#ffffff", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", border: "1px solid #e2e8f0", overflow: "hidden" }}>
-        <div style={{ padding: "16px 20px", borderBottom: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h2 style={{ fontSize: "16px", fontWeight: 700, color: "#1e3a5f", margin: 0 }}>הלקוחות שלי</h2>
+      {/* Clients Section */}
+      <div>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "12px",
+          }}
+        >
+          <h2 style={{ fontSize: "16px", fontWeight: 700, color: "#1e3a5f", margin: 0 }}>
+            הלקוחות שלי
+          </h2>
           <button
-            onClick={() => setFilterUrgent(f => !f)}
+            onClick={() => setFilterUrgent((f) => !f)}
             style={{
-              padding: "6px 14px", borderRadius: "6px", fontSize: "13px", cursor: "pointer",
+              padding: "6px 14px",
+              borderRadius: "9999px",
+              fontSize: "13px",
+              cursor: "pointer",
               border: "1px solid #e8941a",
               backgroundColor: filterUrgent ? "#e8941a" : "transparent",
               color: filterUrgent ? "#ffffff" : "#e8941a",
               fontFamily: "Heebo, sans-serif",
+              fontWeight: 600,
+              transition: "all 0.15s",
             }}
           >
             {filterUrgent ? "הצג הכל" : "🔴 צריך טיפול"}
           </button>
         </div>
 
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
-            <thead>
-              <tr style={{ backgroundColor: "#f8fafc" }}>
-                {["שם עסק", "חודש נוכחי", "ממתין", "הבהרה", "ארכיון", "פעולה"].map(h => (
-                  <th key={h} style={{ padding: "12px", textAlign: "right", fontSize: "12px", fontWeight: 600, color: "#64748b", borderBottom: "1px solid #e2e8f0" }}>
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {displayedClients.length === 0 && (
-                <tr><td colSpan={6} style={{ padding: "32px", textAlign: "center", color: "#94a3b8" }}>אין לקוחות להצגה</td></tr>
-              )}
-              {displayedClients.map((c: any) => {
-                const cc = (counts as any)[c.id] ?? { monthlyTotal: 0, pending: 0, clarification: 0, archived: 0 };
-                return (
-                  <tr key={c.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                    <td style={{ padding: "12px", fontWeight: 500, color: "#1e3a5f" }}>{c.brand_name ?? "—"}</td>
-                    <td style={{ padding: "12px" }}>{"₪" + (cc.monthlyTotal ?? 0).toLocaleString("he-IL", { maximumFractionDigits: 0 })}</td>
-                    <td style={{ padding: "12px" }}>
-                      <span style={{ color: cc.pending > 0 ? "#dc2626" : "#64748b", fontWeight: cc.pending > 0 ? 700 : 400 }}>
-                        {cc.pending > 0 ? `🔴 ${cc.pending}` : "0"}
-                      </span>
-                    </td>
-                    <td style={{ padding: "12px" }}>
-                      <span style={{ color: cc.clarification > 0 ? "#d97706" : "#64748b", fontWeight: cc.clarification > 0 ? 700 : 400 }}>
-                        {cc.clarification > 0 ? `🟡 ${cc.clarification}` : "0"}
-                      </span>
-                    </td>
-                    <td style={{ padding: "12px" }}>{cc.archived}</td>
-                    <td style={{ padding: "12px" }}>
-                      <button
-                        onClick={() => navigate(`/accountant/client/${c.id}`)}
+        {displayedClients.length === 0 ? (
+          <div
+            style={{
+              background: "#ffffff",
+              border: "1px solid #e2e8f0",
+              borderRadius: "12px",
+              padding: "48px 20px",
+              textAlign: "center",
+              color: "#16a34a",
+              fontSize: "16px",
+              fontWeight: 600,
+            }}
+          >
+            <div style={{ fontSize: "36px", marginBottom: "8px" }}>✓</div>
+            כל הלקוחות מטופלים
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            {displayedClients.map((c: any) => {
+              const cc = (counts as any)[c.id] ?? {
+                monthlyTotal: 0,
+                pending: 0,
+                clarification: 0,
+                archived: 0,
+              };
+              let stripeColor = "#16a34a";
+              if (cc.pending > 0) stripeColor = "#dc2626";
+              else if (cc.clarification > 0) stripeColor = "#f59e0b";
+
+              return (
+                <div
+                  key={c.id}
+                  style={{
+                    background: "#ffffff",
+                    border: "1px solid #e2e8f0",
+                    borderRight: `3px solid ${stripeColor}`,
+                    borderRadius: "12px",
+                    padding: "14px 18px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "16px",
+                    transition: "background 0.15s",
+                    cursor: "default",
+                    flexWrap: "wrap",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "#f8fafc";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "#ffffff";
+                  }}
+                >
+                  {/* Right: name */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: "160px" }}>
+                    <span style={{ fontSize: "15px", fontWeight: 700, color: "#1e3a5f" }}>
+                      {c.brand_name ?? "—"}
+                    </span>
+                    {c.plan_type && (
+                      <span
                         style={{
-                          padding: "6px 14px", borderRadius: "6px", fontSize: "13px",
-                          backgroundColor: "#1e3a5f", color: "#ffffff",
-                          border: "none", cursor: "pointer", fontFamily: "Heebo, sans-serif",
+                          background: "#f0f4f8",
+                          color: "#64748b",
+                          fontSize: "10px",
+                          fontWeight: 600,
+                          padding: "2px 8px",
+                          borderRadius: "9999px",
+                          textTransform: "uppercase",
                         }}
                       >
-                        👁️ כניסה
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                        {c.plan_type}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Middle: chips */}
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "8px",
+                      flex: 1,
+                      flexWrap: "wrap",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {chip("ממתין", cc.pending, "orange")}
+                    {chip("הבהרה", cc.clarification, "red")}
+                    {chip("ארכיון", cc.archived, "gray")}
+                  </div>
+
+                  {/* Left: amount + button */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                    <span
+                      style={{
+                        fontSize: "14px",
+                        fontWeight: 700,
+                        color: cc.monthlyTotal > 0 ? "#16a34a" : "#94a3b8",
+                        fontVariantNumeric: "tabular-nums",
+                        minWidth: "90px",
+                        textAlign: "left",
+                      }}
+                    >
+                      {"₪" +
+                        (cc.monthlyTotal ?? 0).toLocaleString("he-IL", {
+                          maximumFractionDigits: 0,
+                        })}
+                    </span>
+                    <button
+                      onClick={() => navigate(`/accountant/client/${c.id}`)}
+                      style={{
+                        padding: "6px 14px",
+                        borderRadius: "8px",
+                        fontSize: "13px",
+                        fontWeight: 600,
+                        backgroundColor: "#1e3a5f",
+                        color: "#ffffff",
+                        border: "none",
+                        cursor: "pointer",
+                        fontFamily: "Heebo, sans-serif",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      כניסה ←
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
