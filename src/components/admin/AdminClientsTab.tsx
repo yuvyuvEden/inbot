@@ -12,6 +12,7 @@ import { Toggle } from "@/components/shared/Toggle";
 import { useImpersonate } from "@/hooks/useImpersonate";
 import { UserCheck, Users } from "lucide-react";
 import { ClientUsersModal } from "@/components/admin/ClientUsersModal";
+import { ChangePlanModal } from "@/components/admin/ChangePlanModal";
 
 
 interface ClientRow {
@@ -51,6 +52,7 @@ export default function AdminClientsTab() {
   const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
   const [editingAccountantId, setEditingAccountantId] = useState<string | null>(null);
   const [usersModal, setUsersModal] = useState<any>(null);
+  const [planModal, setPlanModal] = useState<any>(null);
   const { impersonate, loading: impersonateLoading } = useImpersonate();
 
   const { data: clients, isLoading } = useQuery({
@@ -58,7 +60,7 @@ export default function AdminClientsTab() {
     queryFn: async () => {
       const { data: clientsData, error } = await supabase
         .from("clients")
-        .select("id, brand_name, legal_name, vat_number, plan_type, plan_expires_at, is_active, telegram_chat_id, user_id, gemini_api_key, created_at, plan_id, invoice_limit_override, extra_invoice_price, plans(name, invoice_limit, user_limit, monthly_price)")
+        .select("id, brand_name, legal_name, vat_number, plan_type, plan_expires_at, is_active, telegram_chat_id, user_id, gemini_api_key, created_at, plan_id, invoice_limit_override, extra_invoice_price, locked_monthly_price, locked_yearly_price, plans(id, name, invoice_limit, user_limit, monthly_price, yearly_price)")
         .order("created_at", { ascending: false });
       if (error) throw error;
 
@@ -255,6 +257,7 @@ export default function AdminClientsTab() {
                 <>
                   <th className="p-3">שם עסק</th>
                   <th className="p-3">מנוי</th>
+                  <th className="p-3">חבילה</th>
                   <th className="p-3">תפוגה</th>
                   <th className="p-3">רו"ח משויך</th>
                   <th className="p-3">פעולות</th>
