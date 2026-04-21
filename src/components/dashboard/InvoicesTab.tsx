@@ -126,6 +126,7 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
   const [approveModal, setApproveModal] = useState<Invoice | null>(null);
   const [clarifyModal, setClarifyModal] = useState<Invoice | null>(null);
   const [clarifyText, setClarifyText] = useState("");
+  const [clarifyLoading, setClarifyLoading] = useState(false);
 
   const { data: invoices, isLoading } = useQuery({
     queryKey: ["all-invoices", clientId],
@@ -248,30 +249,38 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
 
   const requestClarification = async () => {
     if (!clarifyModal || !clarifyText.trim()) return;
+    setClarifyLoading(true);
     try {
-      await optimisticUpdate("invoices", clarifyModal.id, clarifyModal.updated_at, { status: "needs_clarification" });
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase.from("invoice_comments").insert({
-          invoice_id: clarifyModal.id,
-          author_id: user.id,
-          author_role: "accountant",
-          body: clarifyText.trim(),
-        });
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/accountant-send-email`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({
+            invoice_id: clarifyModal.id,
+            body: clarifyText.trim(),
+          }),
+        }
+      );
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "שגיאה בשליחה");
+
+      if (result.email_sent) {
+        toast.success("בקשת הבהרה נשלחה ומייל נמסר ללקוח");
+      } else {
+        toast.success("בקשת ההבהרה נשמרה (מייל לא נשלח — Resend לא מוגדר)");
       }
-      toast.success("בקשת הבהרה נשלחה");
       queryClient.invalidateQueries({ queryKey: ["all-invoices"] });
       setClarifyModal(null);
       setClarifyText("");
-    } catch (e) {
-      if (e instanceof ConflictError) {
-        toast.error("החשבונית עודכנה על ידי משתמש אחר — מרענן נתונים");
-        queryClient.invalidateQueries({ queryKey: ["all-invoices"] });
-        setClarifyModal(null);
-        setClarifyText("");
-      } else {
-        toast.error("שגיאה בעדכון סטטוס");
-      }
+    } catch (e: any) {
+      toast.error(e.message || "שגיאה בשליחת בקשת הבהרה");
+    } finally {
+      setClarifyLoading(false);
     }
   };
 
@@ -620,10 +629,10 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
             >ביטול</button>
             <button
               onClick={requestClarification}
-              disabled={!clarifyText.trim()}
+              disabled={!clarifyText.trim() || clarifyLoading}
               className="rounded-lg px-4 py-2 text-[13px] font-medium text-white transition-colors disabled:opacity-50"
               style={{ backgroundColor: "#e8941a" }}
-            >שלח בקשת הבהרה</button>
+            >{clarifyLoading ? "שולח..." : "שלח בקשת הבהרה"}</button>
           </div>
         </DialogContent>
       </Dialog>
