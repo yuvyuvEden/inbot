@@ -24,6 +24,9 @@ interface AccountantRow {
   is_active: boolean | null;
   user_id: string | null;
   active_clients_count: number;
+  base_client_count: number | null;
+  billing_day: number | null;
+  free_months: number | null;
 }
 
 const isExpiringSoon = (d: string | null) => {
@@ -48,6 +51,9 @@ const emptyAccountant: Omit<AccountantRow, "active_clients_count"> = {
   auto_renew: true,
   is_active: true,
   user_id: null,
+  base_client_count: 10,
+  billing_day: 1,
+  free_months: 1,
 };
 
 function RowMenu({
@@ -203,7 +209,7 @@ export default function AdminAccountantsTab() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("accountants")
-        .select("id, name, email, phone, plan_type, plan_expires_at, price_per_client, monthly_fee, auto_renew, is_active, user_id")
+        .select("id, name, email, phone, plan_type, plan_expires_at, price_per_client, monthly_fee, auto_renew, is_active, user_id, base_client_count, billing_day, free_months")
         .order("created_at", { ascending: false });
       if (error) throw error;
 
@@ -227,8 +233,12 @@ export default function AdminAccountantsTab() {
         plan_type: a.plan_type,
         plan_expires_at: a.plan_expires_at,
         price_per_client: a.price_per_client,
+        monthly_fee: a.monthly_fee,
         auto_renew: a.auto_renew,
         is_active: a.is_active,
+        base_client_count: a.base_client_count,
+        billing_day: a.billing_day,
+        free_months: a.free_months,
       };
       if (isNew) {
         const { data: { session } } = await supabase.auth.getSession();
@@ -434,6 +444,44 @@ export default function AdminAccountantsTab() {
                   onChange={(v) => setEditAcc({ ...editAcc, is_active: v })}
                 />
               </div>
+
+              {/* חבילת בסיס */}
+              <label className="block space-y-1">
+                <span className="text-sm font-medium">לקוחות בחבילת הבסיס</span>
+                <Input
+                  dir="ltr"
+                  type="number"
+                  min={0}
+                  value={editAcc.base_client_count ?? 10}
+                  onChange={(e) => setEditAcc({ ...editAcc, base_client_count: parseInt(e.target.value) || 0 })}
+                />
+              </label>
+
+              {/* יום חיוב */}
+              <label className="block space-y-1">
+                <span className="text-sm font-medium">יום חיוב בחודש (1–28)</span>
+                <Input
+                  dir="ltr"
+                  type="number"
+                  min={1}
+                  max={28}
+                  value={editAcc.billing_day ?? 1}
+                  onChange={(e) => setEditAcc({ ...editAcc, billing_day: Math.min(28, Math.max(1, parseInt(e.target.value) || 1)) })}
+                />
+              </label>
+
+              {/* חודשי חינם */}
+              <label className="block space-y-1">
+                <span className="text-sm font-medium">חודשי חינם שנותרו</span>
+                <Input
+                  dir="ltr"
+                  type="number"
+                  min={0}
+                  value={editAcc.free_months ?? 0}
+                  onChange={(e) => setEditAcc({ ...editAcc, free_months: parseInt(e.target.value) || 0 })}
+                />
+                <span style={{ color: '#94a3b8', fontSize: '11px' }}>0 = מחויב מהחודש הנוכחי</span>
+              </label>
 
               <button
                 onClick={() => {
