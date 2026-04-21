@@ -59,8 +59,11 @@ export type Database = {
       accountants: {
         Row: {
           auto_renew: boolean | null
+          base_client_count: number
+          billing_day: number
           created_at: string
           email: string
+          free_months: number
           id: string
           is_active: boolean | null
           monthly_fee: number | null
@@ -75,8 +78,11 @@ export type Database = {
         }
         Insert: {
           auto_renew?: boolean | null
+          base_client_count?: number
+          billing_day?: number
           created_at?: string
           email: string
+          free_months?: number
           id?: string
           is_active?: boolean | null
           monthly_fee?: number | null
@@ -91,8 +97,11 @@ export type Database = {
         }
         Update: {
           auto_renew?: boolean | null
+          base_client_count?: number
+          billing_day?: number
           created_at?: string
           email?: string
+          free_months?: number
           id?: string
           is_active?: boolean | null
           monthly_fee?: number | null
@@ -107,18 +116,81 @@ export type Database = {
         }
         Relationships: []
       }
+      billing_log: {
+        Row: {
+          base_amount: number
+          base_count: number | null
+          billing_day: number | null
+          billing_period: string
+          created_at: string
+          entity_id: string
+          entity_type: string
+          extra_amount: number
+          extra_count: number | null
+          id: string
+          notes: string | null
+          paid_at: string | null
+          payment_method: string | null
+          status: string
+          total_before_vat: number
+          total_with_vat: number
+          vat_amount: number
+        }
+        Insert: {
+          base_amount?: number
+          base_count?: number | null
+          billing_day?: number | null
+          billing_period: string
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          extra_amount?: number
+          extra_count?: number | null
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          payment_method?: string | null
+          status?: string
+          total_before_vat?: number
+          total_with_vat?: number
+          vat_amount?: number
+        }
+        Update: {
+          base_amount?: number
+          base_count?: number | null
+          billing_day?: number | null
+          billing_period?: string
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          extra_amount?: number
+          extra_count?: number | null
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          payment_method?: string | null
+          status?: string
+          total_before_vat?: number
+          total_with_vat?: number
+          vat_amount?: number
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           advanced_settings: Json | null
           ai_temperature: number
           alloc_threshold_after: number
           alloc_threshold_before: number
+          billing_cycle: string
+          billing_day: number
           brand_name: string
           business_nature: string | null
           created_at: string
           custom_categories: Json | null
           drive_folder_id: string | null
           fetch_domains: Json
+          free_months: number
           gemini_api_key: string | null
           id: string
           invoice_platforms: Json
@@ -129,6 +201,7 @@ export type Database = {
           lookback_rows: number
           max_distance: number
           max_logo_bytes: number
+          monthly_price: number
           owner_aliases: Json
           plan_expires_at: string | null
           plan_type: string
@@ -143,18 +216,22 @@ export type Database = {
           user_id: string | null
           vat_number: string | null
           vat_rate: number
+          yearly_price: number
         }
         Insert: {
           advanced_settings?: Json | null
           ai_temperature?: number
           alloc_threshold_after?: number
           alloc_threshold_before?: number
+          billing_cycle?: string
+          billing_day?: number
           brand_name: string
           business_nature?: string | null
           created_at?: string
           custom_categories?: Json | null
           drive_folder_id?: string | null
           fetch_domains?: Json
+          free_months?: number
           gemini_api_key?: string | null
           id?: string
           invoice_platforms?: Json
@@ -165,6 +242,7 @@ export type Database = {
           lookback_rows?: number
           max_distance?: number
           max_logo_bytes?: number
+          monthly_price?: number
           owner_aliases?: Json
           plan_expires_at?: string | null
           plan_type?: string
@@ -179,18 +257,22 @@ export type Database = {
           user_id?: string | null
           vat_number?: string | null
           vat_rate?: number
+          yearly_price?: number
         }
         Update: {
           advanced_settings?: Json | null
           ai_temperature?: number
           alloc_threshold_after?: number
           alloc_threshold_before?: number
+          billing_cycle?: string
+          billing_day?: number
           brand_name?: string
           business_nature?: string | null
           created_at?: string
           custom_categories?: Json | null
           drive_folder_id?: string | null
           fetch_domains?: Json
+          free_months?: number
           gemini_api_key?: string | null
           id?: string
           invoice_platforms?: Json
@@ -201,6 +283,7 @@ export type Database = {
           lookback_rows?: number
           max_distance?: number
           max_logo_bytes?: number
+          monthly_price?: number
           owner_aliases?: Json
           plan_expires_at?: string | null
           plan_type?: string
@@ -215,6 +298,7 @@ export type Database = {
           user_id?: string | null
           vat_number?: string | null
           vat_rate?: number
+          yearly_price?: number
         }
         Relationships: []
       }
