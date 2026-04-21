@@ -514,6 +514,34 @@ export default function AdminClientsTab() {
                 />
               </div>
 
+              {/* שדרוג חבילה */}
+              <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: "12px" }}>
+                <div style={{ fontSize: "13px", fontWeight: 600, color: "#1e3a5f", marginBottom: "8px", fontFamily: "Heebo, sans-serif" }}>
+                  חבילה נוכחית
+                </div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
+                  <div style={{ fontSize: "13px", color: "#1a202c", fontFamily: "Heebo, sans-serif" }}>
+                    {(editClient as any)?.plans?.name ?? editClient?.plan_type ?? "—"}
+                  </div>
+                  <button
+                    onClick={() => setPlanModal(editClient)}
+                    style={{
+                      padding: "5px 12px", borderRadius: "6px", fontSize: "12px",
+                      backgroundColor: "#e8941a", color: "#ffffff",
+                      border: "none", cursor: "pointer", fontFamily: "Heebo, sans-serif"
+                    }}
+                  >
+                    שנה חבילה
+                  </button>
+                </div>
+                {(editClient as any)?.locked_monthly_price != null && (
+                  <div style={{ fontSize: "11px", color: "#64748b", marginTop: "6px", fontFamily: "Heebo, sans-serif" }}>
+                    מחיר נעול: ₪{(editClient as any).locked_monthly_price}/חודש
+                    {" "}(החבילה עולה ₪{(editClient as any).plans?.monthly_price ?? 0})
+                  </div>
+                )}
+              </div>
+
               <label className="block space-y-1">
                 <span className="text-sm font-medium">Telegram Chat ID</span>
                 <Input
@@ -573,6 +601,17 @@ export default function AdminClientsTab() {
 
       {usersModal && (
         <ClientUsersModal client={usersModal} onClose={() => setUsersModal(null)} />
+      )}
+
+      {planModal && (
+        <ChangePlanModal
+          client={planModal}
+          onClose={() => setPlanModal(null)}
+          onSaved={() => {
+            setPlanModal(null);
+            qc.invalidateQueries({ queryKey: ["admin-clients"] });
+          }}
+        />
       )}
     </div>
   );
