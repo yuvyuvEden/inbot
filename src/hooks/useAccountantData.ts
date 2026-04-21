@@ -2,17 +2,25 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 // שליפת רשימת לקוחות המשויכים לרו"ח המחובר
-export function useMyClients() {
+export function useMyClients(overrideUserId?: string | null) {
   return useQuery({
-    queryKey: ["my-clients"],
+    queryKey: ["my-clients", overrideUserId],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("לא מחובר");
+      // קבע את ה-user_id — אם יש override (מצב אדמין) השתמש בו,
+      // אחרת השתמש במשתמש המחובר
+      let userId: string;
+      if (overrideUserId) {
+        userId = overrideUserId;
+      } else {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("לא מחובר");
+        userId = user.id;
+      }
 
       const { data: accountant, error: accErr } = await supabase
         .from("accountants")
         .select("id")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .single();
       if (accErr || !accountant) throw new Error("לא נמצא רואה חשבון");
 
@@ -29,7 +37,7 @@ export function useMyClients() {
         .is("unassigned_at", null);
 
       if (error) throw error;
-      return (data ?? []).map((row: any) => row.clients).filter(Boolean);
+      return data?.map((row: any) => row.clients).filter(Boolean) ?? [];
     },
   });
 }

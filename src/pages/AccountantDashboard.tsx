@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { AccountantHomeTab } from "@/components/accountant/AccountantHomeTab";
 import { AccountantClientsTab } from "@/components/accountant/AccountantClientsTab";
@@ -22,14 +24,17 @@ export default function AccountantDashboard() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("home");
-  const { data: clients = [] } = useMyClients();
-  const clientIds = (clients as any[]).map((c: any) => c.id);
-
-  const accountantName = session?.user?.user_metadata?.full_name ?? "רואה חשבון";
 
   const adminViewId = searchParams.get("admin_view");
   const isAdminView = userRole === "admin" && !!adminViewId;
   const adminViewName = sessionStorage.getItem("admin_view_name") ?? "";
+
+  const { data: clients = [] } = useMyClients(
+    isAdminView ? adminViewId : undefined
+  );
+  const clientIds = (clients as any[]).map((c: any) => c.id);
+
+  const accountantName = session?.user?.user_metadata?.full_name ?? "רואה חשבון";
 
   const exitAdminView = () => {
     sessionStorage.removeItem("admin_view_id");
