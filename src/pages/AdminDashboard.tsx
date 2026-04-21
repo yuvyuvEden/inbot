@@ -3,11 +3,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import AdminClientsTab from "@/components/admin/AdminClientsTab";
 import AdminAccountantsTab from "@/components/admin/AdminAccountantsTab";
 import AdminStatsTab from "@/components/admin/AdminStatsTab";
+import { AdminBillingTab } from "@/components/admin/AdminBillingTab";
 
 const tabs = [
   { key: "stats", label: "סטטיסטיקות" },
   { key: "accountants", label: "רואי חשבון" },
   { key: "clients", label: "לקוחות" },
+  { key: "billing", label: "💳 חיוב" },
 ] as const;
 
 type TabKey = (typeof tabs)[number]["key"];
@@ -16,7 +18,7 @@ const AdminDashboard = () => {
   const { signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<TabKey>(() => {
     const saved = localStorage.getItem("admin-active-tab");
-    const valid: TabKey[] = ["stats", "accountants", "clients"];
+    const valid: TabKey[] = ["stats", "accountants", "clients", "billing"];
     return valid.includes(saved as TabKey) ? (saved as TabKey) : "stats";
   });
 
@@ -66,6 +68,7 @@ const AdminDashboard = () => {
         {activeTab === "clients" && <AdminClientsTab />}
         {activeTab === "accountants" && <AdminAccountantsTab />}
         {activeTab === "stats" && <AdminStatsTab />}
+        {activeTab === "billing" && <AdminBillingTab />}
       </main>
     </div>
   );
