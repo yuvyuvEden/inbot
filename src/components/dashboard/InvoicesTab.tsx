@@ -207,8 +207,16 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
   };
   const deleteInvoice = async () => {
     if (!deleteModal) return;
-    const { error } = await supabase.from("invoices").delete().eq("id", deleteModal.id);
-    if (error) toast.error("שגיאה במחיקת חשבונית"); else { toast.success("החשבונית נמחקה"); queryClient.invalidateQueries({ queryKey: ["all-invoices"] }); }
+    const { error } = await supabase
+      .from("invoices")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", deleteModal.id);
+    if (error) {
+      toast.error("שגיאה במחיקת חשבונית");
+    } else {
+      toast.success("החשבונית נמחקה");
+      queryClient.invalidateQueries({ queryKey: ["all-invoices"] });
+    }
     setDeleteModal(null);
   };
 
