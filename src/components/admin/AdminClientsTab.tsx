@@ -396,6 +396,7 @@ export default function AdminClientsTab() {
                         onToggleActive={() => toggleActive.mutate({ id: c.id, is_active: !c.is_active })}
                         onImpersonate={() => impersonate(c.user_id, c.brand_name ?? c.legal_name ?? "לקוח", "/dashboard", c.id)}
                         impersonateLoading={false}
+                        onOpenUsers={() => setUsersModal(c)}
                       />
                     </td>
                   </tr>
@@ -452,6 +453,7 @@ export default function AdminClientsTab() {
                           onToggleActive={() => toggleActive.mutate({ id: c.id, is_active: !c.is_active })}
                           onImpersonate={() => impersonate(c.user_id, c.brand_name ?? c.legal_name ?? "לקוח", "/dashboard")}
                           impersonateLoading={impersonateLoading === c.user_id}
+                          onOpenUsers={() => setUsersModal(c)}
                         />
                       </td>
                     </tr>
@@ -562,6 +564,10 @@ export default function AdminClientsTab() {
           )}
         </SheetContent>
       </Sheet>
+
+      {usersModal && (
+        <ClientUsersModal client={usersModal} onClose={() => setUsersModal(null)} />
+      )}
     </div>
   );
 }
@@ -592,6 +598,7 @@ function RowMenu({
   onToggleActive,
   onImpersonate,
   impersonateLoading,
+  onOpenUsers,
 }: {
   client: ClientRow;
   onEdit: () => void;
@@ -599,6 +606,7 @@ function RowMenu({
   onToggleActive: () => void;
   onImpersonate: () => void;
   impersonateLoading: boolean;
+  onOpenUsers: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
