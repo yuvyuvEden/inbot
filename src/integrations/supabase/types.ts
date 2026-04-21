@@ -419,6 +419,8 @@ export type Database = {
       invoices: {
         Row: {
           allocation_number: string | null
+          archived_at: string | null
+          archived_by: string | null
           category: string | null
           client_id: string
           created_at: string
@@ -441,6 +443,8 @@ export type Database = {
         }
         Insert: {
           allocation_number?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           category?: string | null
           client_id: string
           created_at?: string
@@ -463,6 +467,8 @@ export type Database = {
         }
         Update: {
           allocation_number?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           category?: string | null
           client_id?: string
           created_at?: string
