@@ -69,6 +69,7 @@ export default function ExportTab() {
       .select("id,invoice_date,vendor,invoice_number,total,vat_original,vat_deductible,tax_deductible,category,document_type,allocation_number,drive_file_url")
       .eq("client_id", client.id)
       .eq("is_archived", false)
+      .is("deleted_at", null)
       .then(({ data, error }) => {
         if (error) { toast.error("שגיאה בטעינת חשבוניות"); console.error(error); }
         setAllInvoices((data as Invoice[]) || []);

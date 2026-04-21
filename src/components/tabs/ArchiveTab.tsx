@@ -17,6 +17,7 @@ export function ArchiveTab({ clientId }: Props) {
         .select("id, vendor, invoice_number, total, category, invoice_date, status")
         .eq("client_id", clientId)
         .eq("is_archived", true)
+        .is("deleted_at", null)
         .order("invoice_date", { ascending: false });
 
       if (error) throw error;
