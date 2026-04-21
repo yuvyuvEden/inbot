@@ -125,12 +125,16 @@ export type Database = {
           created_at: string
           entity_id: string
           entity_type: string
+          external_payment_id: string | null
           extra_amount: number
           extra_count: number | null
           id: string
+          invoice_pdf_url: string | null
           notes: string | null
           paid_at: string | null
           payment_method: string | null
+          payment_url: string | null
+          retry_count: number
           status: string
           total_before_vat: number
           total_with_vat: number
@@ -144,12 +148,16 @@ export type Database = {
           created_at?: string
           entity_id: string
           entity_type: string
+          external_payment_id?: string | null
           extra_amount?: number
           extra_count?: number | null
           id?: string
+          invoice_pdf_url?: string | null
           notes?: string | null
           paid_at?: string | null
           payment_method?: string | null
+          payment_url?: string | null
+          retry_count?: number
           status?: string
           total_before_vat?: number
           total_with_vat?: number
@@ -163,12 +171,16 @@ export type Database = {
           created_at?: string
           entity_id?: string
           entity_type?: string
+          external_payment_id?: string | null
           extra_amount?: number
           extra_count?: number | null
           id?: string
+          invoice_pdf_url?: string | null
           notes?: string | null
           paid_at?: string | null
           payment_method?: string | null
+          payment_url?: string | null
+          retry_count?: number
           status?: string
           total_before_vat?: number
           total_with_vat?: number
