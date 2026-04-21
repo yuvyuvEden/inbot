@@ -1,48 +1,32 @@
-import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 export function useImpersonate() {
-  const [loading, setLoading] = useState<string | null>(null);
+  const navigate = useNavigate();
 
-  const impersonate = async (
+  const impersonate = (
     target_user_id: string | null,
     target_name: string,
-    redirectPath: "/accountant" | "/dashboard"
+    redirectPath: "/accountant" | "/dashboard",
+    extra_id?: string  // client_id or accountant user_id
   ) => {
-    if (!target_user_id) {
-      toast.error("למשתמש זה אין חשבון פעיל");
+    if (!target_user_id && !extra_id) {
+      toast.error("המשתמש עדיין לא השלים הרשמה");
       return;
     }
-    setLoading(target_user_id);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("לא מחובר");
-
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-impersonate`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({ target_user_id, redirect_path: redirectPath }),
-        }
-      );
-
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "שגיאה לא ידועה");
-
-      window.open(json.action_link as string, "_blank");
-      toast.success(`נפתח טאב חדש כ-${target_name}`);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      toast.error(`שגיאה: ${message}`);
-    } finally {
-      setLoading(null);
-    }
+    const viewId = extra_id ?? target_user_id!;
+    sessionStorage.setItem("admin_view_id", viewId);
+    sessionStorage.setItem("admin_view_name", target_name);
+    sessionStorage.setItem("admin_view_path", redirectPath);
+    navigate(`${redirectPath}?admin_view=${viewId}`);
+    toast.success(`צופה כ-${target_name} — מצב קריאה בלבד`);
   };
 
-  return { impersonate, loading };
+  const exitImpersonate = () => {
+    sessionStorage.removeItem("admin_view_id");
+    sessionStorage.removeItem("admin_view_name");
+    sessionStorage.removeItem("admin_view_path");
+  };
+
+  return { impersonate, exitImpersonate, loading: null as string | null };
 }
