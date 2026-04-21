@@ -42,6 +42,21 @@ const formatDate = (d: string | null) => {
   return new Date(d).toLocaleDateString("he-IL");
 };
 
+const getPlanBadge = (plan: string): { bg: string; color: string; text: string } => {
+  switch (plan) {
+    case "pro":
+      return { bg: "#7c3aed", color: "#ffffff", text: "Pro" };
+    case "basic":
+      return { bg: "#1e3a5f", color: "#ffffff", text: "Basic" };
+    case "trial":
+      return { bg: "#f59e0b", color: "#ffffff", text: "ניסיון" };
+    case "free":
+      return { bg: "#f1f5f9", color: "#64748b", text: "חינם" };
+    default:
+      return { bg: "#f1f5f9", color: "#64748b", text: plan || "—" };
+  }
+};
+
 export default function AdminClientsTab() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
