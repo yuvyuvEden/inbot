@@ -277,14 +277,14 @@ export default function AdminClientsTab() {
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <tr key={i} className="border-b border-border">
-                  {Array.from({ length: 5 }).map((_, j) => (
+                  {Array.from({ length: 6 }).map((_, j) => (
                     <td key={j} className="p-3"><Skeleton className="h-4 w-20" /></td>
                   ))}
                 </tr>
               ))
             ) : innerTab === "active" ? (
               activeClients.length === 0 ? (
-                <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">לא נמצאו לקוחות</td></tr>
+                <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">לא נמצאו לקוחות</td></tr>
               ) : (
                 activeClients.map((c) => (
                   <tr key={c.id} className="border-b border-border transition-colors hover:bg-secondary/50">
@@ -328,6 +328,9 @@ export default function AdminClientsTab() {
                           {c.plan_type}
                         </span>
                       )}
+                    </td>
+                    <td className="p-3">
+                      {(c as any).plans?.name ?? c.plan_type ?? "—"}
                     </td>
                     <td className="p-3">
                       <span className={isExpiringSoon(c.plan_expires_at) ? "rounded bg-accent/20 px-2 py-0.5 text-accent" : ""}>
