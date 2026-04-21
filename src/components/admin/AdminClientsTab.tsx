@@ -201,39 +201,88 @@ export default function AdminClientsTab() {
   const activeClients = allFiltered.filter((c) => !isPending(c));
   const pendingClients = allFiltered.filter((c) => isPending(c));
 
+  const thStyle: React.CSSProperties = {
+    color: "#ffffff",
+    fontSize: "12px",
+    fontWeight: 600,
+    padding: "12px 16px",
+    textAlign: "right",
+  };
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-4 flex-wrap">
+    <div className="space-y-4" style={{ fontFamily: "Heebo, sans-serif" }}>
+      <div
+        style={{
+          background: "#ffffff",
+          border: "1px solid #e2e8f0",
+          borderRadius: "12px",
+          padding: "12px 16px",
+          marginBottom: "16px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: "12px",
+          flexWrap: "wrap",
+        }}
+      >
         <Input
           placeholder="חיפוש לפי שם עסק, שם חברה, ח.פ..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-sm"
         />
-        <div className="flex gap-1 rounded-lg bg-secondary p-1">
+        <div style={{ display: "flex", gap: "4px" }}>
           <button
             onClick={() => setInnerTab("active")}
-            className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
-              innerTab === "active"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
+            style={{
+              background: innerTab === "active" ? "#1e3a5f" : "transparent",
+              color: innerTab === "active" ? "#ffffff" : "#64748b",
+              borderRadius: "8px",
+              padding: "6px 16px",
+              fontSize: "13px",
+              fontWeight: 600,
+              border: "none",
+              cursor: "pointer",
+              fontFamily: "Heebo, sans-serif",
+              transition: "all 0.15s",
+            }}
+            onMouseEnter={(e) => {
+              if (innerTab !== "active") e.currentTarget.style.background = "#f0f4f8";
+            }}
+            onMouseLeave={(e) => {
+              if (innerTab !== "active") e.currentTarget.style.background = "transparent";
+            }}
           >
             פעילים ({activeClients.length})
           </button>
           <button
             onClick={() => setInnerTab("pending")}
-            className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
-              innerTab === "pending"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
+            style={{
+              background: innerTab === "pending" ? "#1e3a5f" : "transparent",
+              color: innerTab === "pending" ? "#ffffff" : "#64748b",
+              borderRadius: "8px",
+              padding: "6px 16px",
+              fontSize: "13px",
+              fontWeight: 600,
+              border: "none",
+              cursor: "pointer",
+              fontFamily: "Heebo, sans-serif",
+              transition: "all 0.15s",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+            }}
+            onMouseEnter={(e) => {
+              if (innerTab !== "pending") e.currentTarget.style.background = "#f0f4f8";
+            }}
+            onMouseLeave={(e) => {
+              if (innerTab !== "pending") e.currentTarget.style.background = "transparent";
+            }}
           >
             בהמתנה
             {pendingClients.length > 0 && (
               <span
                 style={{
-                  marginRight: "6px",
                   background: "#dc2626",
                   color: "#fff",
                   borderRadius: "9999px",
@@ -249,26 +298,34 @@ export default function AdminClientsTab() {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-border bg-card shadow-card">
+      <div
+        className="overflow-x-auto"
+        style={{
+          borderRadius: "12px",
+          border: "1px solid #e2e8f0",
+          background: "#ffffff",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
+        }}
+      >
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-border bg-secondary text-right text-xs font-semibold text-muted-foreground">
+            <tr style={{ background: "linear-gradient(to left, #1e3a5f, #2d5a8e)" }}>
               {innerTab === "active" ? (
                 <>
-                  <th className="p-3">שם עסק</th>
-                  <th className="p-3">מנוי</th>
-                  <th className="p-3">חבילה</th>
-                  <th className="p-3">תפוגה</th>
-                  <th className="p-3">רו"ח משויך</th>
-                  <th className="p-3">פעולות</th>
+                  <th style={thStyle}>שם עסק</th>
+                  <th style={thStyle}>מנוי</th>
+                  <th style={thStyle}>חבילה</th>
+                  <th style={thStyle}>תפוגה</th>
+                  <th style={thStyle}>רו"ח משויך</th>
+                  <th style={thStyle}>פעולות</th>
                 </>
               ) : (
                 <>
-                  <th className="p-3">שם עסק</th>
-                  <th className="p-3">Telegram Chat ID</th>
-                  <th className="p-3">שדות חסרים</th>
-                  <th className="p-3">נרשם</th>
-                  <th className="p-3">פעולות</th>
+                  <th style={thStyle}>שם עסק</th>
+                  <th style={thStyle}>Telegram Chat ID</th>
+                  <th style={thStyle}>שדות חסרים</th>
+                  <th style={thStyle}>נרשם</th>
+                  <th style={thStyle}>פעולות</th>
                 </>
               )}
             </tr>
