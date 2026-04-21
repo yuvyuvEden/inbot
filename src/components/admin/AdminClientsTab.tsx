@@ -10,7 +10,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Toggle } from "@/components/shared/Toggle";
 import { useImpersonate } from "@/hooks/useImpersonate";
-import { UserCheck } from "lucide-react";
+import { UserCheck, Users } from "lucide-react";
+import { ClientUsersModal } from "@/components/admin/ClientUsersModal";
 
 
 interface ClientRow {
@@ -49,6 +50,7 @@ export default function AdminClientsTab() {
   const [drawerAccountantName, setDrawerAccountantName] = useState("");
   const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
   const [editingAccountantId, setEditingAccountantId] = useState<string | null>(null);
+  const [usersModal, setUsersModal] = useState<any>(null);
   const { impersonate, loading: impersonateLoading } = useImpersonate();
 
   const { data: clients, isLoading } = useQuery({
@@ -56,7 +58,7 @@ export default function AdminClientsTab() {
     queryFn: async () => {
       const { data: clientsData, error } = await supabase
         .from("clients")
-        .select("id, brand_name, legal_name, vat_number, plan_type, plan_expires_at, is_active, telegram_chat_id, user_id, gemini_api_key, created_at")
+        .select("id, brand_name, legal_name, vat_number, plan_type, plan_expires_at, is_active, telegram_chat_id, user_id, gemini_api_key, created_at, plan_id, invoice_limit_override, extra_invoice_price, plans(name, invoice_limit, user_limit, monthly_price)")
         .order("created_at", { ascending: false });
       if (error) throw error;
 
