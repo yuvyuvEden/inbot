@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -17,7 +18,7 @@ import SettingsTab from "@/components/tabs/SettingsTab";
 import { AccountantTab } from "@/components/tabs/AccountantTab";
 import { ArchiveTab } from "@/components/tabs/ArchiveTab";
 import {
-  BarChart2, FileText, MessageSquare, Archive, Download, Bot, Settings, LogOut,
+  BarChart2, FileText, MessageSquare, Archive, Download, Bot, Settings, LogOut, ShieldAlert,
 } from "lucide-react";
 
 const LOGO_URL = "https://jkqpkbcdtbelgpuwncam.supabase.co/storage/v1/object/public/assets//LOGO.jpeg";
@@ -41,46 +42,117 @@ const TABS = [
 ] as const;
 
 export default function Dashboard() {
-  const { user, signOut } = useAuth();
-  const { data: client } = useClientRecord();
+  const { user, signOut, userRole } = useAuth();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const adminViewId = searchParams.get("admin_view");
+  const isAdminView = userRole === "admin" && !!adminViewId;
+  const adminViewName = sessionStorage.getItem("admin_view_name") ?? "";
+
+  const { data: clientRecord } = useClientRecord();
+  const { data: adminViewClient } = useQuery({
+    queryKey: ["admin-view-client", adminViewId],
+    enabled: isAdminView && !!adminViewId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("clients")
+        .select("id, brand_name")
+        .eq("id", adminViewId!)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const effectiveClientId = isAdminView ? adminViewId! : clientRecord?.id;
+
   const [activeTab, setActiveTab] = useState("dashboard");
   const [period, setPeriod] = useState("this_month");
-  const { data: kpis, isLoading: kpisLoading } = useInvoiceKPIs(client?.id, period);
-  const { data: prevKpis } = useInvoiceKPIsDelta(client?.id, period);
-  const { data: unreadCount } = useUnreadComments(client?.id);
-  const { data: timeline, isLoading: timelineLoading } = useExpenseTimeline(client?.id, period);
-  const { data: categories, isLoading: categoriesLoading } = useCategoryBreakdown(client?.id, period);
-  const { data: recentInvoices, isLoading: recentLoading } = useRecentInvoices(client?.id);
+  const { data: kpis, isLoading: kpisLoading } = useInvoiceKPIs(effectiveClientId, period);
+  const { data: prevKpis } = useInvoiceKPIsDelta(effectiveClientId, period);
+  const { data: unreadCount } = useUnreadComments(effectiveClientId);
+  const { data: timeline, isLoading: timelineLoading } = useExpenseTimeline(effectiveClientId, period);
+  const { data: categories, isLoading: categoriesLoading } = useCategoryBreakdown(effectiveClientId, period);
+  const { data: recentInvoices, isLoading: recentLoading } = useRecentInvoices(effectiveClientId);
 
   const { data: hasAccountant } = useQuery({
-    queryKey: ["has-accountant", client?.id],
-    enabled: !!client?.id,
+    queryKey: ["has-accountant", effectiveClientId],
+    enabled: !!effectiveClientId,
     queryFn: async () => {
       const { count } = await supabase
         .from("accountant_clients")
         .select("id", { count: "exact", head: true })
-        .eq("client_id", client!.id);
+        .eq("client_id", effectiveClientId!);
       return (count ?? 0) > 0;
     },
   });
 
+  const exitAdminView = () => {
+    sessionStorage.removeItem("admin_view_id");
+    sessionStorage.removeItem("admin_view_name");
+    sessionStorage.removeItem("admin_view_path");
+    navigate("/admin");
+  };
+
   return (
     <div dir="rtl" className="min-h-screen bg-background font-sans">
+      {/* Admin View Banner */}
+      {isAdminView && (
+        <div style={{
+          backgroundColor: "#fef3c7",
+          borderBottom: "2px solid #e8941a",
+          padding: "10px 24px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          fontFamily: "Heebo, sans-serif",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <ShieldAlert size={18} color="#b45309" />
+            <span style={{ color: "#854d0e", fontSize: "14px", fontWeight: 700 }}>
+              מצב תמיכה — צופה כ: {adminViewName || adminViewClient?.brand_name || ""}
+            </span>
+            <span style={{ color: "#92400e", fontSize: "12px" }}>
+              (קריאה בלבד — הפעולות מושבתות)
+            </span>
+          </div>
+          <button
+            onClick={exitAdminView}
+            style={{
+              padding: "6px 14px", borderRadius: "6px", fontSize: "13px",
+              backgroundColor: "#1e3a5f", color: "#ffffff",
+              border: "none", cursor: "pointer",
+              fontFamily: "Heebo, sans-serif",
+            }}
+          >
+            ← חזרה לאדמין
+          </button>
+        </div>
+      )}
+
       {/* Navbar */}
       <nav className="sticky top-0 z-50 flex h-[60px] items-center justify-between bg-primary px-4 shadow-md">
         <div className="flex items-center gap-2">
-          <img src={LOGO_URL} alt="INBOT" className="h-9 rounded" />
+          <img
+            src={LOGO_URL}
+            alt="INBOT"
+            className="h-9 rounded"
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            style={{ cursor: "pointer" }}
+          />
           <span className="text-[11px] text-white/40">v3.0</span>
         </div>
         <div className="flex items-center gap-3">
           <span className="text-[13px] text-white/80">{user?.email}</span>
-          <button
-            onClick={signOut}
-            className="flex items-center gap-1.5 rounded-lg border border-white/30 px-3 py-1.5 text-[12px] text-white transition-colors hover:bg-white/10"
-          >
-            <LogOut size={14} />
-            התנתק
-          </button>
+          {!isAdminView && (
+            <button
+              onClick={signOut}
+              className="flex items-center gap-1.5 rounded-lg border border-white/30 px-3 py-1.5 text-[12px] text-white transition-colors hover:bg-white/10"
+            >
+              <LogOut size={14} />
+              התנתק
+            </button>
+          )}
         </div>
       </nav>
 
@@ -157,11 +229,11 @@ export default function Dashboard() {
               </div>
             </div>
           ) : activeTab === "invoices" ? (
-            <InvoicesTab clientId={client?.id} hasAccountant={!!hasAccountant} />
+            <InvoicesTab clientId={effectiveClientId} hasAccountant={!!hasAccountant} isReadOnly={isAdminView} />
           ) : activeTab === "messages" ? (
-            client?.id ? <AccountantTab clientId={client.id} /> : null
+            effectiveClientId ? <AccountantTab clientId={effectiveClientId} /> : null
           ) : activeTab === "archive" ? (
-            client?.id ? <ArchiveTab clientId={client.id} /> : null
+            effectiveClientId ? <ArchiveTab clientId={effectiveClientId} /> : null
           ) : activeTab === "export" ? (
             <ExportTab />
           ) : activeTab === "ai" ? (

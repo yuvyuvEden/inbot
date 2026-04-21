@@ -27,7 +27,11 @@ const AdminDashboard = () => {
         <img
           src="https://jkqpkbcdtbelgpuwncam.supabase.co/storage/v1/object/public/assets//LOGO.jpeg"
           alt="INBOT"
-          style={{ height: '36px', borderRadius: '6px' }}
+          onClick={() => {
+            setActiveTab("stats");
+            localStorage.setItem("admin-active-tab", "stats");
+          }}
+          style={{ height: '36px', borderRadius: '6px', cursor: 'pointer' }}
         />
 
         <div className="flex gap-1 rounded-lg bg-secondary p-1">

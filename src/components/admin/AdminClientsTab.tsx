@@ -392,8 +392,8 @@ export default function AdminClientsTab() {
                         }}
                         onDelete={() => deleteMutation.mutate(c.id)}
                         onToggleActive={() => toggleActive.mutate({ id: c.id, is_active: !c.is_active })}
-                        onImpersonate={() => impersonate(c.user_id, c.brand_name ?? c.legal_name ?? "לקוח", "/dashboard")}
-                        impersonateLoading={impersonateLoading === c.user_id}
+                        onImpersonate={() => impersonate(c.user_id, c.brand_name ?? c.legal_name ?? "לקוח", "/dashboard", c.id)}
+                        impersonateLoading={false}
                       />
                     </td>
                   </tr>

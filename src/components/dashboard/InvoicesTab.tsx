@@ -102,10 +102,10 @@ function getCatColor(cat: string | null) { return cat ? (CATEGORY_COLORS[cat] ||
 const PAGE_SIZE = 50;
 interface Invoice { id: string; invoice_date: string | null; vendor: string | null; invoice_number: string | null; total: number | null; vat_original: number | null; vat_deductible: number | null; category: string | null; document_type: string | null; status: string; drive_file_url: string | null; }
 
-interface Props { clientId?: string; hasAccountant?: boolean; showAccountantActions?: boolean; }
+interface Props { clientId?: string; hasAccountant?: boolean; showAccountantActions?: boolean; isReadOnly?: boolean; }
 
 /* ─── Component ─── */
-export default function InvoicesTab({ clientId, hasAccountant = false, showAccountantActions = false }: Props) {
+export default function InvoicesTab({ clientId, hasAccountant = false, showAccountantActions = false, isReadOnly = false }: Props) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -244,21 +244,21 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
 
   const renderActions = (inv: Invoice, isAccountantView = false) => (
     <div className="flex items-center justify-center gap-1">
-      {isAccountantView && inv.status !== "approved" && (
+      {!isReadOnly && isAccountantView && inv.status !== "approved" && (
         <button onClick={() => setApproveModal(inv)} title="אשר"
           style={{ color: '#16a34a', background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '6px' }}
           onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#dcfce7')}
           onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
         ><CheckCircle size={16} /></button>
       )}
-      {isAccountantView && inv.status !== "needs_clarification" && (
+      {!isReadOnly && isAccountantView && inv.status !== "needs_clarification" && (
         <button onClick={() => { setClarifyModal(inv); setClarifyText(""); }} title="בקש הבהרה"
           style={{ color: '#e8941a', background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '6px' }}
           onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#fef3c7')}
           onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
         ><MessageSquare size={16} /></button>
       )}
-      {isAccountantView && (
+      {!isReadOnly && isAccountantView && (
         <button onClick={() => setArchiveModal(inv)} title="ארכב"
           style={{ color: '#64748b', background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '6px' }}
           onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#f1f5f9')}
@@ -274,16 +274,20 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
       ) : (
         <span style={{ color: '#dc2626', opacity: 0.3, padding: '6px', borderRadius: '6px' }}><ExternalLink size={16} /></span>
       )}
-      <button onClick={() => setEditPickerModal(inv)}
-        style={{ color: '#1e3a5f', background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '6px' }}
-        onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#f1f5f9')}
-        onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
-      ><Pencil size={16} /></button>
-      <button onClick={() => setDeleteModal(inv)}
-        style={{ color: '#dc2626', background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '6px' }}
-        onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#fee2e2')}
-        onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
-      ><Trash2 size={16} /></button>
+      {!isReadOnly && (
+        <button onClick={() => setEditPickerModal(inv)}
+          style={{ color: '#1e3a5f', background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '6px' }}
+          onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#f1f5f9')}
+          onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+        ><Pencil size={16} /></button>
+      )}
+      {!isReadOnly && (
+        <button onClick={() => setDeleteModal(inv)}
+          style={{ color: '#dc2626', background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '6px' }}
+          onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#fee2e2')}
+          onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+        ><Trash2 size={16} /></button>
+      )}
     </div>
   );
 

@@ -110,7 +110,8 @@ export default function AccountantClientView() {
           <img
             src="https://jkqpkbcdtbelgpuwncam.supabase.co/storage/v1/object/public/assets//LOGO.jpeg"
             alt="INBOT"
-            style={{ height: "36px", borderRadius: "4px" }}
+            onClick={() => navigate("/accountant")}
+            style={{ height: "36px", borderRadius: "4px", cursor: "pointer" }}
             onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
           />
           <span style={{ color: "#e8941a", fontSize: "13px", fontWeight: 600 }}>רו"ח</span>

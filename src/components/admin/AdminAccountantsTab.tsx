@@ -366,8 +366,8 @@ export default function AdminAccountantsTab() {
                           const payload = { ...a, is_active: !a.is_active };
                           saveMutation.mutate(payload);
                         }}
-                        onImpersonate={() => impersonate(a.user_id, a.name ?? a.email, "/accountant")}
-                        impersonateLoading={impersonateLoading === a.user_id}
+                        onImpersonate={() => impersonate(a.user_id, a.name ?? a.email, "/accountant", a.user_id ?? undefined)}
+                        impersonateLoading={false}
                       />
                     </td>
                   </tr>
