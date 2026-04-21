@@ -39,6 +39,18 @@ const formatDate = (d: string | null) => {
   return new Date(d).toLocaleDateString("he-IL");
 };
 
+const getAccountantPlanBadge = (plan: string | null): { bg: string; color: string; text: string } => {
+  switch (plan) {
+    case "accountant_monthly":
+      return { bg: "#1e3a5f", color: "#ffffff", text: "חודשי" };
+    case "accountant_yearly":
+    case "accountant_annual":
+      return { bg: "#7c3aed", color: "#ffffff", text: "שנתי" };
+    default:
+      return { bg: "#f1f5f9", color: "#64748b", text: plan || "—" };
+  }
+};
+
 const emptyAccountant: Omit<AccountantRow, "active_clients_count"> = {
   id: "",
   name: "",
