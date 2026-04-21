@@ -176,6 +176,44 @@ export type Database = {
         }
         Relationships: []
       }
+      client_users: {
+        Row: {
+          client_id: string
+          created_at: string
+          email: string | null
+          id: string
+          is_active: boolean
+          name: string
+          telegram_chat_id: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          telegram_chat_id?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          telegram_chat_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_users_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           advanced_settings: Json | null
@@ -189,10 +227,12 @@ export type Database = {
           created_at: string
           custom_categories: Json | null
           drive_folder_id: string | null
+          extra_invoice_price: number | null
           fetch_domains: Json
           free_months: number
           gemini_api_key: string | null
           id: string
+          invoice_limit_override: number | null
           invoice_platforms: Json
           is_active: boolean
           known_domains: Json
@@ -204,6 +244,7 @@ export type Database = {
           monthly_price: number
           owner_aliases: Json
           plan_expires_at: string | null
+          plan_id: string | null
           plan_type: string
           processed_ids: Json
           script_id: string | null
@@ -230,10 +271,12 @@ export type Database = {
           created_at?: string
           custom_categories?: Json | null
           drive_folder_id?: string | null
+          extra_invoice_price?: number | null
           fetch_domains?: Json
           free_months?: number
           gemini_api_key?: string | null
           id?: string
+          invoice_limit_override?: number | null
           invoice_platforms?: Json
           is_active?: boolean
           known_domains?: Json
@@ -245,6 +288,7 @@ export type Database = {
           monthly_price?: number
           owner_aliases?: Json
           plan_expires_at?: string | null
+          plan_id?: string | null
           plan_type?: string
           processed_ids?: Json
           script_id?: string | null
@@ -271,10 +315,12 @@ export type Database = {
           created_at?: string
           custom_categories?: Json | null
           drive_folder_id?: string | null
+          extra_invoice_price?: number | null
           fetch_domains?: Json
           free_months?: number
           gemini_api_key?: string | null
           id?: string
+          invoice_limit_override?: number | null
           invoice_platforms?: Json
           is_active?: boolean
           known_domains?: Json
@@ -286,6 +332,7 @@ export type Database = {
           monthly_price?: number
           owner_aliases?: Json
           plan_expires_at?: string | null
+          plan_id?: string | null
           plan_type?: string
           processed_ids?: Json
           script_id?: string | null
@@ -300,7 +347,15 @@ export type Database = {
           vat_rate?: number
           yearly_price?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "clients_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       invoice_comments: {
         Row: {
@@ -474,6 +529,80 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      plan_price_history: {
+        Row: {
+          apply_to_existing: boolean
+          changed_at: string
+          changed_by: string | null
+          id: string
+          monthly_price: number
+          plan_id: string
+          yearly_price: number
+        }
+        Insert: {
+          apply_to_existing?: boolean
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          monthly_price: number
+          plan_id: string
+          yearly_price: number
+        }
+        Update: {
+          apply_to_existing?: boolean
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          monthly_price?: number
+          plan_id?: string
+          yearly_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_price_history_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plans: {
+        Row: {
+          created_at: string
+          id: string
+          invoice_limit: number
+          is_active: boolean
+          monthly_price: number
+          name: string
+          trial_days: number
+          user_limit: number
+          yearly_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invoice_limit?: number
+          is_active?: boolean
+          monthly_price?: number
+          name: string
+          trial_days?: number
+          user_limit?: number
+          yearly_price?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invoice_limit?: number
+          is_active?: boolean
+          monthly_price?: number
+          name?: string
+          trial_days?: number
+          user_limit?: number
+          yearly_price?: number
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
