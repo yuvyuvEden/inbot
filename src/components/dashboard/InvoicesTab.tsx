@@ -126,6 +126,7 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
   const [approveModal, setApproveModal] = useState<Invoice | null>(null);
   const [clarifyModal, setClarifyModal] = useState<Invoice | null>(null);
   const [clarifyText, setClarifyText] = useState("");
+  const [clarifyLoading, setClarifyLoading] = useState(false);
 
   const { data: invoices, isLoading } = useQuery({
     queryKey: ["all-invoices", clientId],
