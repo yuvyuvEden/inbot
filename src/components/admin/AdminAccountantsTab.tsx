@@ -62,6 +62,7 @@ function RowMenu({
   onDelete,
   onToggleActive,
   onImpersonate,
+  onGoToBilling,
   impersonateLoading,
 }: {
   accountant: AccountantRow;
@@ -69,6 +70,7 @@ function RowMenu({
   onDelete: () => void;
   onToggleActive: () => void;
   onImpersonate: () => void;
+  onGoToBilling?: () => void;
   impersonateLoading: boolean;
 }) {
   const [open, setOpen] = useState(false);
@@ -160,6 +162,19 @@ function RowMenu({
           >
             {accountant.is_active ? "⏸️ השעה" : "▶️ הפעל"}
           </button>
+          <button
+            onClick={() => { onGoToBilling?.(); setOpen(false); }}
+            style={{
+              display: "block", width: "100%", textAlign: "right",
+              padding: "8px 14px", fontSize: "13px", background: "none",
+              border: "none", cursor: "pointer", color: "#1a202c",
+              fontFamily: "Heebo, sans-serif",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#f0f4f8")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+          >
+            💳 צפה בחיובים
+          </button>
           <div style={{ borderTop: "1px solid #e2e8f0", margin: "4px 0" }} />
           <button
             onClick={() => {
@@ -197,7 +212,11 @@ function RowMenu({
   );
 }
 
-export default function AdminAccountantsTab() {
+interface AdminAccountantsTabProps {
+  onGoToBilling?: (accountantId: string) => void;
+}
+
+export default function AdminAccountantsTab({ onGoToBilling }: AdminAccountantsTabProps = {}) {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [editAcc, setEditAcc] = useState<AccountantRow | null>(null);
@@ -377,6 +396,7 @@ export default function AdminAccountantsTab() {
                           saveMutation.mutate(payload);
                         }}
                         onImpersonate={() => impersonate(a.user_id, a.name ?? a.email, "/accountant", a.user_id ?? undefined)}
+                        onGoToBilling={() => onGoToBilling?.(a.id)}
                         impersonateLoading={false}
                       />
                     </td>
