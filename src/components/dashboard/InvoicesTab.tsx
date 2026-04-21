@@ -629,10 +629,10 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
             >ביטול</button>
             <button
               onClick={requestClarification}
-              disabled={!clarifyText.trim()}
+              disabled={!clarifyText.trim() || clarifyLoading}
               className="rounded-lg px-4 py-2 text-[13px] font-medium text-white transition-colors disabled:opacity-50"
               style={{ backgroundColor: "#e8941a" }}
-            >שלח בקשת הבהרה</button>
+            >{clarifyLoading ? "שולח..." : "שלח בקשת הבהרה"}</button>
           </div>
         </DialogContent>
       </Dialog>
