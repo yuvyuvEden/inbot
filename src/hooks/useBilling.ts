@@ -28,7 +28,6 @@ export function calcClientBill(
   planMonthlyPrice: number,
   planYearlyPrice: number
 ) {
-  // השתמש במחיר נעול אם קיים, אחרת מחיר החבילה
   const monthly = lockedMonthlyPrice ?? planMonthlyPrice;
   const yearly = lockedYearlyPrice ?? planYearlyPrice;
   const amount = billingCycle === "yearly" ? yearly : monthly;
@@ -57,12 +56,63 @@ export function useBillingLog(entityType?: string, entityId?: string) {
   });
 }
 
+// שליפת לוג עם שמות גורמים מצורפים
+export function useBillingLogWithNames(filters?: {
+  entityType?: string;
+  entityId?: string;
+  period?: string;
+  status?: string;
+  search?: string;
+}) {
+  return useQuery({
+    queryKey: ["billing-log-names", filters],
+    queryFn: async () => {
+      let q = supabase
+        .from("billing_log")
+        .select("*")
+        .order("billing_period", { ascending: false })
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (filters?.entityType) q = q.eq("entity_type", filters.entityType);
+      if (filters?.entityId) q = q.eq("entity_id", filters.entityId);
+      if (filters?.period) q = q.eq("billing_period", filters.period);
+      if (filters?.status) q = q.eq("status", filters.status);
+      const { data, error } = await q;
+      if (error) throw error;
+      const logs = data ?? [];
+
+      const accIds = [...new Set(logs.filter((l) => l.entity_type === "accountant").map((l) => l.entity_id))];
+      const clientIds = [...new Set(logs.filter((l) => l.entity_type !== "accountant").map((l) => l.entity_id))];
+
+      const [accRes, clientRes] = await Promise.all([
+        accIds.length
+          ? supabase.from("accountants").select("id, name, email").in("id", accIds)
+          : Promise.resolve({ data: [] as any[] }),
+        clientIds.length
+          ? supabase.from("clients").select("id, brand_name, legal_name").in("id", clientIds)
+          : Promise.resolve({ data: [] as any[] }),
+      ]);
+
+      const accMap = new Map((accRes.data ?? []).map((a: any) => [a.id, a.name ?? a.email]));
+      const clientMap = new Map((clientRes.data ?? []).map((c: any) => [c.id, c.brand_name ?? c.legal_name]));
+
+      return logs.map((l: any) => ({
+        ...l,
+        entity_name:
+          l.entity_type === "accountant"
+            ? accMap.get(l.entity_id) ?? "—"
+            : clientMap.get(l.entity_id) ?? "—",
+      }));
+    },
+  });
+}
+
 // סטטיסטיקות חיוב לאדמין
 export function useBillingStats() {
   return useQuery({
     queryKey: ["billing-stats"],
     queryFn: async () => {
-      const currentPeriod = new Date().toISOString().slice(0, 7); // YYYY-MM
+      const currentPeriod = new Date().toISOString().slice(0, 7);
 
       const { data, error } = await supabase
         .from("billing_log")
@@ -88,7 +138,7 @@ export function useBillingStats() {
   });
 }
 
-// יצירת רשומת חיוב ידנית
+// יצירת רשומת חיוב ידנית (עם בדיקת כפילות)
 export function useCreateBillingEntry() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -108,6 +158,16 @@ export function useCreateBillingEntry() {
       payment_method?: string;
       notes?: string;
     }) => {
+      // בדיקת כפילות
+      const { data: existing } = await supabase
+        .from("billing_log")
+        .select("id")
+        .eq("entity_type", entry.entity_type)
+        .eq("entity_id", entry.entity_id)
+        .eq("billing_period", entry.billing_period)
+        .maybeSingle();
+      if (existing) throw new Error("קיים כבר חיוב לתקופה זו עבור גורם זה");
+
       const { data, error } = await supabase
         .from("billing_log")
         .insert(entry)
@@ -118,6 +178,7 @@ export function useCreateBillingEntry() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["billing-log"] });
+      queryClient.invalidateQueries({ queryKey: ["billing-log-names"] });
       queryClient.invalidateQueries({ queryKey: ["billing-stats"] });
       toast.success("רשומת חיוב נוצרה");
     },
@@ -134,27 +195,70 @@ export function useUpdateBillingStatus() {
       status,
       payment_method,
       notes,
+      external_payment_id,
     }: {
       id: string;
       status: string;
       payment_method?: string;
       notes?: string;
+      external_payment_id?: string;
     }) => {
+      const updates: any = {
+        status,
+        payment_method,
+        notes,
+        paid_at: status === "paid" ? new Date().toISOString() : null,
+      };
+      if (external_payment_id !== undefined) {
+        updates.external_payment_id = external_payment_id;
+      }
+      const { error } = await supabase.from("billing_log").update(updates).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["billing-log"] });
+      queryClient.invalidateQueries({ queryKey: ["billing-log-names"] });
+      queryClient.invalidateQueries({ queryKey: ["billing-stats"] });
+      toast.success("סטטוס עודכן");
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+}
+
+// מחיקת רשומת חיוב
+export function useDeleteBillingEntry() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("billing_log").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["billing-log"] });
+      queryClient.invalidateQueries({ queryKey: ["billing-log-names"] });
+      queryClient.invalidateQueries({ queryKey: ["billing-stats"] });
+      toast.success("רשומת חיוב נמחקה");
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+}
+
+// ויתור על חיוב
+export function useWaiveBillingEntry() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, notes }: { id: string; notes?: string }) => {
       const { error } = await supabase
         .from("billing_log")
-        .update({
-          status,
-          payment_method,
-          notes,
-          paid_at: status === "paid" ? new Date().toISOString() : null,
-        })
+        .update({ status: "waived", payment_method: "free", notes: notes ?? null })
         .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["billing-log"] });
+      queryClient.invalidateQueries({ queryKey: ["billing-log-names"] });
       queryClient.invalidateQueries({ queryKey: ["billing-stats"] });
-      toast.success("סטטוס עודכן");
+      toast.success("חיוב סומן כפטור");
     },
     onError: (err: Error) => toast.error(err.message),
   });

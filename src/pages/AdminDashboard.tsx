@@ -5,13 +5,14 @@ import AdminAccountantsTab from "@/components/admin/AdminAccountantsTab";
 import AdminStatsTab from "@/components/admin/AdminStatsTab";
 import { AdminBillingTab } from "@/components/admin/AdminBillingTab";
 import { AdminPlansTab } from "@/components/admin/AdminPlansTab";
+import { BarChart2, Users, Building2, CreditCard, Package } from "lucide-react";
 
 const tabs = [
-  { key: "stats", label: "סטטיסטיקות" },
-  { key: "accountants", label: "רואי חשבון" },
-  { key: "clients", label: "לקוחות" },
-  { key: "billing", label: "💳 חיוב" },
-  { key: "plans", label: "📦 חבילות" },
+  { key: "stats", label: "סטטיסטיקות", icon: BarChart2 },
+  { key: "accountants", label: "רואי חשבון", icon: Users },
+  { key: "clients", label: "לקוחות", icon: Building2 },
+  { key: "billing", label: "חיוב", icon: CreditCard },
+  { key: "plans", label: "חבילות", icon: Package },
 ] as const;
 
 type TabKey = (typeof tabs)[number]["key"];
@@ -23,6 +24,13 @@ const AdminDashboard = () => {
     const valid: TabKey[] = ["stats", "accountants", "clients", "billing", "plans"];
     return valid.includes(saved as TabKey) ? (saved as TabKey) : "stats";
   });
+  const [billingFilterId, setBillingFilterId] = useState<string | undefined>(undefined);
+
+  const goToBilling = (accountantId: string) => {
+    setBillingFilterId(accountantId);
+    setActiveTab("billing");
+    localStorage.setItem("admin-active-tab", "billing");
+  };
 
   return (
     <div dir="rtl" lang="he" className="min-h-screen bg-background font-sans">
@@ -39,22 +47,27 @@ const AdminDashboard = () => {
         />
 
         <div className="flex gap-1 rounded-lg bg-secondary p-1">
-          {tabs.map((t) => (
-            <button
-              key={t.key}
-              onClick={() => {
-                setActiveTab(t.key);
-                localStorage.setItem("admin-active-tab", t.key);
-              }}
-              className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
-                activeTab === t.key
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
+          {tabs.map((t) => {
+            const Icon = t.icon;
+            return (
+              <button
+                key={t.key}
+                onClick={() => {
+                  setActiveTab(t.key);
+                  localStorage.setItem("admin-active-tab", t.key);
+                  if (t.key !== "billing") setBillingFilterId(undefined);
+                }}
+                className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
+                  activeTab === t.key
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Icon size={14} style={{ display: 'inline', marginLeft: '5px', verticalAlign: 'middle' }} />
+                {t.label}
+              </button>
+            );
+          })}
         </div>
 
         <button
@@ -68,9 +81,14 @@ const AdminDashboard = () => {
       {/* Content */}
       <main className="mx-auto max-w-7xl p-6">
         {activeTab === "clients" && <AdminClientsTab />}
-        {activeTab === "accountants" && <AdminAccountantsTab />}
+        {activeTab === "accountants" && <AdminAccountantsTab onGoToBilling={goToBilling} />}
         {activeTab === "stats" && <AdminStatsTab />}
-        {activeTab === "billing" && <AdminBillingTab />}
+        {activeTab === "billing" && (
+          <AdminBillingTab
+            initialAccountantId={billingFilterId}
+            onClearFilter={() => setBillingFilterId(undefined)}
+          />
+        )}
         {activeTab === "plans" && <AdminPlansTab />}
       </main>
     </div>
