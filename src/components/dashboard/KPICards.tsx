@@ -31,12 +31,29 @@ interface KPICardsProps {
 export default function KPICards({ kpis, prevKpis, isLoading }: KPICardsProps) {
   if (isLoading) {
     return (
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4">
+      <div
+        dir="rtl"
+        className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4"
+        style={{ fontFamily: "Heebo, sans-serif" }}
+      >
         {KPI_CARDS.map((c) => (
-          <div key={c.key} className="rounded-xl bg-card p-5 shadow-[0_4px_12px_rgba(0,0,0,.08)]" style={{ borderRight: `4px solid ${c.color}` }}>
-            <Skeleton className="mb-3 h-3 w-20" />
+          <div
+            key={c.key}
+            style={{
+              background: "#ffffff",
+              borderRadius: "16px",
+              borderTop: `4px solid ${c.color}`,
+              padding: "20px",
+              boxShadow: "0 4px 16px rgba(0,0,0,0.07)",
+              minHeight: "130px",
+            }}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="h-5 w-5 rounded" />
+            </div>
             <Skeleton className="mb-2 h-8 w-28" />
-            <Skeleton className="h-3 w-16" />
+            <Skeleton className="h-3 w-32" />
           </div>
         ))}
       </div>
@@ -47,7 +64,11 @@ export default function KPICards({ kpis, prevKpis, isLoading }: KPICardsProps) {
   const data: KPIs = kpis || { totalExpenses: 0, totalVat: 0, totalTax: 0, count: 0, noAllocation: 0 };
 
   return (
-    <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4">
+    <div
+      dir="rtl"
+      className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4"
+      style={{ fontFamily: "Heebo, sans-serif" }}
+    >
       {KPI_CARDS.map((card) => {
         const Icon = card.icon;
         const value = data[card.key as keyof KPIs] as number;
@@ -57,26 +78,88 @@ export default function KPICards({ kpis, prevKpis, isLoading }: KPICardsProps) {
         return (
           <div
             key={card.key}
-            className="relative overflow-hidden rounded-xl bg-card p-5 shadow-[0_4px_12px_rgba(0,0,0,.08)]"
-            style={{ borderRight: `4px solid ${card.color}` }}
+            style={{
+              background: "#ffffff",
+              borderRadius: "16px",
+              borderTop: `4px solid ${card.color}`,
+              padding: "20px",
+              boxShadow: "0 4px 16px rgba(0,0,0,0.07)",
+              transition: "transform 0.18s ease, box-shadow 0.18s ease",
+              cursor: "default",
+              minHeight: "130px",
+              display: "flex",
+              flexDirection: "column",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "scale(1.01)";
+              e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.10)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "scale(1)";
+              e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.07)";
+            }}
           >
-            <Icon className="absolute top-4 left-4 opacity-[0.12]" size={20} />
-            <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.5px] text-muted-foreground">
-              {card.label}
-            </p>
-            <p className="text-[28px] font-black text-foreground" style={{ fontVariantNumeric: "tabular-nums" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: "10px",
+              }}
+            >
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: "11px",
+                  fontWeight: 500,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                  color: "#64748b",
+                }}
+              >
+                {card.label}
+              </p>
+              <Icon size={20} style={{ color: card.color, opacity: 0.7 }} />
+            </div>
+
+            <p
+              style={{
+                margin: 0,
+                fontSize: "32px",
+                fontWeight: 900,
+                color: "#1a202c",
+                lineHeight: 1.1,
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
               {card.format ? formatCurrency(value) : value}
             </p>
-            {delta && delta.direction !== "flat" && (
-              <div className="mt-1 flex items-center gap-1">
-                {delta.direction === "up" ? (
-                  <TrendingUp size={14} className="text-[#16a34a]" />
-                ) : (
-                  <TrendingDown size={14} className="text-[#dc2626]" />
+
+            {delta && (
+              <div style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "6px" }}>
+                {delta.direction === "up" && (
+                  <>
+                    <TrendingUp size={14} style={{ color: "#16a34a" }} />
+                    <span style={{ fontSize: "12px", fontWeight: 600, color: "#16a34a" }}>
+                      ↑ {delta.pct.toFixed(1)}%
+                    </span>
+                    <span style={{ fontSize: "12px", color: "#64748b" }}>מהתקופה הקודמת</span>
+                  </>
                 )}
-                <span className="text-[12px] font-medium" style={{ color: delta.direction === "up" ? "#16a34a" : "#dc2626" }}>
-                  {delta.pct.toFixed(1)}%
-                </span>
+                {delta.direction === "down" && (
+                  <>
+                    <TrendingDown size={14} style={{ color: "#dc2626" }} />
+                    <span style={{ fontSize: "12px", fontWeight: 600, color: "#dc2626" }}>
+                      ↓ {delta.pct.toFixed(1)}%
+                    </span>
+                    <span style={{ fontSize: "12px", color: "#64748b" }}>מהתקופה הקודמת</span>
+                  </>
+                )}
+                {delta.direction === "flat" && (
+                  <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: 500 }}>
+                    ללא שינוי
+                  </span>
+                )}
               </div>
             )}
           </div>
