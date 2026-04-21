@@ -42,6 +42,21 @@ const formatDate = (d: string | null) => {
   return new Date(d).toLocaleDateString("he-IL");
 };
 
+const getPlanBadge = (plan: string): { bg: string; color: string; text: string } => {
+  switch (plan) {
+    case "pro":
+      return { bg: "#7c3aed", color: "#ffffff", text: "Pro" };
+    case "basic":
+      return { bg: "#1e3a5f", color: "#ffffff", text: "Basic" };
+    case "trial":
+      return { bg: "#f59e0b", color: "#ffffff", text: "ניסיון" };
+    case "free":
+      return { bg: "#f1f5f9", color: "#64748b", text: "חינם" };
+    default:
+      return { bg: "#f1f5f9", color: "#64748b", text: plan || "—" };
+  }
+};
+
 export default function AdminClientsTab() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
@@ -201,39 +216,88 @@ export default function AdminClientsTab() {
   const activeClients = allFiltered.filter((c) => !isPending(c));
   const pendingClients = allFiltered.filter((c) => isPending(c));
 
+  const thStyle: React.CSSProperties = {
+    color: "#ffffff",
+    fontSize: "12px",
+    fontWeight: 600,
+    padding: "12px 16px",
+    textAlign: "right",
+  };
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-4 flex-wrap">
+    <div className="space-y-4" style={{ fontFamily: "Heebo, sans-serif" }}>
+      <div
+        style={{
+          background: "#ffffff",
+          border: "1px solid #e2e8f0",
+          borderRadius: "12px",
+          padding: "12px 16px",
+          marginBottom: "16px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: "12px",
+          flexWrap: "wrap",
+        }}
+      >
         <Input
           placeholder="חיפוש לפי שם עסק, שם חברה, ח.פ..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-sm"
         />
-        <div className="flex gap-1 rounded-lg bg-secondary p-1">
+        <div style={{ display: "flex", gap: "4px" }}>
           <button
             onClick={() => setInnerTab("active")}
-            className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
-              innerTab === "active"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
+            style={{
+              background: innerTab === "active" ? "#1e3a5f" : "transparent",
+              color: innerTab === "active" ? "#ffffff" : "#64748b",
+              borderRadius: "8px",
+              padding: "6px 16px",
+              fontSize: "13px",
+              fontWeight: 600,
+              border: "none",
+              cursor: "pointer",
+              fontFamily: "Heebo, sans-serif",
+              transition: "all 0.15s",
+            }}
+            onMouseEnter={(e) => {
+              if (innerTab !== "active") e.currentTarget.style.background = "#f0f4f8";
+            }}
+            onMouseLeave={(e) => {
+              if (innerTab !== "active") e.currentTarget.style.background = "transparent";
+            }}
           >
             פעילים ({activeClients.length})
           </button>
           <button
             onClick={() => setInnerTab("pending")}
-            className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
-              innerTab === "pending"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
+            style={{
+              background: innerTab === "pending" ? "#1e3a5f" : "transparent",
+              color: innerTab === "pending" ? "#ffffff" : "#64748b",
+              borderRadius: "8px",
+              padding: "6px 16px",
+              fontSize: "13px",
+              fontWeight: 600,
+              border: "none",
+              cursor: "pointer",
+              fontFamily: "Heebo, sans-serif",
+              transition: "all 0.15s",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+            }}
+            onMouseEnter={(e) => {
+              if (innerTab !== "pending") e.currentTarget.style.background = "#f0f4f8";
+            }}
+            onMouseLeave={(e) => {
+              if (innerTab !== "pending") e.currentTarget.style.background = "transparent";
+            }}
           >
             בהמתנה
             {pendingClients.length > 0 && (
               <span
                 style={{
-                  marginRight: "6px",
                   background: "#dc2626",
                   color: "#fff",
                   borderRadius: "9999px",
@@ -249,26 +313,34 @@ export default function AdminClientsTab() {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-border bg-card shadow-card">
+      <div
+        className="overflow-x-auto"
+        style={{
+          borderRadius: "12px",
+          border: "1px solid #e2e8f0",
+          background: "#ffffff",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
+        }}
+      >
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-border bg-secondary text-right text-xs font-semibold text-muted-foreground">
+            <tr style={{ background: "linear-gradient(to left, #1e3a5f, #2d5a8e)" }}>
               {innerTab === "active" ? (
                 <>
-                  <th className="p-3">שם עסק</th>
-                  <th className="p-3">מנוי</th>
-                  <th className="p-3">חבילה</th>
-                  <th className="p-3">תפוגה</th>
-                  <th className="p-3">רו"ח משויך</th>
-                  <th className="p-3">פעולות</th>
+                  <th style={thStyle}>שם עסק</th>
+                  <th style={thStyle}>מנוי</th>
+                  <th style={thStyle}>חבילה</th>
+                  <th style={thStyle}>תפוגה</th>
+                  <th style={thStyle}>רו"ח משויך</th>
+                  <th style={thStyle}>פעולות</th>
                 </>
               ) : (
                 <>
-                  <th className="p-3">שם עסק</th>
-                  <th className="p-3">Telegram Chat ID</th>
-                  <th className="p-3">שדות חסרים</th>
-                  <th className="p-3">נרשם</th>
-                  <th className="p-3">פעולות</th>
+                  <th style={thStyle}>שם עסק</th>
+                  <th style={thStyle}>Telegram Chat ID</th>
+                  <th style={thStyle}>שדות חסרים</th>
+                  <th style={thStyle}>נרשם</th>
+                  <th style={thStyle}>פעולות</th>
                 </>
               )}
             </tr>
@@ -286,9 +358,25 @@ export default function AdminClientsTab() {
               activeClients.length === 0 ? (
                 <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">לא נמצאו לקוחות</td></tr>
               ) : (
-                activeClients.map((c) => (
-                  <tr key={c.id} className="border-b border-border transition-colors hover:bg-secondary/50">
-                    <td className="p-3 font-medium">{c.brand_name}</td>
+                activeClients.map((c) => {
+                  const stripeColor = !c.is_active
+                    ? "#94a3b8"
+                    : c.has_accountant
+                    ? "#16a34a"
+                    : "#e8941a";
+                  return (
+                  <tr
+                    key={c.id}
+                    style={{
+                      borderBottom: "1px solid #f1f5f9",
+                      borderRight: `3px solid ${stripeColor}`,
+                      background: "#ffffff",
+                      transition: "background 0.15s",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "#f8fafc")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "#ffffff")}
+                  >
+                    <td className="p-3 font-medium" style={{ color: "#1a202c" }}>{c.brand_name}</td>
                     <td className="p-3" onClick={() => setEditingPlanId(c.id)} style={{ cursor: "pointer" }}>
                       {editingPlanId === c.id ? (
                         <select
@@ -320,22 +408,48 @@ export default function AdminClientsTab() {
                           <option value="pro">pro</option>
                         </select>
                       ) : (
-                        <span style={{
-                          borderBottom: "1px dashed #94a3b8",
-                          paddingBottom: "1px",
-                          cursor: "pointer",
-                        }}>
-                          {c.plan_type}
-                        </span>
+                        (() => {
+                          const b = getPlanBadge(c.plan_type);
+                          return (
+                            <span
+                              style={{
+                                background: b.bg,
+                                color: b.color,
+                                borderRadius: "6px",
+                                padding: "2px 10px",
+                                fontSize: "11px",
+                                fontWeight: 700,
+                                display: "inline-block",
+                              }}
+                            >
+                              {b.text}
+                            </span>
+                          );
+                        })()
                       )}
                     </td>
-                    <td className="p-3">
+                    <td className="p-3" style={{ color: "#1a202c" }}>
                       {(c as any).plans?.name ?? c.plan_type ?? "—"}
                     </td>
                     <td className="p-3">
-                      <span className={isExpiringSoon(c.plan_expires_at) ? "rounded bg-accent/20 px-2 py-0.5 text-accent" : ""}>
-                        {formatDate(c.plan_expires_at)}
-                      </span>
+                      {isExpiringSoon(c.plan_expires_at) ? (
+                        <span
+                          style={{
+                            background: "#fef3c7",
+                            color: "#b45309",
+                            borderRadius: "6px",
+                            padding: "2px 8px",
+                            fontWeight: 600,
+                            fontSize: "12px",
+                          }}
+                        >
+                          ⚠️ {formatDate(c.plan_expires_at)}
+                        </span>
+                      ) : (
+                        <span style={{ color: "#64748b", fontSize: "13px" }}>
+                          {formatDate(c.plan_expires_at)}
+                        </span>
+                      )}
                     </td>
                     <td className="p-3" onClick={() => setEditingAccountantId(c.id)} style={{ cursor: "pointer" }}>
                       {editingAccountantId === c.id ? (
@@ -377,36 +491,36 @@ export default function AdminClientsTab() {
                             ))}
                           </datalist>
                         </div>
-                      ) : (
-                        <span style={{
-                          borderBottom: "1px dashed #94a3b8",
-                          paddingBottom: "1px",
-                          cursor: "pointer",
-                        }}>
-                          {c.has_accountant
-                            ? (accountants || []).find(a => a.id === c.accountant_id)?.name || "✓"
-                            : "—"}
+                      ) : c.has_accountant ? (
+                        <span style={{ display: "flex", alignItems: "center", gap: "6px", color: "#1a202c", fontSize: "13px" }}>
+                          <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#16a34a", flexShrink: 0 }} />
+                          {(accountants || []).find(a => a.id === c.accountant_id)?.name || "✓"}
                         </span>
+                      ) : (
+                        <span style={{ color: "#94a3b8" }}>—</span>
                       )}
                     </td>
                     <td className="p-3">
-                      <RowMenu
-                        client={c}
-                        onEdit={() => {
-                          setEditClient(c);
-                          setDrawerAccountant(c.accountant_id || "");
-                          const found = (accountants || []).find(a => a.id === c.accountant_id);
-                          setDrawerAccountantName(found?.name || "");
-                        }}
-                        onDelete={() => deleteMutation.mutate(c.id)}
-                        onToggleActive={() => toggleActive.mutate({ id: c.id, is_active: !c.is_active })}
-                        onImpersonate={() => impersonate(c.user_id, c.brand_name ?? c.legal_name ?? "לקוח", "/dashboard", c.id)}
-                        impersonateLoading={false}
-                        onOpenUsers={() => setUsersModal(c)}
-                      />
+                      <div title={c.is_active ? "פעיל" : "לא פעיל"} style={{ display: "inline-block" }}>
+                        <RowMenu
+                          client={c}
+                          onEdit={() => {
+                            setEditClient(c);
+                            setDrawerAccountant(c.accountant_id || "");
+                            const found = (accountants || []).find(a => a.id === c.accountant_id);
+                            setDrawerAccountantName(found?.name || "");
+                          }}
+                          onDelete={() => deleteMutation.mutate(c.id)}
+                          onToggleActive={() => toggleActive.mutate({ id: c.id, is_active: !c.is_active })}
+                          onImpersonate={() => impersonate(c.user_id, c.brand_name ?? c.legal_name ?? "לקוח", "/dashboard", c.id)}
+                          impersonateLoading={false}
+                          onOpenUsers={() => setUsersModal(c)}
+                        />
+                      </div>
                     </td>
                   </tr>
-                ))
+                  );
+                })
               )
             ) : (
               pendingClients.length === 0 ? (

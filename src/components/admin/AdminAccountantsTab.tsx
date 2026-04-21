@@ -39,6 +39,18 @@ const formatDate = (d: string | null) => {
   return new Date(d).toLocaleDateString("he-IL");
 };
 
+const getAccountantPlanBadge = (plan: string | null): { bg: string; color: string; text: string } => {
+  switch (plan) {
+    case "accountant_monthly":
+      return { bg: "#1e3a5f", color: "#ffffff", text: "חודשי" };
+    case "accountant_yearly":
+    case "accountant_annual":
+      return { bg: "#7c3aed", color: "#ffffff", text: "שנתי" };
+    default:
+      return { bg: "#f1f5f9", color: "#64748b", text: plan || "—" };
+  }
+};
+
 const emptyAccountant: Omit<AccountantRow, "active_clients_count"> = {
   id: "",
   name: "",
@@ -328,9 +340,30 @@ export default function AdminAccountantsTab({ onGoToBilling }: AdminAccountantsT
     setEditAcc({ ...emptyAccountant, active_clients_count: 0 } as AccountantRow);
   };
 
+  const thStyle: React.CSSProperties = {
+    color: "#ffffff",
+    fontSize: "12px",
+    fontWeight: 600,
+    padding: "12px 16px",
+    textAlign: "right",
+  };
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3">
+    <div className="space-y-4" style={{ fontFamily: "Heebo, sans-serif" }}>
+      <div
+        style={{
+          background: "#ffffff",
+          border: "1px solid #e2e8f0",
+          borderRadius: "12px",
+          padding: "12px 16px",
+          marginBottom: "16px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: "12px",
+          flexWrap: "wrap",
+        }}
+      >
         <Input
           placeholder="חיפוש לפי שם או מייל..."
           value={search}
@@ -339,24 +372,45 @@ export default function AdminAccountantsTab({ onGoToBilling }: AdminAccountantsT
         />
         <button
           onClick={openNew}
-          className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-accent-foreground hover:bg-accent/90"
+          style={{
+            background: "#e8941a",
+            color: "#ffffff",
+            borderRadius: "8px",
+            padding: "8px 18px",
+            fontSize: "14px",
+            fontWeight: 700,
+            border: "none",
+            cursor: "pointer",
+            fontFamily: "Heebo, sans-serif",
+            transition: "background 0.15s",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = "#d97706")}
+          onMouseLeave={(e) => (e.currentTarget.style.background = "#e8941a")}
         >
           + הוסף רו"ח
         </button>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-border bg-card shadow-card">
+      <div
+        className="overflow-x-auto"
+        style={{
+          borderRadius: "12px",
+          border: "1px solid #e2e8f0",
+          background: "#ffffff",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
+        }}
+      >
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-border bg-secondary text-right text-xs font-semibold text-muted-foreground">
-              <th className="p-3">שם</th>
-              <th className="p-3">מייל</th>
-              <th className="p-3">לקוחות פעילים</th>
-              <th className="p-3">מנוי</th>
-              <th className="p-3">מחיר/לקוח</th>
-              <th className="p-3">הכנסה חודשית</th>
-              <th className="p-3">תפוגה</th>
-              <th className="p-3">פעולות</th>
+            <tr style={{ background: "linear-gradient(to left, #1e3a5f, #2d5a8e)" }}>
+              <th style={thStyle}>שם</th>
+              <th style={thStyle}>מייל</th>
+              <th style={thStyle}>לקוחות פעילים</th>
+              <th style={thStyle}>מנוי</th>
+              <th style={thStyle}>מחיר/לקוח</th>
+              <th style={thStyle}>הכנסה חודשית</th>
+              <th style={thStyle}>תפוגה</th>
+              <th style={thStyle}>פעולות</th>
             </tr>
           </thead>
           <tbody>
@@ -373,18 +427,81 @@ export default function AdminAccountantsTab({ onGoToBilling }: AdminAccountantsT
             ) : (
               filtered.map((a) => {
                 const revenue = (a.price_per_client || 0) * a.active_clients_count;
+                const stripeColor = !a.is_active
+                  ? "#94a3b8"
+                  : a.active_clients_count > 0
+                  ? "#16a34a"
+                  : "#e8941a";
+                const planBadge = getAccountantPlanBadge(a.plan_type);
                 return (
-                  <tr key={a.id} className="border-b border-border transition-colors hover:bg-secondary/50">
-                    <td className="p-3 font-medium">{a.name}</td>
-                    <td className="p-3" dir="ltr">{a.email}</td>
-                    <td className="p-3">{a.active_clients_count}</td>
-                    <td className="p-3">{a.plan_type || "—"}</td>
-                    <td className="p-3">₪{a.price_per_client ?? 0}</td>
-                    <td className="p-3">₪{revenue}</td>
+                  <tr
+                    key={a.id}
+                    style={{
+                      borderBottom: "1px solid #f1f5f9",
+                      borderRight: `3px solid ${stripeColor}`,
+                      background: "#ffffff",
+                      transition: "background 0.15s",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "#f8fafc")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "#ffffff")}
+                  >
+                    <td className="p-3 font-medium" style={{ color: "#1a202c" }}>{a.name}</td>
+                    <td className="p-3" dir="ltr" style={{ color: "#64748b", fontSize: "13px" }}>{a.email}</td>
                     <td className="p-3">
-                      <span className={isExpiringSoon(a.plan_expires_at) ? "rounded bg-accent/20 px-2 py-0.5 text-accent" : ""}>
-                        {formatDate(a.plan_expires_at)}
+                      <span
+                        style={{
+                          background: a.active_clients_count > 0 ? "#e8f5e9" : "#f1f5f9",
+                          color: a.active_clients_count > 0 ? "#16a34a" : "#94a3b8",
+                          fontWeight: 700,
+                          borderRadius: "20px",
+                          padding: "2px 12px",
+                          fontSize: "13px",
+                          display: "inline-block",
+                        }}
+                      >
+                        {a.active_clients_count}
                       </span>
+                    </td>
+                    <td className="p-3">
+                      <span
+                        style={{
+                          background: planBadge.bg,
+                          color: planBadge.color,
+                          borderRadius: "6px",
+                          padding: "2px 10px",
+                          fontSize: "11px",
+                          fontWeight: 700,
+                          display: "inline-block",
+                        }}
+                      >
+                        {planBadge.text}
+                      </span>
+                    </td>
+                    <td className="p-3" style={{ color: "#1a202c" }}>₪{a.price_per_client ?? 0}</td>
+                    <td className="p-3">
+                      {revenue > 0 ? (
+                        <span style={{ color: "#16a34a", fontWeight: 700 }}>₪{revenue.toLocaleString("he-IL")}</span>
+                      ) : (
+                        <span style={{ color: "#94a3b8" }}>—</span>
+                      )}
+                    </td>
+                    <td className="p-3">
+                      {isExpiringSoon(a.plan_expires_at) ? (
+                        <span
+                          style={{
+                            background: "#fef3c7",
+                            color: "#b45309",
+                            borderRadius: "6px",
+                            padding: "2px 8px",
+                            fontWeight: 600,
+                            fontSize: "12px",
+                          }}
+                        >
+                          ⚠️ {formatDate(a.plan_expires_at)}
+                        </span>
+                      ) : (
+                        <span style={{ color: "#64748b", fontSize: "13px" }}>{formatDate(a.plan_expires_at)}</span>
+                      )}
                     </td>
                     <td className="p-3">
                       <RowMenu
