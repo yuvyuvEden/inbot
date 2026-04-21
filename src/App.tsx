@@ -31,7 +31,7 @@ const RoleRoute = ({ role, children }: { role: string; children: React.ReactNode
   }
   
   if (!session) return <Navigate to="/login" replace />;
-  if (userRole !== role) return <Navigate to="/dashboard" replace />;
+  if (userRole !== role && userRole !== "admin") return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 };
 
