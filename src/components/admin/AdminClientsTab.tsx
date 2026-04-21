@@ -10,7 +10,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Toggle } from "@/components/shared/Toggle";
 import { useImpersonate } from "@/hooks/useImpersonate";
-import { UserCheck } from "lucide-react";
+import { UserCheck, Users } from "lucide-react";
+import { ClientUsersModal } from "@/components/admin/ClientUsersModal";
 
 
 interface ClientRow {
@@ -49,6 +50,7 @@ export default function AdminClientsTab() {
   const [drawerAccountantName, setDrawerAccountantName] = useState("");
   const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
   const [editingAccountantId, setEditingAccountantId] = useState<string | null>(null);
+  const [usersModal, setUsersModal] = useState<any>(null);
   const { impersonate, loading: impersonateLoading } = useImpersonate();
 
   const { data: clients, isLoading } = useQuery({
@@ -56,7 +58,7 @@ export default function AdminClientsTab() {
     queryFn: async () => {
       const { data: clientsData, error } = await supabase
         .from("clients")
-        .select("id, brand_name, legal_name, vat_number, plan_type, plan_expires_at, is_active, telegram_chat_id, user_id, gemini_api_key, created_at")
+        .select("id, brand_name, legal_name, vat_number, plan_type, plan_expires_at, is_active, telegram_chat_id, user_id, gemini_api_key, created_at, plan_id, invoice_limit_override, extra_invoice_price, plans(name, invoice_limit, user_limit, monthly_price)")
         .order("created_at", { ascending: false });
       if (error) throw error;
 
@@ -394,6 +396,7 @@ export default function AdminClientsTab() {
                         onToggleActive={() => toggleActive.mutate({ id: c.id, is_active: !c.is_active })}
                         onImpersonate={() => impersonate(c.user_id, c.brand_name ?? c.legal_name ?? "לקוח", "/dashboard", c.id)}
                         impersonateLoading={false}
+                        onOpenUsers={() => setUsersModal(c)}
                       />
                     </td>
                   </tr>
@@ -450,6 +453,7 @@ export default function AdminClientsTab() {
                           onToggleActive={() => toggleActive.mutate({ id: c.id, is_active: !c.is_active })}
                           onImpersonate={() => impersonate(c.user_id, c.brand_name ?? c.legal_name ?? "לקוח", "/dashboard")}
                           impersonateLoading={impersonateLoading === c.user_id}
+                          onOpenUsers={() => setUsersModal(c)}
                         />
                       </td>
                     </tr>
@@ -560,6 +564,10 @@ export default function AdminClientsTab() {
           )}
         </SheetContent>
       </Sheet>
+
+      {usersModal && (
+        <ClientUsersModal client={usersModal} onClose={() => setUsersModal(null)} />
+      )}
     </div>
   );
 }
@@ -590,6 +598,7 @@ function RowMenu({
   onToggleActive,
   onImpersonate,
   impersonateLoading,
+  onOpenUsers,
 }: {
   client: ClientRow;
   onEdit: () => void;
@@ -597,6 +606,7 @@ function RowMenu({
   onToggleActive: () => void;
   onImpersonate: () => void;
   impersonateLoading: boolean;
+  onOpenUsers: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
@@ -661,6 +671,21 @@ function RowMenu({
           >
             <UserCheck size={16} />
             {impersonateLoading ? "מתחבר..." : "התחבר כלקוח"}
+          </button>
+          <button
+            onClick={() => { onOpenUsers(); setOpen(false); }}
+            style={{
+              display: "flex", alignItems: "center", gap: "10px",
+              width: "100%", padding: "10px 16px",
+              background: "none", border: "none", cursor: "pointer",
+              fontSize: "14px", color: "#1e3a5f",
+              fontFamily: "Heebo, sans-serif", textAlign: "right",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#f0f4f8")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+          >
+            <Users size={15} style={{ color: "#e8941a", flexShrink: 0 }} />
+            משתמשים ותוספות
           </button>
           <div style={{ borderTop: "1px solid #e2e8f0", margin: "4px 0" }} />
           <button
