@@ -24,16 +24,17 @@ export default function AccountantDashboard() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("home");
+
+  const adminViewId = searchParams.get("admin_view");
+  const isAdminView = userRole === "admin" && !!adminViewId;
+  const adminViewName = sessionStorage.getItem("admin_view_name") ?? "";
+
   const { data: clients = [] } = useMyClients(
     isAdminView ? adminViewId : undefined
   );
   const clientIds = (clients as any[]).map((c: any) => c.id);
 
   const accountantName = session?.user?.user_metadata?.full_name ?? "רואה חשבון";
-
-  const adminViewId = searchParams.get("admin_view");
-  const isAdminView = userRole === "admin" && !!adminViewId;
-  const adminViewName = sessionStorage.getItem("admin_view_name") ?? "";
 
   const exitAdminView = () => {
     sessionStorage.removeItem("admin_view_id");
