@@ -425,6 +425,7 @@ export type Database = {
           client_id: string
           created_at: string
           currency_note: string | null
+          deleted_at: string | null
           document_type: string | null
           drive_file_url: string | null
           id: string
@@ -449,6 +450,7 @@ export type Database = {
           client_id: string
           created_at?: string
           currency_note?: string | null
+          deleted_at?: string | null
           document_type?: string | null
           drive_file_url?: string | null
           id?: string
@@ -473,6 +475,7 @@ export type Database = {
           client_id?: string
           created_at?: string
           currency_note?: string | null
+          deleted_at?: string | null
           document_type?: string | null
           drive_file_url?: string | null
           id?: string
