@@ -105,39 +105,60 @@ export function AccountantHomeTab({ clients, clientIds }: Props) {
               style={{
                 position: "relative",
                 overflow: "hidden",
-                background: k.gradient,
                 borderRadius: "16px",
                 padding: "20px",
+                background: k.gradient,
                 boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
-                color: "#fff",
+                color: "#ffffff",
                 minHeight: "120px",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
               }}
             >
-              <p style={{ margin: 0, fontSize: "13px", fontWeight: 500, opacity: 0.85 }}>
-                {k.label}
-              </p>
-              <p
-                style={{
-                  margin: "8px 0 0 0",
-                  fontSize: "28px",
-                  fontWeight: 900,
-                  lineHeight: 1.1,
-                  position: "relative",
-                  zIndex: 1,
-                }}
-              >
-                {kpisLoading ? "…" : k.value}
-              </p>
+              {/* Background icon — large, faded */}
               <Icon
                 size={64}
                 style={{
                   position: "absolute",
                   bottom: "-8px",
                   left: "-8px",
-                  opacity: 0.15,
+                  opacity: 0.12,
+                  color: "#ffffff",
                   pointerEvents: "none",
                 }}
               />
+
+              {/* Top row: label + small icon */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", position: "relative", zIndex: 1 }}>
+                <Icon size={18} style={{ opacity: 0.8, color: "#ffffff", flexShrink: 0 }} />
+                <p style={{
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  color: "rgba(255,255,255,0.85)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                  margin: 0,
+                  textAlign: "right",
+                }}>
+                  {k.label}
+                </p>
+              </div>
+
+              {/* Value */}
+              <p style={{
+                fontSize: "30px",
+                fontWeight: 900,
+                color: "#ffffff",
+                margin: 0,
+                fontVariantNumeric: "tabular-nums",
+                textAlign: "right",
+                position: "relative",
+                zIndex: 1,
+                lineHeight: 1.1,
+              }}>
+                {kpisLoading ? "…" : k.value}
+              </p>
             </div>
           );
         })}

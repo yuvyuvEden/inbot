@@ -2,11 +2,41 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { TrendingUp, TrendingDown, Wallet, Landmark, Receipt, FileWarning, Hash } from "lucide-react";
 
 const KPI_CARDS = [
-  { key: "totalExpenses", label: "סה״כ הוצאות", color: "#1e3a5f", format: true, icon: Wallet },
-  { key: "totalVat", label: "מע״מ לקיזוז", color: "#16a34a", format: true, icon: Landmark },
-  { key: "totalTax", label: "הוצאה מוכרת מס", color: "#7c3aed", format: true, icon: Receipt },
-  { key: "count", label: "חשבוניות", color: "#e8941a", format: false, icon: Hash },
-  { key: "noAllocation", label: "ללא הקצאה", color: "#dc2626", format: false, icon: FileWarning },
+  {
+    key: "totalExpenses",
+    label: "סה״כ הוצאות",
+    gradient: "linear-gradient(135deg, #1e3a5f 0%, #2d5a8e 100%)",
+    format: true,
+    icon: Wallet,
+  },
+  {
+    key: "totalVat",
+    label: "מע״מ לקיזוז",
+    gradient: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+    format: true,
+    icon: Landmark,
+  },
+  {
+    key: "totalTax",
+    label: "הוצאה מוכרת",
+    gradient: "linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)",
+    format: true,
+    icon: Receipt,
+  },
+  {
+    key: "count",
+    label: "חשבוניות",
+    gradient: "linear-gradient(135deg, #e8941a 0%, #c2770f 100%)",
+    format: false,
+    icon: Hash,
+  },
+  {
+    key: "noAllocation",
+    label: "ללא הקצאה",
+    gradient: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)",
+    format: false,
+    icon: FileWarning,
+  },
 ] as const;
 
 function formatCurrency(n: number) {
@@ -40,20 +70,22 @@ export default function KPICards({ kpis, prevKpis, isLoading }: KPICardsProps) {
           <div
             key={c.key}
             style={{
-              background: "#ffffff",
               borderRadius: "16px",
-              borderTop: `4px solid ${c.color}`,
+              height: "120px",
               padding: "20px",
-              boxShadow: "0 4px 16px rgba(0,0,0,0.07)",
-              minHeight: "130px",
+              background: "linear-gradient(135deg, #e2e8f0, #f1f5f9)",
+              boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
             }}
           >
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-4 w-4 rounded" />
               <Skeleton className="h-3 w-20" />
-              <Skeleton className="h-5 w-5 rounded" />
             </div>
-            <Skeleton className="mb-2 h-8 w-28" />
-            <Skeleton className="h-3 w-32" />
+            <Skeleton className="h-7 w-28 self-end" />
+            <Skeleton className="h-3 w-32 self-end" />
           </div>
         ))}
       </div>
@@ -79,87 +111,73 @@ export default function KPICards({ kpis, prevKpis, isLoading }: KPICardsProps) {
           <div
             key={card.key}
             style={{
-              background: "#ffffff",
+              position: "relative",
+              overflow: "hidden",
               borderRadius: "16px",
-              borderTop: `4px solid ${card.color}`,
               padding: "20px",
-              boxShadow: "0 4px 16px rgba(0,0,0,0.07)",
-              transition: "transform 0.18s ease, box-shadow 0.18s ease",
-              cursor: "default",
-              minHeight: "130px",
+              background: card.gradient,
+              boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+              color: "#ffffff",
+              minHeight: "120px",
               display: "flex",
               flexDirection: "column",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "scale(1.01)";
-              e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.10)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "scale(1)";
-              e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.07)";
+              justifyContent: "space-between",
             }}
           >
-            <div
+            {/* Background icon — large, faded */}
+            <Icon
+              size={64}
               style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: "10px",
+                position: "absolute",
+                bottom: "-8px",
+                left: "-8px",
+                opacity: 0.12,
+                color: "#ffffff",
+                pointerEvents: "none",
               }}
-            >
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: "11px",
-                  fontWeight: 500,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.5px",
-                  color: "#64748b",
-                }}
-              >
+            />
+
+            {/* Top row: label + small icon */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", position: "relative", zIndex: 1 }}>
+              <Icon size={18} style={{ opacity: 0.8, color: "#ffffff", flexShrink: 0 }} />
+              <p style={{
+                fontSize: "11px",
+                fontWeight: 600,
+                color: "rgba(255,255,255,0.85)",
+                textTransform: "uppercase",
+                letterSpacing: "0.5px",
+                margin: 0,
+                textAlign: "right",
+              }}>
                 {card.label}
               </p>
-              <Icon size={20} style={{ color: card.color, opacity: 0.7 }} />
             </div>
 
-            <p
-              style={{
-                margin: 0,
-                fontSize: "32px",
-                fontWeight: 900,
-                color: "#1a202c",
-                lineHeight: 1.1,
-                fontVariantNumeric: "tabular-nums",
-              }}
-            >
+            {/* Value */}
+            <p style={{
+              fontSize: "30px",
+              fontWeight: 900,
+              color: "#ffffff",
+              margin: 0,
+              fontVariantNumeric: "tabular-nums",
+              textAlign: "right",
+              position: "relative",
+              zIndex: 1,
+              lineHeight: 1.1,
+            }}>
               {card.format ? formatCurrency(value) : value}
             </p>
 
-            {delta && (
-              <div style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "6px" }}>
-                {delta.direction === "up" && (
-                  <>
-                    <TrendingUp size={14} style={{ color: "#16a34a" }} />
-                    <span style={{ fontSize: "12px", fontWeight: 600, color: "#16a34a" }}>
-                      ↑ {delta.pct.toFixed(1)}%
-                    </span>
-                    <span style={{ fontSize: "12px", color: "#64748b" }}>מהתקופה הקודמת</span>
-                  </>
-                )}
-                {delta.direction === "down" && (
-                  <>
-                    <TrendingDown size={14} style={{ color: "#dc2626" }} />
-                    <span style={{ fontSize: "12px", fontWeight: 600, color: "#dc2626" }}>
-                      ↓ {delta.pct.toFixed(1)}%
-                    </span>
-                    <span style={{ fontSize: "12px", color: "#64748b" }}>מהתקופה הקודמת</span>
-                  </>
-                )}
-                {delta.direction === "flat" && (
-                  <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: 500 }}>
-                    ללא שינוי
-                  </span>
-                )}
+            {/* Delta */}
+            {delta && delta.direction !== "flat" && (
+              <div style={{ display: "flex", alignItems: "center", gap: "4px", justifyContent: "flex-end", position: "relative", zIndex: 1 }}>
+                {delta.direction === "up"
+                  ? <TrendingUp size={13} style={{ color: "rgba(255,255,255,0.9)" }} />
+                  : <TrendingDown size={13} style={{ color: "rgba(255,255,255,0.9)" }} />
+                }
+                <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>
+                  {delta.pct.toFixed(1)}% מהתקופה הקודמת
+                </span>
               </div>
             )}
           </div>
