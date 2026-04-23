@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Search, ExternalLink, X, ChevronLeft, ChevronRight, FileText, Pencil, Trash2, Download, CalendarIcon, CheckCircle, MessageSquare, Archive } from "lucide-react";
@@ -127,6 +127,8 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
   const [clarifyModal, setClarifyModal] = useState<Invoice | null>(null);
   const [clarifyText, setClarifyText] = useState("");
   const [clarifyLoading, setClarifyLoading] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkApproving, setBulkApproving] = useState(false);
 
   const { data: invoices, isLoading } = useQuery({
     queryKey: ["all-invoices", clientId],
@@ -170,7 +172,44 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
   const totalAmount = filtered.reduce((s, i) => s + (i.total || 0), 0);
-  const resetFilters = () => { setSearch(""); setCategoryFilter(""); setDocTypeFilter(""); setStatusFilter(""); setDateFrom(undefined); setDateTo(undefined); setQuickFilter("all"); setPage(0); };
+  const resetFilters = () => { setSearch(""); setCategoryFilter(""); setDocTypeFilter(""); setStatusFilter(""); setDateFrom(undefined); setDateTo(undefined); setQuickFilter("all"); setPage(0); setSelectedIds(new Set()); };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+  const toggleSelectAll = () => {
+    if (selectedIds.size === paged.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(paged.map(inv => inv.id)));
+    }
+  };
+  const bulkApprove = async () => {
+    if (selectedIds.size === 0) return;
+    setBulkApproving(true);
+    try {
+      const ids = Array.from(selectedIds);
+      const { error } = await supabase
+        .from("invoices")
+        .update({ status: "approved" })
+        .in("id", ids);
+      if (error) throw error;
+      toast.success(`${ids.length} חשבוניות אושרו בהצלחה`);
+      setSelectedIds(new Set());
+      queryClient.invalidateQueries({ queryKey: ["all-invoices"] });
+    } catch (e: any) {
+      toast.error(e.message || "שגיאה באישור מרובה");
+    } finally {
+      setBulkApproving(false);
+    }
+  };
+
+  useEffect(() => { setSelectedIds(new Set()); }, [page, clientId]);
 
   const updateCategory = async () => {
     if (!editModal) return;
@@ -421,7 +460,38 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
         </div>
       </div>
 
-      {/* ── Content ── */}
+      {/* ── Bulk Action Bar ── */}
+      {showAccountantActions && selectedIds.size > 0 && (
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "10px 16px", backgroundColor: "#1e3a5f", color: "#ffffff",
+          fontSize: "13px", fontFamily: "Heebo, sans-serif",
+        }}>
+          <button
+            onClick={() => setSelectedIds(new Set())}
+            style={{ background: "none", border: "none", color: "#94a3b8",
+                     cursor: "pointer", fontSize: "13px", fontFamily: "Heebo, sans-serif" }}
+          >
+            ✕ נקה בחירה
+          </button>
+          <span>סומנו {selectedIds.size} חשבוניות</span>
+          <button
+            onClick={bulkApprove}
+            disabled={bulkApproving}
+            style={{
+              display: "flex", alignItems: "center", gap: "6px",
+              padding: "6px 16px", borderRadius: "8px", fontSize: "13px",
+              backgroundColor: "#16a34a", color: "#ffffff",
+              border: "none", cursor: "pointer", fontFamily: "Heebo, sans-serif",
+              opacity: bulkApproving ? 0.6 : 1,
+            }}
+          >
+            <CheckCircle size={14} />
+            {bulkApproving ? "מאשר..." : "אשר נבחרים"}
+          </button>
+        </div>
+      )}
+
       {isLoading ? (
         <div className="p-6 space-y-2">{[...Array(8)].map((_, i) => <Skeleton key={i} className="h-12 w-full rounded-lg" />)}</div>
       ) : paged.length === 0 ? (
@@ -436,6 +506,7 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
           <div className="hidden md:block w-full bg-white overflow-hidden">
             <table className="w-full text-[12px]" style={{ width: "100%", tableLayout: "fixed" }}>
               <colgroup>
+                {showAccountantActions && <col style={{ width: "40px" }} />}
                 <col style={{ width: hasAccountant ? "8%" : "9%" }} />
                 <col style={{ width: hasAccountant ? "15%" : "17%" }} />
                 <col style={{ width: hasAccountant ? "9%" : "10%" }} />
@@ -449,6 +520,16 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
               </colgroup>
               <thead>
                 <tr className="border-b border-[#e2e8f0] bg-[#f8fafc] text-[11px] font-bold text-gray-500">
+                  {showAccountantActions && (
+                    <th className="px-3 py-3 text-center" style={{ width: "40px" }}>
+                      <input
+                        type="checkbox"
+                        checked={paged.length > 0 && selectedIds.size === paged.length}
+                        onChange={toggleSelectAll}
+                        style={{ cursor: "pointer", width: "16px", height: "16px" }}
+                      />
+                    </th>
+                  )}
                   <th className="px-2 py-3 text-right">תאריך</th>
                   <th className="px-2 py-3 text-right">ספק</th>
                   <th className="px-2 py-3 text-right">מספר חשבונית</th>
@@ -467,6 +548,16 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
                   const cc = getCatColor(inv.category);
                   return (
                     <tr key={inv.id} className="border-b border-[#e2e8f0]/60 hover:bg-[#f8fafc] transition-colors">
+                      {showAccountantActions && (
+                        <td className="px-3 py-3 text-center">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(inv.id)}
+                            onChange={() => toggleSelect(inv.id)}
+                            style={{ cursor: "pointer", width: "16px", height: "16px" }}
+                          />
+                        </td>
+                      )}
                       <td className="px-2 py-3 whitespace-nowrap">{formatDate(inv.invoice_date)}</td>
                       <td className="px-2 py-3 truncate" title={inv.vendor || ""}>{inv.vendor || "—"}</td>
                       <td className="px-2 py-3 truncate">{inv.invoice_number || "—"}</td>
@@ -491,6 +582,17 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
               const cc = getCatColor(inv.category);
               return (
                 <div key={inv.id} className="rounded-xl bg-white p-4 shadow-sm border border-[#e2e8f0]">
+                  {showAccountantActions && (
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(inv.id)}
+                        onChange={() => toggleSelect(inv.id)}
+                        style={{ cursor: "pointer", width: "16px", height: "16px" }}
+                      />
+                      <span style={{ fontSize: "11px", color: "#64748b" }}>בחר</span>
+                    </div>
+                  )}
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-[14px] text-[#1a202c] truncate">{inv.vendor || "—"}</span>
                     <span className="font-bold text-[14px] font-mono">{inv.total != null ? `₪${inv.total.toLocaleString("he-IL")}` : "—"}</span>
