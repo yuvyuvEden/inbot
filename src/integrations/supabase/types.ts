@@ -771,6 +771,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_client_of_accountant: {
+        Args: { p_client_id: string; p_user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "accountant" | "client"
