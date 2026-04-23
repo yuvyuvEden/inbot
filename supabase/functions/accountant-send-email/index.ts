@@ -115,7 +115,10 @@ Deno.serve(async (req) => {
       accountant_user_id: user.id,
       ts: Date.now(),
     };
-    const token = btoa(JSON.stringify(tokenPayload));
+    const token = btoa(JSON.stringify(tokenPayload))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=/g, '');
     const inbotDomain = Deno.env.get("INBOT_DOMAIN") ?? "inbot.app";
     const replyTo = `reply+${token}@${inbotDomain}`;
 
