@@ -433,32 +433,32 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
       ) : (
         <>
           {/* Desktop table */}
-          <div className="hidden md:block w-full bg-white" style={{ overflowX: "auto" }}>
-            <table className="w-full text-[13px]" style={{ width: "100%", tableLayout: "fixed" }}>
+          <div className="hidden md:block w-full bg-white overflow-hidden">
+            <table className="w-full text-[12px]" style={{ width: "100%", tableLayout: "fixed" }}>
               <colgroup>
+                <col style={{ width: hasAccountant ? "8%" : "9%" }} />
+                <col style={{ width: hasAccountant ? "15%" : "17%" }} />
+                <col style={{ width: hasAccountant ? "9%" : "10%" }} />
                 <col style={{ width: "8%" }} />
-                <col style={{ width: "18%" }} />
-                <col style={{ width: "11%" }} />
                 <col style={{ width: "8%" }} />
                 <col style={{ width: "8%" }} />
-                <col style={{ width: "8%" }} />
-                <col style={{ width: "11%" }} />
-                <col style={{ width: "10%" }} />
-                <col style={{ width: "9%" }} />
-                <col style={{ width: "9%" }} />
+                <col style={{ width: hasAccountant ? "10%" : "12%" }} />
+                <col style={{ width: hasAccountant ? "8%" : "10%" }} />
+                {hasAccountant && <col style={{ width: "9%" }} />}
+                <col style={{ width: hasAccountant ? "17%" : "18%" }} />
               </colgroup>
               <thead>
-                <tr className="border-b border-[#e2e8f0] bg-[#f8fafc] text-[12px] font-bold text-gray-500">
-                  <th className="px-3 py-3 text-right">תאריך</th>
-                  <th className="px-3 py-3 text-right">ספק</th>
-                  <th className="px-3 py-3 text-right">מספר חשבונית</th>
-                  <th className="px-3 py-3 text-left">סכום</th>
-                  <th className="px-3 py-3 text-left">מע״מ בפועל</th>
-                  <th className="px-3 py-3 text-left">מע״מ מוכר</th>
-                  <th className="px-3 py-3 text-right">קטגוריה</th>
-                  <th className="px-3 py-3 text-right">סוג</th>
-                  {hasAccountant && <th className="px-3 py-3 text-right">סטטוס</th>}
-                  <th className="px-3 py-3 text-center">פעולות</th>
+                <tr className="border-b border-[#e2e8f0] bg-[#f8fafc] text-[11px] font-bold text-gray-500">
+                  <th className="px-2 py-3 text-right">תאריך</th>
+                  <th className="px-2 py-3 text-right">ספק</th>
+                  <th className="px-2 py-3 text-right">מספר חשבונית</th>
+                  <th className="px-2 py-3 text-left">סכום</th>
+                  <th className="px-2 py-3 text-left">מע״מ בפועל</th>
+                  <th className="px-2 py-3 text-left">מע״מ מוכר</th>
+                  <th className="px-2 py-3 text-right">קטגוריה</th>
+                  <th className="px-2 py-3 text-right">סוג</th>
+                  {hasAccountant && <th className="px-2 py-3 text-right">סטטוס</th>}
+                  <th className="px-2 py-3 text-center">פעולות</th>
                 </tr>
               </thead>
               <tbody>
@@ -467,16 +467,16 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
                   const cc = getCatColor(inv.category);
                   return (
                     <tr key={inv.id} className="border-b border-[#e2e8f0]/60 hover:bg-[#f8fafc] transition-colors">
-                      <td className="px-3 py-3 whitespace-nowrap">{formatDate(inv.invoice_date)}</td>
-                      <td className="px-3 py-3 truncate" title={inv.vendor || ""}>{inv.vendor || "—"}</td>
-                      <td className="px-3 py-3 truncate">{inv.invoice_number || "—"}</td>
-                      <td className="px-3 py-3 text-left font-mono tabular-nums whitespace-nowrap">{inv.total != null ? `₪${inv.total.toLocaleString("he-IL")}` : "—"}</td>
-                      <td className="px-3 py-3 text-left font-mono tabular-nums whitespace-nowrap">{inv.vat_original != null ? `₪${inv.vat_original.toLocaleString("he-IL")}` : "—"}</td>
-                      <td className="px-3 py-3 text-left font-mono tabular-nums whitespace-nowrap">{inv.vat_deductible != null ? `₪${inv.vat_deductible.toLocaleString("he-IL")}` : "—"}</td>
-                      <td className="px-3 py-3"><span className="inline-block max-w-full truncate rounded-full px-2.5 py-0.5 text-[11px] font-medium" style={{ backgroundColor: cc.bg, color: cc.text }}>{inv.category || "—"}</span></td>
-                      <td className="px-3 py-3 text-[12px] truncate">{inv.document_type || "—"}</td>
-                      {hasAccountant && <td className="px-3 py-3"><span className="inline-block rounded-full px-2.5 py-0.5 text-[11px] font-medium" style={{ backgroundColor: st.bg, color: st.text }}>{st.label}</span></td>}
-                      <td className="px-3 py-3">{renderActions(inv, showAccountantActions)}</td>
+                      <td className="px-2 py-3 whitespace-nowrap">{formatDate(inv.invoice_date)}</td>
+                      <td className="px-2 py-3 truncate" title={inv.vendor || ""}>{inv.vendor || "—"}</td>
+                      <td className="px-2 py-3 truncate">{inv.invoice_number || "—"}</td>
+                      <td className="px-2 py-3 text-left font-mono tabular-nums whitespace-nowrap">{inv.total != null ? `₪${inv.total.toLocaleString("he-IL")}` : "—"}</td>
+                      <td className="px-2 py-3 text-left font-mono tabular-nums whitespace-nowrap">{inv.vat_original != null ? `₪${inv.vat_original.toLocaleString("he-IL")}` : "—"}</td>
+                      <td className="px-2 py-3 text-left font-mono tabular-nums whitespace-nowrap">{inv.vat_deductible != null ? `₪${inv.vat_deductible.toLocaleString("he-IL")}` : "—"}</td>
+                      <td className="px-2 py-3"><span className="inline-block max-w-full truncate rounded-full px-2 py-0.5 text-[10px] font-medium" style={{ backgroundColor: cc.bg, color: cc.text }}>{inv.category || "—"}</span></td>
+                      <td className="px-2 py-3 text-[11px] truncate">{inv.document_type || "—"}</td>
+                      {hasAccountant && <td className="px-2 py-3"><span className="inline-block max-w-full truncate rounded-full px-2 py-0.5 text-[10px] font-medium" style={{ backgroundColor: st.bg, color: st.text }}>{st.label}</span></td>}
+                      <td className="px-2 py-3">{renderActions(inv, showAccountantActions, true)}</td>
                     </tr>
                   );
                 })}
