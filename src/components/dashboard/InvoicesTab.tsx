@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Search, ExternalLink, X, ChevronLeft, ChevronRight, FileText, Pencil, Trash2, Download, CalendarIcon, CheckCircle, MessageSquare, Archive } from "lucide-react";
@@ -127,6 +127,8 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
   const [clarifyModal, setClarifyModal] = useState<Invoice | null>(null);
   const [clarifyText, setClarifyText] = useState("");
   const [clarifyLoading, setClarifyLoading] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkApproving, setBulkApproving] = useState(false);
 
   const { data: invoices, isLoading } = useQuery({
     queryKey: ["all-invoices", clientId],
@@ -170,7 +172,44 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
   const totalAmount = filtered.reduce((s, i) => s + (i.total || 0), 0);
-  const resetFilters = () => { setSearch(""); setCategoryFilter(""); setDocTypeFilter(""); setStatusFilter(""); setDateFrom(undefined); setDateTo(undefined); setQuickFilter("all"); setPage(0); };
+  const resetFilters = () => { setSearch(""); setCategoryFilter(""); setDocTypeFilter(""); setStatusFilter(""); setDateFrom(undefined); setDateTo(undefined); setQuickFilter("all"); setPage(0); setSelectedIds(new Set()); };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+  const toggleSelectAll = () => {
+    if (selectedIds.size === paged.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(paged.map(inv => inv.id)));
+    }
+  };
+  const bulkApprove = async () => {
+    if (selectedIds.size === 0) return;
+    setBulkApproving(true);
+    try {
+      const ids = Array.from(selectedIds);
+      const { error } = await supabase
+        .from("invoices")
+        .update({ status: "approved" })
+        .in("id", ids);
+      if (error) throw error;
+      toast.success(`${ids.length} חשבוניות אושרו בהצלחה`);
+      setSelectedIds(new Set());
+      queryClient.invalidateQueries({ queryKey: ["all-invoices"] });
+    } catch (e: any) {
+      toast.error(e.message || "שגיאה באישור מרובה");
+    } finally {
+      setBulkApproving(false);
+    }
+  };
+
+  useEffect(() => { setSelectedIds(new Set()); }, [page, clientId]);
 
   const updateCategory = async () => {
     if (!editModal) return;
