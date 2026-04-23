@@ -79,9 +79,14 @@ export default function AdminClientsTab() {
         .order("created_at", { ascending: false });
       if (error) throw error;
 
-      const { data: acData } = await supabase
+      const { data: acData, error: acError } = await supabase
         .from("accountant_clients")
-        .select("client_id, accountant_id");
+        .select("client_id, accountant_id")
+        .is("unassigned_at", null);
+      
+      if (acError) {
+        console.error("accountant_clients error:", acError.message);
+      }
 
       const acMap = new Map<string, string>();
       (acData || []).forEach((ac) => acMap.set(ac.client_id, ac.accountant_id));
