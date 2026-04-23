@@ -204,9 +204,9 @@ export default function AccountantClientView() {
               </span>
             </div>
             <KPICards kpis={kpis} prevKpis={prevKpis} isLoading={kpisLoading} />
-            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "20px", marginTop: "20px" }}>
-              <ExpenseChart data={timeline} isLoading={timelineLoading} />
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_3fr]" style={{ marginTop: "20px" }}>
               <CategoryPieChart data={categories} isLoading={catLoading} />
+              <ExpenseChart data={timeline} isLoading={timelineLoading} />
             </div>
           </div>
         )}
@@ -223,7 +223,7 @@ export default function AccountantClientView() {
 
         {activeTab === "archive" && clientId && (
           <div style={{ padding: "24px" }}>
-            <ArchiveTab clientId={clientId} />
+            <ArchiveTab clientId={clientId} showRestore={true} />
           </div>
         )}
       </main>
