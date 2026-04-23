@@ -108,19 +108,16 @@ Deno.serve(async (req) => {
 
     const accountantName = accountant?.name ?? "רואה החשבון שלך";
 
-    // ── בניית Reply-To token (base64) לשימוש עתידי ב-P1-010
-    const tokenPayload = {
-      invoice_id,
-      client_id: client.id,
-      accountant_user_id: user.id,
-      ts: Date.now(),
-    };
-    const token = btoa(JSON.stringify(tokenPayload))
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=/g, '');
+    // ── שליפת פרטי הרו"ח השולח
+    const { data: accountant } = await supabaseAdmin
+      .from("accountants")
+      .select("name, email")
+      .eq("user_id", user.id)
+      .single();
+
+    const accountantName = accountant?.name ?? "רואה החשבון שלך";
+
     const inbotDomain = Deno.env.get("INBOT_DOMAIN") ?? "inbot.app";
-    const replyTo = `reply+${token}@${inbotDomain}`;
 
     // ── עדכון סטטוס חשבונית ל-needs_clarification
     const { error: statusError } = await supabaseAdmin
@@ -211,7 +208,6 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         from: `INBOT <${fromEmail}>`,
         to: [clientEmail],
-        reply_to: replyTo,
         subject: emailSubject,
         html: emailHtml,
       }),
