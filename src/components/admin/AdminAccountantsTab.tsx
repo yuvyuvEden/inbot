@@ -392,15 +392,16 @@ export default function AdminAccountantsTab({ onGoToBilling }: AdminAccountantsT
       </div>
 
       <div
-        className="overflow-x-auto"
         style={{
           borderRadius: "12px",
           border: "1px solid #e2e8f0",
           background: "#ffffff",
           boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
+          overflow: "hidden",
+          width: "100%",
         }}
       >
-        <table className="w-full text-sm">
+        <table className="w-full text-xs" style={{ tableLayout: "fixed" }}>
           <thead>
             <tr style={{ background: "linear-gradient(to left, #1e3a5f, #2d5a8e)" }}>
               <th style={thStyle}>שם</th>

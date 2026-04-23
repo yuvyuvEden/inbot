@@ -82,8 +82,8 @@ export function ArchiveTab({ clientId, showRestore = false }: Props) {
             <p style={{ margin: 0 }}>{search ? "אין תוצאות לחיפוש" : "הארכיון ריק"}</p>
           </div>
         ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
+          <div style={{ overflow: "hidden", width: "100%" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", tableLayout: "fixed" }}>
               <thead>
                 <tr style={{ backgroundColor: "#f8fafc" }}>
                   {["ספק", "מס' חשבונית", "קטגוריה", "סכום", "תאריך", "סטטוס"].map(h => (

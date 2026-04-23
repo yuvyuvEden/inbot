@@ -549,7 +549,7 @@ export default function SettingsTab() {
             <div style={{ fontSize: 12, color: "#64748b", marginBottom: 12 }}>
               עריכת אחוזי הכרה לפי קטגוריה. שינויים ישפיעו על חשבוניות חדשות בלבד.
             </div>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, tableLayout: "fixed" }}>
               <thead>
                 <tr style={{ background: "#f8fafc" }}>
                   {["קטגוריה", "מע\"מ מוכר %", "הוצאה מוכרת %", "פעולות"].map(h => (
