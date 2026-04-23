@@ -108,15 +108,6 @@ Deno.serve(async (req) => {
 
     const accountantName = accountant?.name ?? "רואה החשבון שלך";
 
-    // ── שליפת פרטי הרו"ח השולח
-    const { data: accountant } = await supabaseAdmin
-      .from("accountants")
-      .select("name, email")
-      .eq("user_id", user.id)
-      .single();
-
-    const accountantName = accountant?.name ?? "רואה החשבון שלך";
-
     const inbotDomain = Deno.env.get("INBOT_DOMAIN") ?? "inbot.app";
 
     // ── עדכון סטטוס חשבונית ל-needs_clarification
