@@ -29,6 +29,30 @@ export function AccountantTab({ clientId }: Props) {
     },
   });
 
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!clientId) return;
+    const markAsRead = async () => {
+      const { data: invoices } = await supabase
+        .from("invoices")
+        .select("id")
+        .eq("client_id", clientId);
+      if (!invoices?.length) return;
+      const ids = invoices.map((i: any) => i.id);
+      await supabase
+        .from("invoice_comments")
+        .update({ is_read: true })
+        .in("invoice_id", ids)
+        .eq("is_read", false)
+        .eq("author_role", "accountant");
+      queryClient.invalidateQueries({
+        queryKey: ["unread-comments", clientId]
+      });
+    };
+    markAsRead();
+  }, [clientId]);
+
   const fmt = (iso: string) =>
     new Date(iso).toLocaleDateString("he-IL", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 
