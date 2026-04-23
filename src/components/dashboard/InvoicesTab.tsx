@@ -428,7 +428,7 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
       ) : (
         <>
           {/* Desktop table */}
-          <div className="hidden md:block w-full bg-white overflow-visible">
+          <div className="hidden md:block w-full bg-white" style={{ overflowX: "auto" }}>
             <table className="w-full text-[13px]" style={{ width: "100%", tableLayout: "fixed" }}>
               <colgroup>
                 <col style={{ width: "8%" }} />

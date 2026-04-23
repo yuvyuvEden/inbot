@@ -82,7 +82,8 @@ export default function Dashboard() {
       const { count } = await supabase
         .from("accountant_clients")
         .select("id", { count: "exact", head: true })
-        .eq("client_id", effectiveClientId!);
+        .eq("client_id", effectiveClientId!)
+        .is("unassigned_at", null);
       return (count ?? 0) > 0;
     },
   });
@@ -233,7 +234,12 @@ export default function Dashboard() {
           ) : activeTab === "messages" ? (
             effectiveClientId ? <AccountantTab clientId={effectiveClientId} /> : null
           ) : activeTab === "archive" ? (
-            effectiveClientId ? <ArchiveTab clientId={effectiveClientId} /> : null
+            effectiveClientId ? (
+              <ArchiveTab
+                clientId={effectiveClientId}
+                showRestore={!hasAccountant}
+              />
+            ) : null
           ) : activeTab === "export" ? (
             <ExportTab />
           ) : activeTab === "ai" ? (
