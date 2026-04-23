@@ -38,8 +38,8 @@ export function AccountantClientsTab({ clients, clientIds }: Props) {
         </div>
       </div>
 
-      <div style={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
+      <div style={{ overflow: "hidden", width: "100%" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", tableLayout: "fixed" }}>
           <thead>
             <tr style={{ backgroundColor: "#f8fafc" }}>
               {["שם עסק", "ח\"פ", "סטטוס", "חודש נוכחי", "ממתין", "הבהרה", "פעולה"].map(h => (

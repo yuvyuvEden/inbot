@@ -89,8 +89,8 @@ export function AdminPlansTab() {
           </button>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+        <div className="w-full overflow-hidden">
+          <table className="w-full text-xs" style={{ tableLayout: "fixed" }}>
             <thead>
               <tr className="border-b border-border bg-secondary text-right text-xs font-semibold text-muted-foreground">
                 {["שם חבילה", "מחיר חודשי", "מחיר שנתי", "משתמשים", "חשבוניות/חודש", "ימי ניסיון", "פעיל", "פעולה"].map(
@@ -236,8 +236,8 @@ export function AdminPlansTab() {
           <div className="border-b border-border px-5 py-3">
             <h3 className="text-base font-bold text-primary">היסטוריית שינויי מחיר</h3>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="w-full overflow-hidden">
+            <table className="w-full text-xs" style={{ tableLayout: "fixed" }}>
               <thead>
                 <tr className="border-b border-border bg-secondary text-right text-xs font-semibold text-muted-foreground">
                   {["חבילה", "מחיר חודשי", "מחיר שנתי", "הוחל על ותיקים", "תאריך"].map((h) => (

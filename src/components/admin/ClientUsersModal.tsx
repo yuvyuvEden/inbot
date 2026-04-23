@@ -177,8 +177,8 @@ export function ClientUsersModal({ client, onClose }: Props) {
               אין משתמשים משניים
             </p>
           ) : (
-            <div className="overflow-x-auto rounded-lg border border-border">
-              <table className="w-full text-sm">
+            <div className="w-full overflow-hidden rounded-lg border border-border">
+              <table className="w-full text-xs" style={{ tableLayout: "fixed" }}>
                 <thead>
                   <tr className="border-b border-border bg-secondary text-right text-xs font-semibold text-muted-foreground">
                     {["שם", "Telegram ID", "מייל", "סטטוס"].map((h) => (
