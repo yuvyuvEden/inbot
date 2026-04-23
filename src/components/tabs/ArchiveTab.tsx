@@ -1,12 +1,15 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Archive } from "lucide-react";
+import { Archive, RotateCcw } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
-interface Props { clientId: string; }
+interface Props { clientId: string; showRestore?: boolean; }
 
-export function ArchiveTab({ clientId }: Props) {
+export function ArchiveTab({ clientId, showRestore = false }: Props) {
   const [search, setSearch] = useState("");
+  const queryClient = useQueryClient();
+  const [restoringId, setRestoringId] = useState<string | null>(null);
 
   const { data: invoices = [], isLoading } = useQuery({
     queryKey: ["archived-invoices", clientId],
@@ -24,6 +27,22 @@ export function ArchiveTab({ clientId }: Props) {
       return data ?? [];
     },
   });
+
+  const restoreInvoice = async (invoiceId: string) => {
+    setRestoringId(invoiceId);
+    const { error } = await supabase
+      .from("invoices")
+      .update({ is_archived: false })
+      .eq("id", invoiceId);
+    if (error) {
+      toast.error("שגיאה בשחזור החשבונית");
+    } else {
+      toast.success("החשבונית שוחזרה בהצלחה");
+      queryClient.invalidateQueries({ queryKey: ["archived-invoices", clientId] });
+      queryClient.invalidateQueries({ queryKey: ["all-invoices", clientId] });
+    }
+    setRestoringId(null);
+  };
 
   const filtered = invoices.filter((inv: any) =>
     !search ||
@@ -72,6 +91,11 @@ export function ArchiveTab({ clientId }: Props) {
                       {h}
                     </th>
                   ))}
+                  {showRestore && (
+                    <th style={{ padding: "12px", textAlign: "right", fontSize: "12px", fontWeight: 600, color: "#64748b", borderBottom: "1px solid #e2e8f0" }}>
+                      פעולות
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -89,6 +113,26 @@ export function ArchiveTab({ clientId }: Props) {
                         {inv.status === "approved" ? "מאושר" : inv.status ?? "—"}
                       </span>
                     </td>
+                    {showRestore && (
+                      <td style={{ padding: "12px" }}>
+                        <button
+                          onClick={() => restoreInvoice(inv.id)}
+                          disabled={restoringId === inv.id}
+                          title="שחזר מארכיון"
+                          style={{
+                            display: "inline-flex", alignItems: "center", gap: "4px",
+                            padding: "4px 10px", borderRadius: "6px", fontSize: "12px",
+                            backgroundColor: "#f0f4f8", color: "#1e3a5f",
+                            border: "1px solid #e2e8f0", cursor: "pointer",
+                            fontFamily: "Heebo, sans-serif",
+                            opacity: restoringId === inv.id ? 0.5 : 1,
+                          }}
+                        >
+                          <RotateCcw size={12} />
+                          {restoringId === inv.id ? "משחזר..." : "שחזר"}
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
