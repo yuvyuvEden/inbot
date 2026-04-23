@@ -128,7 +128,10 @@ export function useExpenseTimeline(clientId: string | undefined, period: string)
     queryFn: async () => {
       const all = await fetchAllInvoices(clientId!);
       const filter = getPeriodFilter(period);
-      const filtered = all.filter((i) => i.status === "approved" && filter(i.invoice_date));
+      const filtered = all.filter((i) =>
+        (i.status === "approved" || i.status === "pending_review" || i.status === "needs_clarification")
+        && filter(i.invoice_date)
+      );
 
       const grouped: Record<string, number> = {};
       filtered.forEach((inv) => {
@@ -154,7 +157,10 @@ export function useCategoryBreakdown(clientId: string | undefined, period: strin
     queryFn: async () => {
       const all = await fetchAllInvoices(clientId!);
       const filter = getPeriodFilter(period);
-      const filtered = all.filter((i) => i.status === "approved" && filter(i.invoice_date));
+      const filtered = all.filter((i) =>
+        (i.status === "approved" || i.status === "pending_review" || i.status === "needs_clarification")
+        && filter(i.invoice_date)
+      );
 
       const grouped: Record<string, number> = {};
       filtered.forEach((inv) => {
