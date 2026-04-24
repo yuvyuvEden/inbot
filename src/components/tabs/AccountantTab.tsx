@@ -213,7 +213,7 @@ export function AccountantTab({ clientId, isAccountant = false }: Props) {
 
               {/* Reply box */}
               {!isResolved && !isAccountant && (
-                <div style={{ padding: "12px 20px 16px", backgroundColor: "#ffffff", borderTop: "1px solid #e2e8f0", display: "flex", flexDirection: "column", gap: "8px" }}>
+                <div style={{ width: "100%", boxSizing: "border-box", padding: "12px 16px", backgroundColor: "#ffffff", borderTop: "1px solid #e2e8f0", display: "block" }}>
                   <textarea
                     dir="rtl"
                     placeholder="כתוב תשובה..."
@@ -222,6 +222,8 @@ export function AccountantTab({ clientId, isAccountant = false }: Props) {
                     rows={3}
                     style={{
                       width: "100%",
+                      boxSizing: "border-box",
+                      minHeight: "80px",
                       padding: "10px 12px",
                       borderRadius: "8px",
                       border: "1px solid #cbd5e1",
@@ -230,28 +232,29 @@ export function AccountantTab({ clientId, isAccountant = false }: Props) {
                       color: "#1e3a5f",
                       resize: "vertical",
                       outline: "none",
-                      boxSizing: "border-box",
+                      display: "block",
                     }}
                   />
-                  <div style={{ display: "flex", justifyContent: "flex-start" }}>
-                    <button
-                      onClick={() => handleSend(inv.id)}
-                      disabled={!!sending[inv.id] || !(replies[inv.id] ?? "").trim()}
-                      style={{
-                        padding: "8px 18px",
-                        backgroundColor: "#1e3a5f",
-                        color: "#ffffff",
-                        border: "none",
-                        borderRadius: "8px",
-                        fontSize: "14px",
-                        fontWeight: 600,
-                        cursor: sending[inv.id] || !(replies[inv.id] ?? "").trim() ? "not-allowed" : "pointer",
-                        opacity: sending[inv.id] || !(replies[inv.id] ?? "").trim() ? 0.6 : 1,
-                      }}
-                    >
-                      {sending[inv.id] ? "שולח..." : "שלח תשובה"}
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => handleSend(inv.id)}
+                    disabled={!!sending[inv.id] || !(replies[inv.id] ?? "").trim()}
+                    style={{
+                      width: "100%",
+                      marginTop: "8px",
+                      padding: "10px",
+                      backgroundColor: "#1e3a5f",
+                      color: "#ffffff",
+                      border: "none",
+                      borderRadius: "8px",
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      cursor: sending[inv.id] || !(replies[inv.id] ?? "").trim() ? "not-allowed" : "pointer",
+                      opacity: sending[inv.id] || !(replies[inv.id] ?? "").trim() ? 0.6 : 1,
+                      display: "block",
+                    }}
+                  >
+                    {sending[inv.id] ? "שולח..." : "שלח תשובה"}
+                  </button>
                 </div>
               )}
             </div>
