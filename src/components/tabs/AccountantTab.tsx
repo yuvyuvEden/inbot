@@ -201,7 +201,7 @@ export function AccountantTab({ clientId, isAccountant = false }: Props) {
               </div>
 
               {/* Reply box */}
-              {!isResolved && (
+              {!isResolved && !isAccountant && (
                 <div style={{ padding: "12px 20px 16px", backgroundColor: "#ffffff", borderTop: "1px solid #e2e8f0", display: "flex", flexDirection: "column", gap: "8px" }}>
                   <textarea
                     dir="rtl"
