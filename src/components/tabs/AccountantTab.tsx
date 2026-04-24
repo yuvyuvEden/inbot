@@ -4,13 +4,35 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { MessageSquare } from "lucide-react";
 
-interface Props { clientId: string; }
+interface Props { clientId: string; isAccountant?: boolean; }
 
-export function AccountantTab({ clientId }: Props) {
+export function AccountantTab({ clientId, isAccountant = false }: Props) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [replies, setReplies] = useState<Record<string, string>>({});
   const [sending, setSending] = useState<Record<string, boolean>>({});
+  const [resolving, setResolving] = useState<Record<string, boolean>>({});
+
+  const handleResolve = async (invoiceId: string) => {
+    setResolving((s) => ({ ...s, [invoiceId]: true }));
+    try {
+      const { error: cErr } = await supabase
+        .from("invoice_comments")
+        .update({ thread_status: "resolved" })
+        .eq("invoice_id", invoiceId);
+      if (cErr) throw cErr;
+      const { error: iErr } = await supabase
+        .from("invoices")
+        .update({ status: "approved" })
+        .eq("id", invoiceId);
+      if (iErr) throw iErr;
+      await queryClient.invalidateQueries({ queryKey: ["accountant-threads", clientId] });
+    } catch (e) {
+      console.error("Failed to resolve thread:", e);
+    } finally {
+      setResolving((s) => ({ ...s, [invoiceId]: false }));
+    }
+  };
 
   const { data: threads = [], isLoading } = useQuery({
     queryKey: ["accountant-threads", clientId],
@@ -133,6 +155,25 @@ export function AccountantTab({ clientId }: Props) {
                       🟡 דרושה הבהרה
                     </span>
                   )}
+                  {isAccountant && !isResolved && (
+                    <button
+                      onClick={() => handleResolve(inv.id)}
+                      disabled={!!resolving[inv.id]}
+                      style={{
+                        padding: "4px 12px",
+                        backgroundColor: "#1e3a5f",
+                        color: "#ffffff",
+                        border: "none",
+                        borderRadius: "9999px",
+                        fontSize: "12px",
+                        fontWeight: 600,
+                        cursor: resolving[inv.id] ? "not-allowed" : "pointer",
+                        opacity: resolving[inv.id] ? 0.6 : 1,
+                      }}
+                    >
+                      {resolving[inv.id] ? "מסמן..." : "✅ סמן כהושלם"}
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -160,7 +201,7 @@ export function AccountantTab({ clientId }: Props) {
               </div>
 
               {/* Reply box */}
-              {!isResolved && (
+              {!isResolved && !isAccountant && (
                 <div style={{ padding: "12px 20px 16px", backgroundColor: "#ffffff", borderTop: "1px solid #e2e8f0", display: "flex", flexDirection: "column", gap: "8px" }}>
                   <textarea
                     dir="rtl"
