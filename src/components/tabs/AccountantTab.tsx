@@ -241,7 +241,7 @@ export function AccountantTab({ clientId, isAccountant = false }: Props) {
                     style={{
                       width: "100%",
                       marginTop: "8px",
-                      padding: "10px",
+                      padding: "12px",
                       backgroundColor: "#1e3a5f",
                       color: "#ffffff",
                       border: "none",
