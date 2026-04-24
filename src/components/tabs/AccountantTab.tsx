@@ -4,13 +4,35 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { MessageSquare } from "lucide-react";
 
-interface Props { clientId: string; }
+interface Props { clientId: string; isAccountant?: boolean; }
 
-export function AccountantTab({ clientId }: Props) {
+export function AccountantTab({ clientId, isAccountant = false }: Props) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [replies, setReplies] = useState<Record<string, string>>({});
   const [sending, setSending] = useState<Record<string, boolean>>({});
+  const [resolving, setResolving] = useState<Record<string, boolean>>({});
+
+  const handleResolve = async (invoiceId: string) => {
+    setResolving((s) => ({ ...s, [invoiceId]: true }));
+    try {
+      const { error: cErr } = await supabase
+        .from("invoice_comments")
+        .update({ thread_status: "resolved" })
+        .eq("invoice_id", invoiceId);
+      if (cErr) throw cErr;
+      const { error: iErr } = await supabase
+        .from("invoices")
+        .update({ status: "approved" })
+        .eq("id", invoiceId);
+      if (iErr) throw iErr;
+      await queryClient.invalidateQueries({ queryKey: ["accountant-threads", clientId] });
+    } catch (e) {
+      console.error("Failed to resolve thread:", e);
+    } finally {
+      setResolving((s) => ({ ...s, [invoiceId]: false }));
+    }
+  };
 
   const { data: threads = [], isLoading } = useQuery({
     queryKey: ["accountant-threads", clientId],
