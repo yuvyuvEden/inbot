@@ -217,7 +217,7 @@ export default function AccountantClientView() {
 
         {activeTab === "messages" && clientId && (
           <div style={{ padding: "24px" }}>
-            <AccountantTab clientId={clientId} />
+            <AccountantTab clientId={clientId} isAccountant={true} />
           </div>
         )}
 
