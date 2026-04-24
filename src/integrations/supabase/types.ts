@@ -385,6 +385,7 @@ export type Database = {
           id: string
           invoice_id: string
           is_read: boolean
+          thread_status: string
         }
         Insert: {
           author_id: string
@@ -395,6 +396,7 @@ export type Database = {
           id?: string
           invoice_id: string
           is_read?: boolean
+          thread_status?: string
         }
         Update: {
           author_id?: string
@@ -405,6 +407,7 @@ export type Database = {
           id?: string
           invoice_id?: string
           is_read?: boolean
+          thread_status?: string
         }
         Relationships: [
           {

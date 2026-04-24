@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
 
     const accountantName = accountant?.name ?? "רואה החשבון שלך";
 
-    const inbotDomain = Deno.env.get("INBOT_DOMAIN") ?? "inbot.app";
+    const inbotDomain = Deno.env.get("INBOT_DOMAIN") ?? "app.inbot.co.il";
 
     // ── עדכון סטטוס חשבונית ל-needs_clarification
     const { error: statusError } = await supabaseAdmin
@@ -176,11 +176,8 @@ Deno.serve(async (req) => {
             חשבונית: <strong>${invoiceLabel}</strong>
           </p>
           <p style="margin: 16px 0; font-size: 13px; color: #475569;">
-            ניתן להשיב ישירות למייל זה — תשובתך תגיע אוטומטית לרואה החשבון שלך.
-          </p>
-          <p style="margin: 24px 0 0; font-size: 13px; color: #64748b;">
-            או להיכנס למערכת:
-            <a href="https://app.inbot.app" style="color: #e8941a; text-decoration: none; font-weight: 600;">app.inbot.app</a>
+            למתן מענה יש להיכנס למערכת:
+            <a href="https://app.${inbotDomain}" style="color: #e8941a; text-decoration: none; font-weight: 600;">app.inbot.co.il</a>
           </p>
           <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0 12px;" />
           <p style="margin: 0; font-size: 11px; color: #94a3b8; text-align: center;">
