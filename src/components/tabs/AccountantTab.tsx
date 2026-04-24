@@ -155,6 +155,25 @@ export function AccountantTab({ clientId, isAccountant = false }: Props) {
                       🟡 דרושה הבהרה
                     </span>
                   )}
+                  {isAccountant && !isResolved && (
+                    <button
+                      onClick={() => handleResolve(inv.id)}
+                      disabled={!!resolving[inv.id]}
+                      style={{
+                        padding: "4px 12px",
+                        backgroundColor: "#1e3a5f",
+                        color: "#ffffff",
+                        border: "none",
+                        borderRadius: "9999px",
+                        fontSize: "12px",
+                        fontWeight: 600,
+                        cursor: resolving[inv.id] ? "not-allowed" : "pointer",
+                        opacity: resolving[inv.id] ? 0.6 : 1,
+                      }}
+                    >
+                      {resolving[inv.id] ? "מסמן..." : "✅ סמן כהושלם"}
+                    </button>
+                  )}
                 </div>
               </div>
 
