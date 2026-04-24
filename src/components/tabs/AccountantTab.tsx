@@ -110,6 +110,17 @@ export function AccountantTab({ clientId, isAccountant = false }: Props) {
         is_read: false,
       });
       if (error) throw error;
+
+      // Notify accountant via email (non-blocking on failure)
+      try {
+        const { error: notifyError } = await supabase.functions.invoke("client-reply-notify", {
+          body: { invoice_id: invoiceId, comment_body: body },
+        });
+        if (notifyError) console.error("client-reply-notify failed:", notifyError);
+      } catch (notifyErr) {
+        console.error("client-reply-notify exception:", notifyErr);
+      }
+
       setReplies((r) => ({ ...r, [invoiceId]: "" }));
       await queryClient.invalidateQueries({ queryKey: ["accountant-threads", clientId] });
     } catch (e) {
