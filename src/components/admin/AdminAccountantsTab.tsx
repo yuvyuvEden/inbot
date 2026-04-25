@@ -398,6 +398,55 @@ export default function AdminAccountantsTab({ onGoToBilling }: AdminAccountantsT
         </button>
       </div>
 
+      {isMobile ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px", padding: "12px" }}>
+          {filtered.length === 0 ? (
+            <div style={{ padding: "24px", textAlign: "center", color: "#94a3b8", fontSize: "14px" }}>
+              לא נמצאו רואי חשבון
+            </div>
+          ) : (
+            filtered.map((a) => {
+              const revenue = (a.price_per_client || 0) * a.active_clients_count;
+              const stripeColor = !a.is_active ? "#94a3b8" : a.active_clients_count > 0 ? "#16a34a" : "#e8941a";
+              const planBadge = getAccountantPlanBadge(a.plan_type);
+              return (
+                <div
+                  key={a.id}
+                  style={{
+                    background: "#ffffff",
+                    borderRadius: "12px",
+                    padding: "16px",
+                    border: "1px solid #e2e8f0",
+                    borderRight: `4px solid ${stripeColor}`,
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", gap: "8px" }}>
+                    <span style={{ fontWeight: 700, fontSize: "15px", color: "#1e3a5f" }}>{a.name}</span>
+                    <span style={{ background: planBadge.bg, color: planBadge.color, borderRadius: "6px", padding: "2px 10px", fontSize: "11px", fontWeight: 700 }}>
+                      {planBadge.text}
+                    </span>
+                  </div>
+                  <div dir="ltr" style={{ fontSize: "13px", color: "#64748b", marginBottom: "8px", textAlign: "right" }}>{a.email}</div>
+                  <div style={{ display: "flex", gap: "16px", marginBottom: "12px", fontSize: "13px", color: "#64748b" }}>
+                    <span>לקוחות: <strong style={{ color: a.active_clients_count > 0 ? "#16a34a" : "#94a3b8" }}>{a.active_clients_count}</strong></span>
+                    <span>הכנסה: <strong style={{ color: revenue > 0 ? "#16a34a" : "#94a3b8" }}>₪{revenue.toLocaleString("he-IL")}</strong></span>
+                  </div>
+                  <RowMenu
+                    accountant={a}
+                    onEdit={() => { setIsNew(false); setEditAcc(a); }}
+                    onDelete={() => deleteMutation.mutate(a.id)}
+                    onToggleActive={() => saveMutation.mutate({ ...a, is_active: !a.is_active })}
+                    onImpersonate={() => impersonate(a.user_id, a.name ?? a.email, "/accountant", a.user_id ?? undefined)}
+                    onGoToBilling={() => onGoToBilling?.(a.id)}
+                    impersonateLoading={false}
+                  />
+                </div>
+              );
+            })
+          )}
+        </div>
+      ) : (
       <div
         style={{
           borderRadius: "12px",
