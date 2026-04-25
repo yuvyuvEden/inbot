@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePlans, useUpdatePlan } from "@/hooks/usePlans";
 import { useAuth } from "@/contexts/AuthContext";
 import { Edit2, Check, X, History } from "lucide-react";
@@ -29,6 +29,13 @@ export function AdminPlansTab() {
   });
   const [applyToExisting, setApplyToExisting] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
 
   const { data: history = [] } = useQuery({
     queryKey: ["plan-price-history"],
@@ -89,6 +96,40 @@ export function AdminPlansTab() {
           </button>
         </div>
 
+        {isMobile ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px", padding: "12px" }}>
+            {isLoading ? (
+              <div style={{ padding: "24px", textAlign: "center", color: "#94a3b8", fontFamily: "Heebo, sans-serif" }}>טוען...</div>
+            ) : (
+              plans.map((plan: any) => (
+                <div key={plan.id} style={{ background: "#ffffff", borderRadius: "12px", padding: "16px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", fontFamily: "Heebo, sans-serif" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", gap: "8px" }}>
+                    <span style={{ fontWeight: 700, fontSize: "16px", color: "#1e3a5f" }}>{plan.name}</span>
+                    <span style={{ background: plan.is_active ? "#dcfce7" : "#f1f5f9", color: plan.is_active ? "#16a34a" : "#64748b", borderRadius: "20px", padding: "2px 10px", fontSize: "12px", fontWeight: 600 }}>
+                      {plan.is_active ? "פעיל" : "לא פעיל"}
+                    </span>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "12px", fontSize: "13px", color: "#1a202c" }}>
+                    <div><span style={{ color: "#64748b" }}>חודשי: </span><strong>{fmt(plan.monthly_price)}</strong></div>
+                    <div><span style={{ color: "#64748b" }}>שנתי: </span><strong>{fmt(plan.yearly_price)}</strong></div>
+                    <div><span style={{ color: "#64748b" }}>משתמשים: </span><strong>{fmtLimit(plan.user_limit)}</strong></div>
+                    <div><span style={{ color: "#64748b" }}>חשבוניות: </span><strong>{fmtLimit(plan.invoice_limit)}</strong></div>
+                  </div>
+                  <button
+                    onClick={() => startEdit(plan)}
+                    style={{
+                      width: "100%", padding: "8px", borderRadius: "8px",
+                      backgroundColor: "#1e3a5f", color: "#ffffff", border: "none",
+                      cursor: "pointer", fontSize: "13px", fontFamily: "Heebo, sans-serif", fontWeight: 600,
+                    }}
+                  >
+                    ✏️ ערוך
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        ) : (
         <div className="w-full overflow-hidden">
           <table className="w-full text-xs" style={{ tableLayout: "fixed" }}>
             <thead>
@@ -228,6 +269,7 @@ export function AdminPlansTab() {
             </tbody>
           </table>
         </div>
+        )}
       </div>
 
       {/* History */}

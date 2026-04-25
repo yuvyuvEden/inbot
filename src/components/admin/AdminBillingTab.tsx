@@ -112,6 +112,13 @@ export function AdminBillingTab({ initialAccountantId, onClearFilter }: Props) {
 
   const [generateAllLoading, setGenerateAllLoading] = useState(false);
 
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+
   useEffect(() => {
     if (initialAccountantId) setBillingSubTab("accountants");
   }, [initialAccountantId]);
@@ -380,7 +387,7 @@ export function AdminBillingTab({ initialAccountantId, onClearFilter }: Props) {
       </div>
 
       {/* Sub-tabs */}
-      <div style={{ display: "flex", gap: "6px", background: "#f1f5f9", padding: "4px", borderRadius: "10px", width: "fit-content" }}>
+      <div style={isMobile ? { display: "flex", gap: "6px", overflowX: "auto", scrollbarWidth: "none", padding: "4px", background: "#f1f5f9", borderRadius: "10px", WebkitOverflowScrolling: "touch" } : { display: "flex", gap: "6px", background: "#f1f5f9", padding: "4px", borderRadius: "10px", width: "fit-content" }}>
         {[
           { k: "all", label: "📊 הכל", count: allLogs.length },
           { k: "accountants", label: "🏢 רואי חשבון", count: allLogs.filter((l: any) => l.entity_type === "accountant").length },
@@ -394,6 +401,7 @@ export function AdminBillingTab({ initialAccountantId, onClearFilter }: Props) {
               border: "none", cursor: "pointer", fontFamily: "Heebo, sans-serif",
               background: billingSubTab === t.k ? "#1e3a5f" : "transparent",
               color: billingSubTab === t.k ? "#ffffff" : "#64748b",
+              flexShrink: 0, whiteSpace: "nowrap",
             }}>
             {t.label} ({t.count})
           </button>
@@ -443,8 +451,8 @@ export function AdminBillingTab({ initialAccountantId, onClearFilter }: Props) {
               </button>
             </div>
           </div>
-          <div style={{ overflow: "hidden", width: "100%" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", tableLayout: "fixed" }}>
+          <div style={isMobile ? { overflowX: "auto", WebkitOverflowScrolling: "touch", width: "100%" } : { overflow: "hidden", width: "100%" }}>
+            <table style={{ width: "100%", minWidth: isMobile ? "700px" : undefined, borderCollapse: "collapse", fontSize: "12px", tableLayout: "fixed" }}>
               <thead>
                 <tr style={{ background: "#f8fafc", textAlign: "right" }}>
                   {["שם", "בסיס לקוחות", "מחיר בסיס", "מחיר נוסף", "יום חיוב", "חינם", "חיוב חודשי משוער", "פעולה"].map((h) => (
@@ -504,8 +512,8 @@ export function AdminBillingTab({ initialAccountantId, onClearFilter }: Props) {
           <div style={{ padding: "14px 18px", borderBottom: "1px solid #e2e8f0" }}>
             <h3 style={{ margin: 0, fontSize: "16px", color: "#1e3a5f", fontWeight: 700 }}>לקוחות ישירים — חיוב חודשי</h3>
           </div>
-          <div style={{ overflow: "hidden", width: "100%" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", tableLayout: "fixed" }}>
+          <div style={isMobile ? { overflowX: "auto", WebkitOverflowScrolling: "touch", width: "100%" } : { overflow: "hidden", width: "100%" }}>
+            <table style={{ width: "100%", minWidth: isMobile ? "700px" : undefined, borderCollapse: "collapse", fontSize: "12px", tableLayout: "fixed" }}>
               <thead>
                 <tr style={{ background: "#f8fafc", textAlign: "right" }}>
                   {["שם עסק", "חבילה", "מחזור", "מחיר", "יום חיוב", "חינם", "חיוב משוער", "פעולה"].map((h) => (
@@ -567,8 +575,8 @@ export function AdminBillingTab({ initialAccountantId, onClearFilter }: Props) {
               לקוחות אלו מחוייבים דרך רואה החשבון שלהם
             </div>
           </div>
-          <div style={{ overflow: "hidden", width: "100%" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", tableLayout: "fixed" }}>
+          <div style={isMobile ? { overflowX: "auto", WebkitOverflowScrolling: "touch", width: "100%" } : { overflow: "hidden", width: "100%" }}>
+            <table style={{ width: "100%", minWidth: isMobile ? "600px" : undefined, borderCollapse: "collapse", fontSize: "12px", tableLayout: "fixed" }}>
               <thead>
                 <tr style={{ background: "#f8fafc", textAlign: "right" }}>
                   {["שם עסק", "רו\"ח אחראי", "חבילת רו\"ח", "סטטוס"].map((h) => (
@@ -630,8 +638,8 @@ export function AdminBillingTab({ initialAccountantId, onClearFilter }: Props) {
             </select>
           </div>
         </div>
-        <div style={{ overflow: "hidden", width: "100%" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "11px", tableLayout: "fixed" }}>
+        <div style={isMobile ? { overflowX: "auto", WebkitOverflowScrolling: "touch", width: "100%" } : { overflow: "hidden", width: "100%" }}>
+          <table style={{ width: "100%", minWidth: isMobile ? "900px" : undefined, borderCollapse: "collapse", fontSize: "11px", tableLayout: "fixed" }}>
             <thead>
               <tr style={{ background: "#f8fafc", textAlign: "right" }}>
                 {["שם", "סוג", "תקופה", "בסיס", "נוספים", 'לפני מע"מ', 'מע"מ', 'כולל מע"מ', "אסמכתא", "שולם ב", "סטטוס", "פעולות"].map((h) => (

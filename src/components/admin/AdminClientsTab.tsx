@@ -70,6 +70,13 @@ export default function AdminClientsTab() {
   const [planModal, setPlanModal] = useState<any>(null);
   const { impersonate, loading: impersonateLoading } = useImpersonate();
 
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+
   const { data: clients, isLoading } = useQuery({
     queryKey: ["admin-clients"],
     queryFn: async () => {
@@ -318,6 +325,59 @@ export default function AdminClientsTab() {
         </div>
       </div>
 
+      {isMobile ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px", padding: "12px" }}>
+          {(innerTab === "active" ? activeClients : pendingClients).length === 0 ? (
+            <div style={{ padding: "24px", textAlign: "center", color: "#94a3b8", fontSize: "14px" }}>
+              לא נמצאו לקוחות
+            </div>
+          ) : (
+            (innerTab === "active" ? activeClients : pendingClients).map((c) => {
+              const stripeColor = !c.is_active ? "#94a3b8" : c.has_accountant ? "#16a34a" : "#e8941a";
+              return (
+                <div
+                  key={c.id}
+                  style={{
+                    background: "#ffffff",
+                    borderRadius: "12px",
+                    padding: "16px",
+                    border: "1px solid #e2e8f0",
+                    borderRight: `4px solid ${stripeColor}`,
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", gap: "8px" }}>
+                    <span style={{ fontWeight: 700, fontSize: "15px", color: "#1e3a5f" }}>{c.brand_name}</span>
+                    {(() => {
+                      const b = getPlanBadge(c.plan_type);
+                      return (
+                        <span style={{ background: b.bg, color: b.color, borderRadius: "6px", padding: "2px 10px", fontSize: "11px", fontWeight: 700 }}>
+                          {b.text}
+                        </span>
+                      );
+                    })()}
+                  </div>
+                  <div style={{ fontSize: "13px", color: "#64748b", marginBottom: "4px" }}>
+                    רו"ח: {c.has_accountant ? (accountants || []).find((a: any) => a.id === c.accountant_id)?.name || "✓" : "—"}
+                  </div>
+                  <div style={{ fontSize: "13px", color: "#64748b", marginBottom: "12px" }}>
+                    תפוגה: {formatDate(c.plan_expires_at)}
+                  </div>
+                  <RowMenu
+                    client={c}
+                    onEdit={() => { setEditClient(c); setDrawerAccountant(c.accountant_id || ""); }}
+                    onDelete={() => deleteMutation.mutate(c.id)}
+                    onToggleActive={() => toggleActive.mutate({ id: c.id, is_active: !c.is_active })}
+                    onImpersonate={() => impersonate(c.user_id, c.brand_name ?? c.legal_name ?? "לקוח", "/dashboard")}
+                    impersonateLoading={impersonateLoading === c.user_id}
+                    onOpenUsers={() => setUsersModal(c)}
+                  />
+                </div>
+              );
+            })
+          )}
+        </div>
+      ) : (
       <div
         style={{
           borderRadius: "12px",
@@ -590,6 +650,7 @@ export default function AdminClientsTab() {
           </tbody>
         </table>
       </div>
+      )}
 
       {/* Edit Drawer */}
       <Sheet open={!!editClient} onOpenChange={(o) => !o && setEditClient(null)}>
