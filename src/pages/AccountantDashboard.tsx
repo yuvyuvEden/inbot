@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +8,7 @@ import { AccountantClientsTab } from "@/components/accountant/AccountantClientsT
 import { AccountantMessagesTab } from "@/components/accountant/AccountantMessagesTab";
 import { AccountantSettingsTab } from "@/components/accountant/AccountantSettingsTab";
 import { useMyClients } from "@/hooks/useAccountantData";
-import { LogOut, ShieldAlert } from "lucide-react";
+import { LogOut, ShieldAlert, Home, Users, MessageSquare, Settings } from "lucide-react";
 
 const LOGO_URL = "https://jkqpkbcdtbelgpuwncam.supabase.co/storage/v1/object/public/assets//LOGO.jpeg";
 
@@ -24,6 +24,13 @@ export default function AccountantDashboard() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("home");
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
 
   const adminViewId = searchParams.get("admin_view");
   const isAdminView = userRole === "admin" && !!adminViewId;
@@ -127,7 +134,7 @@ export default function AccountantDashboard() {
       </nav>
 
       {/* Tab Bar */}
-      <div style={{ backgroundColor: "#ffffff", borderBottom: "1px solid #e2e8f0", display: "flex", gap: "4px", padding: "0 16px", overflowX: "auto" }}>
+      <div style={{ backgroundColor: "#ffffff", borderBottom: "1px solid #e2e8f0", display: isMobile ? "none" : "flex", gap: "4px", padding: "0 16px", overflowX: "auto" }}>
         {TABS.map(tab => (
           <button
             key={tab.id}
@@ -152,12 +159,42 @@ export default function AccountantDashboard() {
       </div>
 
       {/* Content */}
-      <main style={{ padding: "24px", maxWidth: "1400px", margin: "0 auto" }}>
+      <main style={{ padding: "24px", maxWidth: "1400px", margin: "0 auto", paddingBottom: isMobile ? "80px" : "24px" }}>
         {activeTab === "home" && <AccountantHomeTab clients={clients as any[]} clientIds={clientIds} />}
         {activeTab === "clients" && <AccountantClientsTab clients={clients as any[]} clientIds={clientIds} />}
         {activeTab === "messages" && <AccountantMessagesTab clientIds={clientIds} />}
         {activeTab === "settings" && <AccountantSettingsTab />}
       </main>
+
+      {isMobile && (
+        <div style={{
+          position: "fixed", bottom: 0, left: 0, right: 0,
+          height: "64px", backgroundColor: "#1e3a5f",
+          display: "flex", justifyContent: "space-around", alignItems: "center",
+          zIndex: 1000, borderTop: "2px solid #e8941a"
+        }}>
+          {[
+            { id: "home", label: "בית", icon: <Home size={20} /> },
+            { id: "clients", label: "לקוחות", icon: <Users size={20} /> },
+            { id: "messages", label: "הודעות", icon: <MessageSquare size={20} /> },
+            { id: "settings", label: "הגדרות", icon: <Settings size={20} /> },
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                display: "flex", flexDirection: "column", alignItems: "center",
+                gap: "2px", background: "none", border: "none", cursor: "pointer",
+                color: activeTab === tab.id ? "#e8941a" : "#94a3b8",
+                fontSize: "10px", padding: "8px", fontFamily: "Heebo, sans-serif"
+              }}
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
