@@ -194,7 +194,7 @@ export default function Dashboard() {
 
       {/* Content */}
       <main className="py-4 md:py-6" style={{ paddingBottom: isMobile ? "80px" : undefined }}>
-        <div className="mx-auto w-full md:w-[90%] bg-white rounded-none md:rounded-xl shadow-none md:shadow-[0_4px_12px_rgba(0,0,0,.08)] overflow-hidden">
+        <div className="mx-auto w-full md:w-[90%] bg-white rounded-none md:rounded-xl shadow-none md:shadow-[0_4px_12px_rgba(0,0,0,.08)] overflow-visible">
           {activeTab === "dashboard" ? (
             <div className="space-y-6 p-4 md:p-6">
               {/* 1. Period Selector */}
@@ -205,11 +205,14 @@ export default function Dashboard() {
                   style={{
                     display: "flex",
                     flexDirection: "row",
-                    overflowX: "auto",
+                    overflowX: "scroll",
                     gap: "8px",
-                    padding: "4px 0 8px 0",
+                    paddingBottom: "8px",
                     paddingLeft: "16px",
-                    whiteSpace: "nowrap",
+                    paddingRight: "4px",
+                    width: "100%",
+                    boxSizing: "border-box",
+                    msOverflowStyle: "none",
                     scrollbarWidth: "none",
                     WebkitOverflowScrolling: "touch",
                     direction: "rtl",
@@ -219,7 +222,7 @@ export default function Dashboard() {
                     <button
                       key={p.key}
                       onClick={() => setPeriod(p.key)}
-                      style={{ flexShrink: 0 }}
+                      style={{ flexShrink: 0, whiteSpace: "nowrap" }}
                       className={`rounded-lg px-4 py-2 text-[13px] font-medium transition-colors ${
                         period === p.key
                           ? "bg-primary text-primary-foreground"
