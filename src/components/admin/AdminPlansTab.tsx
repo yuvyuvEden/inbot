@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePlans, useUpdatePlan } from "@/hooks/usePlans";
 import { useAuth } from "@/contexts/AuthContext";
 import { Edit2, Check, X, History } from "lucide-react";
