@@ -235,6 +235,13 @@ export default function AdminAccountantsTab({ onGoToBilling }: AdminAccountantsT
   const [isNew, setIsNew] = useState(false);
   const { impersonate, loading: impersonateLoading } = useImpersonate();
 
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+
   const { data: accountants, isLoading } = useQuery({
     queryKey: ["admin-accountants"],
     queryFn: async () => {
