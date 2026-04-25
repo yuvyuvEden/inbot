@@ -189,8 +189,8 @@ export function AdminPlansTab() {
             )}
           </div>
         ) : (
-        <div className="w-full overflow-hidden">
-          <table className="w-full text-xs" style={{ tableLayout: "fixed" }}>
+        <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", width: "100%" }}>
+          <table className="w-full text-xs" style={{ tableLayout: "fixed", minWidth: isMobile ? "600px" : undefined }}>
             <thead>
               <tr className="border-b border-border bg-secondary text-right text-xs font-semibold text-muted-foreground">
                 {["שם חבילה", "מחיר חודשי", "מחיר שנתי", "משתמשים", "חשבוניות/חודש", "ימי ניסיון", "פעיל", "פעולה"].map(
