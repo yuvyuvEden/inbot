@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import AdminClientsTab from "@/components/admin/AdminClientsTab";
 import AdminAccountantsTab from "@/components/admin/AdminAccountantsTab";
