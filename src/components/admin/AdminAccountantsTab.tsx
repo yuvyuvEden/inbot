@@ -581,6 +581,7 @@ export default function AdminAccountantsTab({ onGoToBilling }: AdminAccountantsT
           </tbody>
         </table>
       </div>
+      )}
 
       {/* Edit/Create Drawer */}
       <Sheet open={!!editAcc} onOpenChange={(o) => { if (!o) { setEditAcc(null); setIsNew(false); } }}>
