@@ -144,6 +144,3 @@ export function AccountantClientsTab({ clients, clientIds }: Props) {
     </div>
   );
 }
-    </div>
-  );
-}
