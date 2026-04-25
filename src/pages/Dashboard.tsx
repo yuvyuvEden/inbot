@@ -26,11 +26,11 @@ import { useIsMobile } from "@/hooks/use-mobile";
 const LOGO_URL = "https://jkqpkbcdtbelgpuwncam.supabase.co/storage/v1/object/public/assets//LOGO.jpeg";
 
 const PERIODS = [
-  { key: "this_month", label: "החודש" },
-  { key: "last_month", label: "חודש קודם" },
-  { key: "this_quarter", label: "רבעון נוכחי" },
-  { key: "last_quarter", label: "רבעון קודם" },
   { key: "this_year", label: "השנה" },
+  { key: "last_quarter", label: "רבעון קודם" },
+  { key: "this_quarter", label: "רבעון נוכחי" },
+  { key: "last_month", label: "חודש קודם" },
+  { key: "this_month", label: "החודש" },
 ] as const;
 
 const TABS = [
@@ -206,13 +206,14 @@ export default function Dashboard() {
                     display: "flex",
                     gap: "8px",
                     overflowX: "auto",
-                    padding: "2px 0 8px 0",
+                    padding: "2px 4px 8px 0",
                     width: "100%",
                     maxWidth: "100%",
                     boxSizing: "border-box",
                     scrollbarWidth: "none",
                     WebkitOverflowScrolling: "touch",
                     msOverflowStyle: "none",
+                    direction: "rtl",
                   }}
                 >
                   {PERIODS.map((p) => (
