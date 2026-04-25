@@ -254,6 +254,91 @@ export default function Dashboard() {
           )}
         </div>
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      {isMobile && (
+        <nav
+          style={{
+            position: "fixed",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: "64px",
+            backgroundColor: "#1e3a5f",
+            display: "flex",
+            justifyContent: "space-around",
+            alignItems: "center",
+            zIndex: 1000,
+            borderTop: "2px solid #e8941a",
+          }}
+        >
+          {[
+            { key: "dashboard", label: "דשבורד", icon: LayoutDashboard },
+            { key: "invoices", label: "חשבוניות", icon: FileText },
+            { key: "messages", label: "הודעות", icon: MessageSquare, badge: true },
+            { key: "archive", label: "ארכיון", icon: Archive },
+            { key: "export", label: "יצוא", icon: Download },
+            { key: "settings", label: "הגדרות", icon: Settings },
+          ]
+            .filter((tab) => {
+              if (tab.key === "messages" || tab.key === "archive") return !!hasAccountant;
+              return true;
+            })
+            .map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.key;
+              const color = isActive ? "#e8941a" : "#94a3b8";
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  style={{
+                    position: "relative",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: "2px",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    color,
+                    fontSize: "10px",
+                    padding: "8px",
+                    fontFamily: "Heebo, sans-serif",
+                  }}
+                >
+                  <div style={{ position: "relative" }}>
+                    <Icon size={22} color={color} />
+                    {tab.badge && (unreadCount ?? 0) > 0 && (
+                      <span
+                        style={{
+                          position: "absolute",
+                          top: "-4px",
+                          left: "-6px",
+                          minWidth: "16px",
+                          height: "16px",
+                          padding: "0 4px",
+                          borderRadius: "8px",
+                          backgroundColor: "#e8941a",
+                          color: "#ffffff",
+                          fontSize: "10px",
+                          fontWeight: 700,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          lineHeight: 1,
+                        }}
+                      >
+                        {unreadCount}
+                      </span>
+                    )}
+                  </div>
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+        </nav>
+      )}
     </div>
   );
 }
