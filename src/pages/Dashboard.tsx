@@ -211,6 +211,7 @@ export default function Dashboard() {
                     whiteSpace: "nowrap",
                     scrollbarWidth: "none",
                     WebkitOverflowScrolling: "touch",
+                    direction: "rtl",
                   }}
                 >
                   {PERIODS.map((p) => (
