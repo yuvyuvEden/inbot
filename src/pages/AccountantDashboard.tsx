@@ -134,7 +134,7 @@ export default function AccountantDashboard() {
       </nav>
 
       {/* Tab Bar */}
-      <div style={{ backgroundColor: "#ffffff", borderBottom: "1px solid #e2e8f0", display: "flex", gap: "4px", padding: "0 16px", overflowX: "auto" }}>
+      <div style={{ backgroundColor: "#ffffff", borderBottom: "1px solid #e2e8f0", display: isMobile ? "none" : "flex", gap: "4px", padding: "0 16px", overflowX: "auto" }}>
         {TABS.map(tab => (
           <button
             key={tab.id}
