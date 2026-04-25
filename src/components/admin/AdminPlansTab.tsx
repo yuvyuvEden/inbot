@@ -269,6 +269,7 @@ export function AdminPlansTab() {
             </tbody>
           </table>
         </div>
+        )}
       </div>
 
       {/* History */}
