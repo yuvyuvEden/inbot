@@ -10,8 +10,15 @@ interface Props {
 
 export function AccountantClientsTab({ clients, clientIds }: Props) {
   const [search, setSearch] = useState("");
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const { data: counts = {} } = useClientInvoiceCounts(clientIds);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
 
   const filtered = clients.filter((c: any) =>
     !search ||
