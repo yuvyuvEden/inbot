@@ -198,21 +198,36 @@ export default function Dashboard() {
           {activeTab === "dashboard" ? (
             <div className="space-y-6 p-4 md:p-6">
               {/* 1. Period Selector */}
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[13px] font-medium text-muted-foreground">תקופה:</span>
-                {PERIODS.map((p) => (
-                  <button
-                    key={p.key}
-                    onClick={() => setPeriod(p.key)}
-                    className={`rounded-lg px-4 py-2 text-[13px] font-medium transition-colors ${
-                      period === p.key
-                        ? "bg-primary text-primary-foreground"
-                        : "border border-border bg-card text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {p.label}
-                  </button>
-                ))}
+              <div>
+                <p style={{ fontSize: "12px", color: "#64748b", margin: "0 0 6px 0", textAlign: "right" }}>תקופה:</p>
+                <div
+                  className="hide-scrollbar"
+                  style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    overflowX: "auto",
+                    gap: "8px",
+                    padding: "4px 0 8px 0",
+                    whiteSpace: "nowrap",
+                    scrollbarWidth: "none",
+                    WebkitOverflowScrolling: "touch",
+                  }}
+                >
+                  {PERIODS.map((p) => (
+                    <button
+                      key={p.key}
+                      onClick={() => setPeriod(p.key)}
+                      style={{ flexShrink: 0 }}
+                      className={`rounded-lg px-4 py-2 text-[13px] font-medium transition-colors ${
+                        period === p.key
+                          ? "bg-primary text-primary-foreground"
+                          : "border border-border bg-card text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* 2. KPI Cards — always visible */}
