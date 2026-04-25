@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +8,7 @@ import { AccountantClientsTab } from "@/components/accountant/AccountantClientsT
 import { AccountantMessagesTab } from "@/components/accountant/AccountantMessagesTab";
 import { AccountantSettingsTab } from "@/components/accountant/AccountantSettingsTab";
 import { useMyClients } from "@/hooks/useAccountantData";
-import { LogOut, ShieldAlert } from "lucide-react";
+import { LogOut, ShieldAlert, Home, Users, MessageSquare, Settings } from "lucide-react";
 
 const LOGO_URL = "https://jkqpkbcdtbelgpuwncam.supabase.co/storage/v1/object/public/assets//LOGO.jpeg";
 
