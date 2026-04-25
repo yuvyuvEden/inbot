@@ -106,9 +106,11 @@ function RowMenu({
   const handleOpen = () => {
     if (btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect();
+      const menuWidth = 180;
+      const leftPos = Math.min(rect.left + window.scrollX, window.innerWidth - menuWidth - 8);
       setMenuPos({
         top: rect.bottom + window.scrollY + 4,
-        left: rect.left + window.scrollX,
+        left: Math.max(8, leftPos),
       });
     }
     setOpen((p) => !p);
