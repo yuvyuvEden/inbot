@@ -206,10 +206,9 @@ export default function Dashboard() {
                     flexWrap: "wrap",
                     gap: "8px",
                     width: "100%",
-                    justifyContent: "flex-end",
-                    direction: "rtl",
+                    justifyContent: "flex-start",
                   }}>
-                    {PERIODS.map((p) => (
+                    {[...PERIODS].reverse().map((p) => (
                       <button
                         key={p.key}
                         onClick={() => setPeriod(p.key)}
