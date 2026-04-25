@@ -26,6 +26,13 @@ const AdminDashboard = () => {
   });
   const [billingFilterId, setBillingFilterId] = useState<string | undefined>(undefined);
 
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+
   const goToBilling = (accountantId: string) => {
     setBillingFilterId(accountantId);
     setActiveTab("billing");
