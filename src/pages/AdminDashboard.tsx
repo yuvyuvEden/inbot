@@ -88,7 +88,7 @@ const AdminDashboard = () => {
       </nav>
 
       {/* Content */}
-      <main className="mx-auto max-w-7xl p-6">
+      <main className="mx-auto max-w-7xl p-6" style={{ paddingBottom: isMobile ? "80px" : undefined }}>
         {activeTab === "clients" && <AdminClientsTab />}
         {activeTab === "accountants" && <AdminAccountantsTab onGoToBilling={goToBilling} />}
         {activeTab === "stats" && <AdminStatsTab />}
@@ -100,6 +100,39 @@ const AdminDashboard = () => {
         )}
         {activeTab === "plans" && <AdminPlansTab />}
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      {isMobile && (
+        <div style={{
+          position: "fixed", bottom: 0, left: 0, right: 0,
+          height: "64px", backgroundColor: "#1e3a5f",
+          display: "flex", justifyContent: "space-around", alignItems: "center",
+          zIndex: 1000, borderTop: "2px solid #e8941a"
+        }}>
+          {tabs.map((t) => {
+            const Icon = t.icon;
+            return (
+              <button
+                key={t.key}
+                onClick={() => {
+                  setActiveTab(t.key);
+                  localStorage.setItem("admin-active-tab", t.key);
+                  if (t.key !== "billing") setBillingFilterId(undefined);
+                }}
+                style={{
+                  display: "flex", flexDirection: "column", alignItems: "center",
+                  gap: "2px", background: "none", border: "none", cursor: "pointer",
+                  color: activeTab === t.key ? "#e8941a" : "#94a3b8",
+                  fontSize: "10px", padding: "8px", fontFamily: "Heebo, sans-serif"
+                }}
+              >
+                <Icon size={20} />
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };
