@@ -193,7 +193,7 @@ export default function Dashboard() {
       </div>
 
       {/* Content */}
-      <main className="py-4 md:py-6">
+      <main className="py-4 md:py-6" style={{ paddingBottom: isMobile ? "80px" : undefined }}>
         <div className="mx-auto w-full md:w-[90%] bg-white rounded-none md:rounded-xl shadow-none md:shadow-[0_4px_12px_rgba(0,0,0,.08)] overflow-hidden">
           {activeTab === "dashboard" ? (
             <div className="space-y-6 p-4 md:p-6">
