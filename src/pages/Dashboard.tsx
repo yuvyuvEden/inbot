@@ -198,24 +198,21 @@ export default function Dashboard() {
           {activeTab === "dashboard" ? (
             <div className="space-y-6 p-4 md:p-6">
               {/* 1. Period Selector */}
-              <div>
+              <div style={{ width: "100%", maxWidth: "100%", overflow: "visible" }}>
                 <p style={{ fontSize: "12px", color: "#64748b", margin: "0 0 6px 0", textAlign: "right" }}>תקופה:</p>
                 <div
                   className="hide-scrollbar"
                   style={{
                     display: "flex",
-                    flexDirection: "row",
-                    overflowX: "scroll",
                     gap: "8px",
-                    paddingBottom: "8px",
-                    paddingLeft: "16px",
-                    paddingRight: "4px",
+                    overflowX: "auto",
+                    padding: "2px 0 8px 0",
                     width: "100%",
+                    maxWidth: "100%",
                     boxSizing: "border-box",
-                    msOverflowStyle: "none",
                     scrollbarWidth: "none",
                     WebkitOverflowScrolling: "touch",
-                    direction: "rtl",
+                    msOverflowStyle: "none",
                   }}
                 >
                   {PERIODS.map((p) => (
