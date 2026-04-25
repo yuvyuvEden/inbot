@@ -393,17 +393,113 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
   return (
     <div className="flex flex-col">
       {/* ── Filters ── */}
-      <div className="bg-white border-b border-[#e2e8f0] px-6 py-3">
-        {/* Mobile: search on top */}
-        <div className="md:hidden mb-2">
-          <div className="relative">
+      <div className="bg-white border-b border-[#e2e8f0] px-4 md:px-6 py-3">
+        {/* Mobile: vertical stacked filters */}
+        <div
+          className="md:hidden"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "8px",
+            marginBottom: "16px",
+          }}
+        >
+          {/* Row 1: search */}
+          <div style={{ position: "relative", width: "100%" }}>
             <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-            <input placeholder="חיפוש לפי ספק, מספר חשבונית..." value={search} onChange={e => { setSearch(e.target.value); setPage(0); }}
-              className="h-[36px] w-full rounded-md border border-[#e2e8f0] bg-white pr-9 pl-3 text-[13px] outline-none focus:ring-1 focus:ring-primary" />
+            <input
+              placeholder="חיפוש לפי ספק, מספר חשבונית..."
+              value={search}
+              onChange={e => { setSearch(e.target.value); setPage(0); }}
+              style={{ width: "100%", boxSizing: "border-box", fontSize: "13px" }}
+              className="h-[36px] rounded-md border border-[#e2e8f0] bg-white pr-9 pl-3 outline-none focus:ring-1 focus:ring-primary"
+            />
+          </div>
+
+          {/* Row 2: category + status */}
+          <div style={{ display: "flex", gap: "8px" }}>
+            <select
+              value={categoryFilter}
+              onChange={e => { setCategoryFilter(e.target.value); setPage(0); }}
+              style={{ width: "50%", boxSizing: "border-box", fontSize: "13px" }}
+              className="h-[36px] rounded-md border border-[#e2e8f0] bg-white px-2 outline-none focus:ring-1 focus:ring-primary"
+            >
+              <option value="">קטגוריה: הכל</option>
+              {categories.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+            {hasAccountant ? (
+              <select
+                value={statusFilter}
+                onChange={e => { setStatusFilter(e.target.value); setPage(0); }}
+                style={{ width: "50%", boxSizing: "border-box", fontSize: "13px" }}
+                className="h-[36px] rounded-md border border-[#e2e8f0] bg-white px-2 outline-none focus:ring-1 focus:ring-primary"
+              >
+                {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            ) : <div style={{ width: "50%" }} />}
+          </div>
+
+          {/* Row 3: doc type */}
+          <select
+            value={docTypeFilter}
+            onChange={e => { setDocTypeFilter(e.target.value); setPage(0); }}
+            style={{ width: "100%", boxSizing: "border-box", fontSize: "13px" }}
+            className="h-[36px] rounded-md border border-[#e2e8f0] bg-white px-2 outline-none focus:ring-1 focus:ring-primary"
+          >
+            {DOC_TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+
+          {/* Row 4: date pickers */}
+          <div style={{ display: "flex", gap: "8px" }}>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className={cn("h-[36px] gap-1 text-[12px] font-normal flex-1", !dateFrom && "text-muted-foreground")} style={{ width: "50%", boxSizing: "border-box" }}>
+                  <CalendarIcon size={14} />
+                  {dateFrom ? format(dateFrom, "dd/MM/yyyy") : "מ-תאריך"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar mode="single" selected={dateFrom} onSelect={(d) => { setDateFrom(d); setQuickFilter(""); setPage(0); }} initialFocus className={cn("p-3 pointer-events-auto")} />
+              </PopoverContent>
+            </Popover>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className={cn("h-[36px] gap-1 text-[12px] font-normal flex-1", !dateTo && "text-muted-foreground")} style={{ width: "50%", boxSizing: "border-box" }}>
+                  <CalendarIcon size={14} />
+                  {dateTo ? format(dateTo, "dd/MM/yyyy") : "עד-תאריך"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar mode="single" selected={dateTo} onSelect={(d) => { setDateTo(d); setQuickFilter(""); setPage(0); }} initialFocus className={cn("p-3 pointer-events-auto")} />
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          {/* Row 5: quick filters scrollable */}
+          <div className="hide-scrollbar" style={{ display: "flex", gap: "6px", overflowX: "auto", padding: "2px 0" }}>
+            {QUICK_FILTERS.map(qf => (
+              <button key={qf.key} onClick={() => { setQuickFilter(qf.key); setDateFrom(undefined); setDateTo(undefined); setPage(0); }}
+                style={{ flexShrink: 0 }}
+                className={`rounded-md px-3 py-1.5 text-[12px] font-medium transition-colors ${quickFilter === qf.key ? "bg-[#1e3a5f] text-white" : "text-gray-500 hover:text-gray-800 border border-[#e2e8f0]"}`}>
+                {qf.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Row 6: actions */}
+          <div style={{ display: "flex", gap: "8px", justifyContent: "space-between" }}>
+            <button onClick={exportCSV} className="flex items-center gap-1 rounded-md border border-[#e2e8f0] px-3 py-1.5 text-[12px] font-medium text-gray-500 hover:text-gray-800 transition-colors">
+              <Download size={12} /> CSV
+            </button>
+            <button onClick={resetFilters} className="flex items-center gap-1 text-[12px] text-gray-400 hover:text-gray-700 transition-colors">
+              <X size={12} /> נקה
+            </button>
           </div>
         </div>
+
+        {/* Desktop: single horizontal scrollable row */}
         <div
-          className="flex items-center gap-2 hide-scrollbar"
+          className="hidden md:flex items-center gap-2 hide-scrollbar"
           style={{
             flexDirection: "row",
             flexWrap: "nowrap",
@@ -414,7 +510,7 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
           }}
         >
           {/* Desktop search */}
-          <div className="relative hidden md:block shrink min-w-[160px] flex-1">
+          <div className="relative shrink min-w-[160px] flex-1">
             <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             <input placeholder="חיפוש לפי ספק, מספר חשבונית..." value={search} onChange={e => { setSearch(e.target.value); setPage(0); }}
               className="h-[36px] w-full rounded-md border border-[#e2e8f0] bg-white pr-9 pl-3 text-[13px] outline-none focus:ring-1 focus:ring-primary" />
