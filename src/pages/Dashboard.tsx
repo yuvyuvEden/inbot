@@ -200,37 +200,63 @@ export default function Dashboard() {
               {/* 1. Period Selector */}
               <div style={{ width: "100%", maxWidth: "100%", overflow: "visible" }}>
                 <p style={{ fontSize: "12px", color: "#64748b", margin: "0 0 6px 0", textAlign: "right" }}>תקופה:</p>
-                <div
-                  className="hide-scrollbar"
-                  style={{
+                {isMobile ? (
+                  <div style={{
                     display: "flex",
+                    flexWrap: "wrap",
                     gap: "8px",
-                    overflowX: "auto",
-                    padding: "2px 4px 8px 0",
                     width: "100%",
-                    maxWidth: "100%",
-                    boxSizing: "border-box",
-                    scrollbarWidth: "none",
-                    WebkitOverflowScrolling: "touch",
-                    msOverflowStyle: "none",
+                    justifyContent: "flex-end",
                     direction: "rtl",
-                  }}
-                >
-                  {PERIODS.map((p) => (
-                    <button
-                      key={p.key}
-                      onClick={() => setPeriod(p.key)}
-                      style={{ flexShrink: 0, whiteSpace: "nowrap" }}
-                      className={`rounded-lg px-4 py-2 text-[13px] font-medium transition-colors ${
-                        period === p.key
-                          ? "bg-primary text-primary-foreground"
-                          : "border border-border bg-card text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      {p.label}
-                    </button>
-                  ))}
-                </div>
+                  }}>
+                    {PERIODS.map((p) => (
+                      <button
+                        key={p.key}
+                        onClick={() => setPeriod(p.key)}
+                        style={{ flexShrink: 0, whiteSpace: "nowrap" }}
+                        className={`rounded-lg px-4 py-2 text-[13px] font-medium transition-colors ${
+                          period === p.key
+                            ? "bg-primary text-primary-foreground"
+                            : "border border-border bg-card text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div
+                    className="hide-scrollbar"
+                    style={{
+                      display: "flex",
+                      gap: "8px",
+                      overflowX: "auto",
+                      padding: "2px 4px 8px 0",
+                      width: "100%",
+                      maxWidth: "100%",
+                      boxSizing: "border-box",
+                      scrollbarWidth: "none",
+                      WebkitOverflowScrolling: "touch",
+                      msOverflowStyle: "none",
+                      direction: "rtl",
+                    }}
+                  >
+                    {PERIODS.map((p) => (
+                      <button
+                        key={p.key}
+                        onClick={() => setPeriod(p.key)}
+                        style={{ flexShrink: 0, whiteSpace: "nowrap" }}
+                        className={`rounded-lg px-4 py-2 text-[13px] font-medium transition-colors ${
+                          period === p.key
+                            ? "bg-primary text-primary-foreground"
+                            : "border border-border bg-card text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* 2. KPI Cards — always visible */}
