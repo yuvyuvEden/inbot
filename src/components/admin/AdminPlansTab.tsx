@@ -128,6 +128,57 @@ export function AdminPlansTab() {
                 </div>
               ))
             )}
+
+            {isMobile && editId && (
+              <div
+                style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 1000 }}
+                onClick={() => setEditId(null)}
+              >
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ background: "#ffffff", borderRadius: "16px 16px 0 0", padding: "24px", width: "100%", fontFamily: "Heebo, sans-serif" }}
+                >
+                  <h3 style={{ margin: "0 0 16px 0", color: "#1e3a5f" }}>
+                    עריכת {plans.find((p: any) => p.id === editId)?.name}
+                  </h3>
+                  {[
+                    { label: "מחיר חודשי", key: "monthly_price" },
+                    { label: "מחיר שנתי", key: "yearly_price" },
+                    { label: "משתמשים", key: "user_limit" },
+                    { label: "חשבוניות/חודש", key: "invoice_limit" },
+                  ].map(({ label, key }) => (
+                    <label key={key} style={{ display: "block", marginBottom: "12px" }}>
+                      <span style={{ fontSize: "13px", color: "#64748b" }}>{label}</span>
+                      <input
+                        type="number"
+                        value={(editValues as any)[key]}
+                        onChange={(e) => setEditValues({ ...editValues, [key]: e.target.value })}
+                        style={{ display: "block", width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "14px", fontFamily: "Heebo, sans-serif", boxSizing: "border-box", marginTop: "4px" }}
+                      />
+                    </label>
+                  ))}
+                  <label style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px", fontSize: "13px" }}>
+                    <input type="checkbox" checked={applyToExisting} onChange={(e) => setApplyToExisting(e.target.checked)} />
+                    החל על לקוחות ותיקים
+                  </label>
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <button
+                      onClick={saveEdit}
+                      disabled={updatePlan.isPending}
+                      style={{ flex: 1, padding: "12px", borderRadius: "8px", backgroundColor: "#1e3a5f", color: "#ffffff", border: "none", cursor: "pointer", fontSize: "14px", fontFamily: "Heebo, sans-serif", fontWeight: 600 }}
+                    >
+                      שמור
+                    </button>
+                    <button
+                      onClick={() => setEditId(null)}
+                      style={{ padding: "12px 20px", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#ffffff", color: "#64748b", cursor: "pointer", fontSize: "14px", fontFamily: "Heebo, sans-serif" }}
+                    >
+                      ביטול
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
         <div className="w-full overflow-hidden">
