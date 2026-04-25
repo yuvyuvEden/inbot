@@ -70,6 +70,13 @@ export default function AdminClientsTab() {
   const [planModal, setPlanModal] = useState<any>(null);
   const { impersonate, loading: impersonateLoading } = useImpersonate();
 
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+
   const { data: clients, isLoading } = useQuery({
     queryKey: ["admin-clients"],
     queryFn: async () => {
