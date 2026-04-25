@@ -401,6 +401,7 @@ export function AdminBillingTab({ initialAccountantId, onClearFilter }: Props) {
               border: "none", cursor: "pointer", fontFamily: "Heebo, sans-serif",
               background: billingSubTab === t.k ? "#1e3a5f" : "transparent",
               color: billingSubTab === t.k ? "#ffffff" : "#64748b",
+              flexShrink: 0, whiteSpace: "nowrap",
             }}>
             {t.label} ({t.count})
           </button>
