@@ -160,8 +160,8 @@ export default function Dashboard() {
         </div>
       </nav>
 
-      {/* Tab Bar */}
-      <div className="border-b border-border bg-card">
+      {/* Tab Bar — desktop only */}
+      <div className="border-b border-border bg-card" style={{ display: isMobile ? "none" : "block" }}>
         <div className="flex gap-1 overflow-x-auto px-4">
           {TABS.filter((tab) => {
             if (tab.key === "messages" || tab.key === "archive") return !!hasAccountant;
