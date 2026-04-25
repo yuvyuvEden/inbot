@@ -650,6 +650,7 @@ export default function AdminClientsTab() {
           </tbody>
         </table>
       </div>
+      )}
 
       {/* Edit Drawer */}
       <Sheet open={!!editClient} onOpenChange={(o) => !o && setEditClient(null)}>
