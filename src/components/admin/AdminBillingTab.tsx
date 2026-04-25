@@ -387,7 +387,7 @@ export function AdminBillingTab({ initialAccountantId, onClearFilter }: Props) {
       </div>
 
       {/* Sub-tabs */}
-      <div style={{ display: "flex", gap: "6px", background: "#f1f5f9", padding: "4px", borderRadius: "10px", width: "fit-content" }}>
+      <div style={isMobile ? { display: "flex", gap: "6px", overflowX: "auto", scrollbarWidth: "none", padding: "4px", background: "#f1f5f9", borderRadius: "10px", WebkitOverflowScrolling: "touch" } : { display: "flex", gap: "6px", background: "#f1f5f9", padding: "4px", borderRadius: "10px", width: "fit-content" }}>
         {[
           { k: "all", label: "📊 הכל", count: allLogs.length },
           { k: "accountants", label: "🏢 רואי חשבון", count: allLogs.filter((l: any) => l.entity_type === "accountant").length },
