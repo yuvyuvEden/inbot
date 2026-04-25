@@ -46,62 +46,104 @@ export function AccountantClientsTab({ clients, clientIds }: Props) {
       </div>
 
       <div style={{ overflow: "hidden", width: "100%" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", tableLayout: "fixed" }}>
-          <thead>
-            <tr style={{ backgroundColor: "#f8fafc" }}>
-              {["שם עסק", "ח\"פ", "סטטוס", "חודש נוכחי", "ממתין", "הבהרה", "פעולה"].map(h => (
-                <th key={h} style={{ padding: "12px", textAlign: "right", fontSize: "12px", fontWeight: 600, color: "#64748b", borderBottom: "1px solid #e2e8f0" }}>
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
+        {isMobile ? (
+          <div style={{ padding: "16px" }}>
             {filtered.length === 0 && (
-              <tr><td colSpan={7} style={{ padding: "32px", textAlign: "center", color: "#94a3b8" }}>אין תוצאות</td></tr>
+              <div style={{ padding: "32px", textAlign: "center", color: "#94a3b8" }}>אין תוצאות</div>
             )}
             {filtered.map((c: any) => {
               const cc = (counts as any)[c.id] ?? { monthlyTotal: 0, pending: 0, clarification: 0 };
               return (
-                <tr key={c.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                  <td style={{ padding: "12px", fontWeight: 500, color: "#1e3a5f" }}>{c.brand_name ?? "—"}</td>
-                  <td style={{ padding: "12px", color: "#64748b" }}>{c.vat_number ?? "—"}</td>
-                  <td style={{ padding: "12px" }}>
-                    <span
-                      style={{
-                        display: "inline-block",
-                        padding: "2px 8px",
-                        borderRadius: "9999px",
-                        fontSize: "11px",
-                        fontWeight: 600,
-                        backgroundColor: c.is_active ? "#dcfce7" : "#fee2e2",
-                        color: c.is_active ? "#16a34a" : "#dc2626",
-                      }}
-                    >
-                      {c.is_active ? "פעיל" : "מושהה"}
-                    </span>
-                  </td>
-                  <td style={{ padding: "12px" }}>{"₪" + (cc.monthlyTotal ?? 0).toLocaleString("he-IL", { maximumFractionDigits: 0 })}</td>
-                  <td style={{ padding: "12px", color: cc.pending > 0 ? "#dc2626" : "#64748b", fontWeight: cc.pending > 0 ? 700 : 400 }}>{cc.pending}</td>
-                  <td style={{ padding: "12px", color: cc.clarification > 0 ? "#d97706" : "#64748b", fontWeight: cc.clarification > 0 ? 700 : 400 }}>{cc.clarification}</td>
-                  <td style={{ padding: "12px" }}>
-                    <button
-                      onClick={() => navigate(`/accountant/client/${c.id}`)}
-                      style={{
-                        padding: "6px 14px", borderRadius: "6px", fontSize: "13px",
-                        backgroundColor: "#1e3a5f", color: "#ffffff",
-                        border: "none", cursor: "pointer", fontFamily: "Heebo, sans-serif",
-                      }}
-                    >
-                      👁️ כניסה
-                    </button>
-                  </td>
-                </tr>
+                <div key={c.id} style={{
+                  backgroundColor: "#ffffff", borderRadius: "12px", padding: "16px",
+                  marginBottom: "12px", border: "1px solid #e2e8f0",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.06)"
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                    <span style={{ fontWeight: 700, fontSize: "16px", color: "#1e3a5f" }}>{c.brand_name ?? "—"}</span>
+                    <span style={{ fontSize: "12px", color: "#64748b" }}>{c.vat_number ?? "—"}</span>
+                  </div>
+                  <div style={{ display: "flex", gap: "8px", marginBottom: "12px", flexWrap: "wrap" }}>
+                    <span style={{ fontSize: "13px", color: "#475569" }}>חודש נוכחי: <strong>₪{(cc.monthlyTotal ?? 0).toLocaleString("he-IL", { maximumFractionDigits: 0 })}</strong></span>
+                    <span style={{ color: "#dc2626", fontSize: "13px" }}>ממתין: <strong>{cc.pending}</strong></span>
+                    <span style={{ color: "#e8941a", fontSize: "13px" }}>הבהרה: <strong>{cc.clarification}</strong></span>
+                  </div>
+                  <button
+                    onClick={() => navigate(`/accountant/client/${c.id}`)}
+                    style={{
+                      width: "100%", padding: "10px", borderRadius: "8px",
+                      backgroundColor: "#1e3a5f", color: "#ffffff",
+                      border: "none", cursor: "pointer", fontSize: "14px",
+                      fontFamily: "Heebo, sans-serif", fontWeight: 600
+                    }}
+                  >
+                    👁 כניסה
+                  </button>
+                </div>
               );
             })}
-          </tbody>
-        </table>
+          </div>
+        ) : (
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", tableLayout: "fixed" }}>
+            <thead>
+              <tr style={{ backgroundColor: "#f8fafc" }}>
+                {["שם עסק", "ח\"פ", "סטטוס", "חודש נוכחי", "ממתין", "הבהרה", "פעולה"].map(h => (
+                  <th key={h} style={{ padding: "12px", textAlign: "right", fontSize: "12px", fontWeight: 600, color: "#64748b", borderBottom: "1px solid #e2e8f0" }}>
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.length === 0 && (
+                <tr><td colSpan={7} style={{ padding: "32px", textAlign: "center", color: "#94a3b8" }}>אין תוצאות</td></tr>
+              )}
+              {filtered.map((c: any) => {
+                const cc = (counts as any)[c.id] ?? { monthlyTotal: 0, pending: 0, clarification: 0 };
+                return (
+                  <tr key={c.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                    <td style={{ padding: "12px", fontWeight: 500, color: "#1e3a5f" }}>{c.brand_name ?? "—"}</td>
+                    <td style={{ padding: "12px", color: "#64748b" }}>{c.vat_number ?? "—"}</td>
+                    <td style={{ padding: "12px" }}>
+                      <span
+                        style={{
+                          display: "inline-block",
+                          padding: "2px 8px",
+                          borderRadius: "9999px",
+                          fontSize: "11px",
+                          fontWeight: 600,
+                          backgroundColor: c.is_active ? "#dcfce7" : "#fee2e2",
+                          color: c.is_active ? "#16a34a" : "#dc2626",
+                        }}
+                      >
+                        {c.is_active ? "פעיל" : "מושהה"}
+                      </span>
+                    </td>
+                    <td style={{ padding: "12px" }}>{"₪" + (cc.monthlyTotal ?? 0).toLocaleString("he-IL", { maximumFractionDigits: 0 })}</td>
+                    <td style={{ padding: "12px", color: cc.pending > 0 ? "#dc2626" : "#64748b", fontWeight: cc.pending > 0 ? 700 : 400 }}>{cc.pending}</td>
+                    <td style={{ padding: "12px", color: cc.clarification > 0 ? "#d97706" : "#64748b", fontWeight: cc.clarification > 0 ? 700 : 400 }}>{cc.clarification}</td>
+                    <td style={{ padding: "12px" }}>
+                      <button
+                        onClick={() => navigate(`/accountant/client/${c.id}`)}
+                        style={{
+                          padding: "6px 14px", borderRadius: "6px", fontSize: "13px",
+                          backgroundColor: "#1e3a5f", color: "#ffffff",
+                          border: "none", cursor: "pointer", fontFamily: "Heebo, sans-serif",
+                        }}
+                      >
+                        👁️ כניסה
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
       </div>
+    </div>
+  );
+}
     </div>
   );
 }
