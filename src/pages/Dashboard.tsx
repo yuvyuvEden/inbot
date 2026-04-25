@@ -45,6 +45,7 @@ const TABS = [
 
 export default function Dashboard() {
   const { user, signOut, userRole } = useAuth();
+  const isMobile = useIsMobile();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const adminViewId = searchParams.get("admin_view");
