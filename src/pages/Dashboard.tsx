@@ -208,6 +208,7 @@ export default function Dashboard() {
                     overflowX: "auto",
                     gap: "8px",
                     padding: "4px 0 8px 0",
+                    paddingLeft: "16px",
                     whiteSpace: "nowrap",
                     scrollbarWidth: "none",
                     WebkitOverflowScrolling: "touch",
