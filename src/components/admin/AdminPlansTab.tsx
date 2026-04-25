@@ -136,7 +136,7 @@ export function AdminPlansTab() {
               >
                 <div
                   onClick={(e) => e.stopPropagation()}
-                  style={{ background: "#ffffff", borderRadius: "16px 16px 0 0", padding: "24px", width: "100%", fontFamily: "Heebo, sans-serif" }}
+                  style={{ background: "#ffffff", borderRadius: "16px 16px 0 0", padding: "24px", width: "100%", fontFamily: "Heebo, sans-serif", maxHeight: "85vh", overflowY: "auto" }}
                 >
                   <h3 style={{ margin: "0 0 16px 0", color: "#1e3a5f" }}>
                     עריכת {plans.find((p: any) => p.id === editId)?.name}
