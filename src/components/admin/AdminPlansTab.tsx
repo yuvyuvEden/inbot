@@ -30,6 +30,13 @@ export function AdminPlansTab() {
   const [applyToExisting, setApplyToExisting] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
 
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+
   const { data: history = [] } = useQuery({
     queryKey: ["plan-price-history"],
     enabled: showHistory,
