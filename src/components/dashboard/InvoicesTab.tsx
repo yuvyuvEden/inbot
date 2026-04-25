@@ -402,7 +402,17 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
               className="h-[36px] w-full rounded-md border border-[#e2e8f0] bg-white pr-9 pl-3 text-[13px] outline-none focus:ring-1 focus:ring-primary" />
           </div>
         </div>
-        <div className="flex items-center gap-2" style={{ flexWrap: "nowrap", overflowX: "auto" }}>
+        <div
+          className="flex items-center gap-2 hide-scrollbar"
+          style={{
+            flexDirection: "row",
+            flexWrap: "nowrap",
+            overflowX: "auto",
+            padding: "4px 0 8px 0",
+            scrollbarWidth: "none",
+            WebkitOverflowScrolling: "touch",
+          }}
+        >
           {/* Desktop search */}
           <div className="relative hidden md:block shrink min-w-[160px] flex-1">
             <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
