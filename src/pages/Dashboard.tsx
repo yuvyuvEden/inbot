@@ -19,7 +19,9 @@ import { AccountantTab } from "@/components/tabs/AccountantTab";
 import { ArchiveTab } from "@/components/tabs/ArchiveTab";
 import {
   BarChart2, FileText, MessageSquare, Archive, Download, Bot, Settings, LogOut, ShieldAlert,
+  LayoutDashboard,
 } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const LOGO_URL = "https://jkqpkbcdtbelgpuwncam.supabase.co/storage/v1/object/public/assets//LOGO.jpeg";
 
