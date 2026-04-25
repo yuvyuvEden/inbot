@@ -53,29 +53,31 @@ const AdminDashboard = () => {
           style={{ height: '36px', borderRadius: '6px', cursor: 'pointer' }}
         />
 
-        <div className="flex gap-1 rounded-lg bg-secondary p-1">
-          {tabs.map((t) => {
-            const Icon = t.icon;
-            return (
-              <button
-                key={t.key}
-                onClick={() => {
-                  setActiveTab(t.key);
-                  localStorage.setItem("admin-active-tab", t.key);
-                  if (t.key !== "billing") setBillingFilterId(undefined);
-                }}
-                className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
-                  activeTab === t.key
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <Icon size={14} style={{ display: 'inline', marginLeft: '5px', verticalAlign: 'middle' }} />
-                {t.label}
-              </button>
-            );
-          })}
-        </div>
+        {!isMobile && (
+          <div className="flex gap-1 rounded-lg bg-secondary p-1">
+            {tabs.map((t) => {
+              const Icon = t.icon;
+              return (
+                <button
+                  key={t.key}
+                  onClick={() => {
+                    setActiveTab(t.key);
+                    localStorage.setItem("admin-active-tab", t.key);
+                    if (t.key !== "billing") setBillingFilterId(undefined);
+                  }}
+                  className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
+                    activeTab === t.key
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Icon size={14} style={{ display: 'inline', marginLeft: '5px', verticalAlign: 'middle' }} />
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         <button
           onClick={signOut}
