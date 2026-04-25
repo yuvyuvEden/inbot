@@ -451,8 +451,8 @@ export function AdminBillingTab({ initialAccountantId, onClearFilter }: Props) {
               </button>
             </div>
           </div>
-          <div style={{ overflow: "hidden", width: "100%" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", tableLayout: "fixed" }}>
+          <div style={isMobile ? { overflowX: "auto", WebkitOverflowScrolling: "touch", width: "100%" } : { overflow: "hidden", width: "100%" }}>
+            <table style={{ width: "100%", minWidth: isMobile ? "700px" : undefined, borderCollapse: "collapse", fontSize: "12px", tableLayout: "fixed" }}>
               <thead>
                 <tr style={{ background: "#f8fafc", textAlign: "right" }}>
                   {["שם", "בסיס לקוחות", "מחיר בסיס", "מחיר נוסף", "יום חיוב", "חינם", "חיוב חודשי משוער", "פעולה"].map((h) => (
