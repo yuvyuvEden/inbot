@@ -828,6 +828,30 @@ export type Database = {
         }
         Relationships: []
       }
+      vat_rules: {
+        Row: {
+          category: string
+          no_vat: boolean
+          tax_rate: number
+          updated_at: string | null
+          vat_rate: number
+        }
+        Insert: {
+          category: string
+          no_vat?: boolean
+          tax_rate?: number
+          updated_at?: string | null
+          vat_rate?: number
+        }
+        Update: {
+          category?: string
+          no_vat?: boolean
+          tax_rate?: number
+          updated_at?: string | null
+          vat_rate?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       v_active_assignments: {
