@@ -714,6 +714,10 @@ export default function AdminAccountantsTab({ onGoToBilling }: AdminAccountantsT
                     toast.error("מייל הוא שדה חובה");
                     return;
                   }
+                  if (!editAcc.vat_number?.trim()) {
+                    toast.error("יש להזין מספר ע״מ / ח״פ");
+                    return;
+                  }
                   saveMutation.mutate(editAcc);
                 }}
                 disabled={saveMutation.isPending}
