@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useAllThreadComments } from "@/hooks/useAccountantData";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -97,16 +97,25 @@ export function AccountantMessagesTab({ clientIds }: Props) {
     mutationFn: async ({ invoiceId, text }: { invoiceId: string; text: string }) => {
       console.log("sendReply called", invoiceId, text, new Date().toISOString());
       const { data: { user } } = await supabase.auth.getUser();
-      await supabase.from("invoice_comments").insert({
+
+      // שמור הודעה — זה חייב להצליח
+      const { error } = await supabase.from("invoice_comments").insert({
         invoice_id: invoiceId,
-        author_id: user?.id as string,
+        author_id: user?.id,
         author_role: "accountant",
         body: text,
         is_read: false,
       });
-      await supabase.functions.invoke("accountant-send-email", {
-        body: { invoice_id: invoiceId, body: text },
-      });
+      if (error) throw error;
+
+      // שלח מייל — אם נכשל, לא חוסם
+      try {
+        await supabase.functions.invoke("accountant-send-email", {
+          body: { invoice_id: invoiceId, body: text },
+        });
+      } catch (emailError) {
+        console.warn("Email notification failed:", emailError);
+      }
     },
     onSuccess: () => {
       setView("inbox");
