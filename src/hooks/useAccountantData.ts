@@ -115,7 +115,6 @@ export function useClientInvoiceCounts(clientIds: string[]) {
   });
 }
 
-// שליפת תגובות שלא נקראו על חשבוניות של לקוחות הרו"ח
 export function useUnreadAccountantComments(clientIds: string[]) {
   return useQuery({
     queryKey: ["unread-accountant-comments", clientIds],
@@ -123,14 +122,19 @@ export function useUnreadAccountantComments(clientIds: string[]) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("invoice_comments")
-        .select("id, invoice_id, body, author_role, created_at, invoices(client_id, vendor, invoice_number)")
+        .select("id, invoice_id, body, author_role, created_at, is_read, invoices(client_id, vendor, invoice_number)")
         .eq("is_read", false)
         .eq("author_role", "client");
 
+      console.log("RAW comments:", data, "error:", error);
+      console.log("clientIds filter:", clientIds);
+
       if (error) throw error;
-      return (data ?? []).filter((c: any) =>
+      const filtered = (data ?? []).filter((c: any) =>
         clientIds.includes(c.invoices?.client_id)
       );
+      console.log("FILTERED comments:", filtered);
+      return filtered;
     },
   });
 }
