@@ -1,7 +1,7 @@
 import { useAccountantKPIs, useClientInvoiceCounts } from "@/hooks/useAccountantData";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { Users, Clock, MessageSquare, Archive, Wallet } from "lucide-react";
+import { Users, Clock, MessageSquare, CheckCircle, FileText } from "lucide-react";
 
 interface Props {
   clients: any[];

@@ -65,10 +65,10 @@ export function useAccountantKPIs(clientIds: string[]) {
       );
 
       return {
-        totalExpenses: thisMonthInvoices.reduce((s: number, i: any) => s + (i.total ?? 0), 0),
         pendingReview: invoices.filter((i: any) => i.status === "pending_review").length,
         needsClarification: invoices.filter((i: any) => i.status === "needs_clarification").length,
-        archivedThisMonth: thisMonthInvoices.filter((i: any) => i.is_archived).length,
+        collectedThisMonth: thisMonthInvoices.length,
+        approvedThisMonth: thisMonthInvoices.filter((i: any) => i.status === "approved").length,
       };
     },
   });
