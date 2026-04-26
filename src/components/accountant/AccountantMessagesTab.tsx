@@ -95,8 +95,10 @@ export function AccountantMessagesTab({ clientIds }: Props) {
 
   const sendReply = async (thread: Thread) => {
     const text = replyText.trim();
-    if (!text) return;
+    if (!text || sending) return; // מניעת כפול
     setSending(true);
+    // clear text immediately to prevent re-submission
+    setReplyText("");
     try {
       const { data: { user } } = await supabase.auth.getUser();
       await supabase.from("invoice_comments").insert({
@@ -109,7 +111,6 @@ export function AccountantMessagesTab({ clientIds }: Props) {
       await supabase.functions.invoke("accountant-send-email", {
         body: { invoice_id: thread.invoiceId, body: text },
       });
-      setReplyText("");
       setView("inbox");
       setSelectedThread(null);
       invalidateAll();
