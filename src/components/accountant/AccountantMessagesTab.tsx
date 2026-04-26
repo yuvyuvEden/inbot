@@ -310,8 +310,8 @@ export function AccountantMessagesTab({ clientIds }: Props) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 20px", borderBottom: "1px solid #e2e8f0" }}>
         <div style={{ display: "flex", gap: "6px" }}>
           {[
-            { key: "unanswered", label: "טרם נענו" },
-            { key: "unread", label: "טרם נקראו" },
+            { key: "received", label: "התקבלו" },
+            { key: "sent", label: "נשלחו" },
             { key: "all", label: "הכל" },
           ].map((f) => (
             <button
