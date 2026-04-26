@@ -36,16 +36,16 @@ export function AccountantHomeTab({ clients, clientIds }: Props) {
       Icon: MessageSquare,
     },
     {
-      label: "בארכיון החודש",
-      value: kpis?.archivedThisMonth ?? 0,
-      gradient: "linear-gradient(135deg, #64748b 0%, #475569 100%)",
-      Icon: Archive,
+      label: "נאספו החודש",
+      value: kpis?.collectedThisMonth ?? 0,
+      gradient: "linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)",
+      Icon: FileText,
     },
     {
-      label: "סה״כ הוצאות החודש",
-      value: fmt(kpis?.totalExpenses ?? 0),
+      label: "מאושרות החודש",
+      value: kpis?.approvedThisMonth ?? 0,
       gradient: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
-      Icon: Wallet,
+      Icon: CheckCircle,
     },
   ];
 
