@@ -68,12 +68,6 @@ export default function AdminStatsTab() {
         (inv) => inv.invoice_date && inv.invoice_date >= startOfMonthISO
       ).length;
 
-      // מנויים שפגו השבוע
-      const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-      const expiredThisWeek = expired.filter(
-        (e) => new Date(e.plan_expires_at).getTime() >= new Date(oneWeekAgo).getTime()
-      ).length;
-
       // נתוני גרף — חשבוניות לפי חודש (6 חודשים אחרונים)
       const nowDate = new Date();
       const monthlyData = Array.from({ length: 6 }, (_, i) => {
@@ -89,14 +83,15 @@ export default function AdminStatsTab() {
         return { label, count };
       });
 
-      // נתוני גרף עוגה — פילוח לקוחות לפי plan_type
-      const planMap = new Map<string, number>();
-      clients.forEach((c) => {
-        if (!c.is_active) return;
-        const plan = (c as any).plan_type || "ללא תוכנית";
-        planMap.set(plan, (planMap.get(plan) || 0) + 1);
-      });
-      const planData = Array.from(planMap.entries()).map(([name, value]) => ({ name, value }));
+      // פילוח לקוחות — משויכים מול לא משויכים
+      const assignedClientIds = new Set(acLinks.map((ac: any) => ac.client_id));
+      const activeClientsList = clients.filter((c: any) => c.is_active);
+      const assignedCount = activeClientsList.filter((c: any) => assignedClientIds.has(c.id)).length;
+      const unassignedCount = activeClientsList.length - assignedCount;
+      const assignmentData = [
+        { name: "משויכים לרו״ח", value: assignedCount },
+        { name: "לא משויכים", value: unassignedCount },
+      ];
 
       const top5 = accountants
         .filter((a) => a.is_active)
@@ -115,9 +110,8 @@ export default function AdminStatsTab() {
         estimatedRevenue,
         expired,
         invoicesThisMonth,
-        expiredThisWeek,
         monthlyData,
-        planData,
+        assignmentData,
         top5,
         // derived
         totalActiveLinks: acLinks.length,
