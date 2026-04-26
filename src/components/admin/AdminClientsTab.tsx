@@ -139,13 +139,33 @@ export default function AdminClientsTab() {
       if (error) throw error;
 
       // Handle accountant assignment
-      if (drawerAccountant) {
-        // Remove existing
-        await supabase.from("accountant_clients").delete().eq("client_id", c.id);
-        if (drawerAccountant !== "__none__") {
+      if (drawerAccountant !== undefined && drawerAccountant !== null) {
+        // קריאת השיוך הפעיל הנוכחי
+        const { data: currentLink } = await supabase
+          .from("accountant_clients")
+          .select("accountant_id")
+          .eq("client_id", c.id)
+          .is("unassigned_at", null)
+          .maybeSingle();
+
+        const currentAccountantId = currentLink?.accountant_id ?? null;
+        const newAccountantId = drawerAccountant === "__none__" ? null : drawerAccountant;
+
+        // אם הרו"ח לא השתנה — לא עושים כלום
+        if (currentAccountantId === newAccountantId) return;
+
+        // סימון שיוך קיים כלא פעיל
+        await supabase
+          .from("accountant_clients")
+          .update({ unassigned_at: new Date().toISOString() })
+          .eq("client_id", c.id)
+          .is("unassigned_at", null);
+
+        // הוספת שיוך חדש רק אם נבחר רו"ח
+        if (newAccountantId) {
           const { error: acErr } = await supabase
             .from("accountant_clients")
-            .insert({ client_id: c.id, accountant_id: drawerAccountant });
+            .insert({ client_id: c.id, accountant_id: newAccountantId });
           if (acErr) throw acErr;
         }
       }
