@@ -1,20 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Users,
   UserCheck,
   TrendingUp,
-  AlertTriangle,
   FileText,
-  Percent,
-  Save,
-  Link,
 } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
-import { toast } from "sonner";
-import { useVatRules, useUpdateVatRule, type VatRule } from "@/hooks/useVatRules";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 interface ExpiredItem {
   id: string;
@@ -35,7 +28,7 @@ export default function AdminStatsTab() {
       const [clientsRes, accountantsRes, acRes, invoicesRes] = await Promise.all([
         supabase.from("clients").select("id, brand_name, is_active, plan_expires_at, plan_type"),
         supabase.from("accountants").select("id, name, is_active, plan_expires_at, price_per_client"),
-        supabase.from("accountant_clients").select("accountant_id").is("unassigned_at", null),
+        supabase.from("accountant_clients").select("accountant_id, client_id").is("unassigned_at", null),
         supabase.from("invoices").select("id, total, status, invoice_date, client_id"),
       ]);
       const invoices = invoicesRes.data || [];
@@ -75,12 +68,6 @@ export default function AdminStatsTab() {
         (inv) => inv.invoice_date && inv.invoice_date >= startOfMonthISO
       ).length;
 
-      // מנויים שפגו השבוע
-      const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-      const expiredThisWeek = expired.filter(
-        (e) => new Date(e.plan_expires_at).getTime() >= new Date(oneWeekAgo).getTime()
-      ).length;
-
       // נתוני גרף — חשבוניות לפי חודש (6 חודשים אחרונים)
       const nowDate = new Date();
       const monthlyData = Array.from({ length: 6 }, (_, i) => {
@@ -96,14 +83,15 @@ export default function AdminStatsTab() {
         return { label, count };
       });
 
-      // נתוני גרף עוגה — פילוח לקוחות לפי plan_type
-      const planMap = new Map<string, number>();
-      clients.forEach((c) => {
-        if (!c.is_active) return;
-        const plan = (c as any).plan_type || "ללא תוכנית";
-        planMap.set(plan, (planMap.get(plan) || 0) + 1);
-      });
-      const planData = Array.from(planMap.entries()).map(([name, value]) => ({ name, value }));
+      // פילוח לקוחות — משויכים מול לא משויכים
+      const assignedClientIds = new Set(acLinks.map((ac: any) => ac.client_id));
+      const activeClientsList = clients.filter((c: any) => c.is_active);
+      const assignedCount = activeClientsList.filter((c: any) => assignedClientIds.has(c.id)).length;
+      const unassignedCount = activeClientsList.length - assignedCount;
+      const assignmentData = [
+        { name: "משויכים לרו״ח", value: assignedCount },
+        { name: "לא משויכים", value: unassignedCount },
+      ];
 
       const top5 = accountants
         .filter((a) => a.is_active)
@@ -122,9 +110,8 @@ export default function AdminStatsTab() {
         estimatedRevenue,
         expired,
         invoicesThisMonth,
-        expiredThisWeek,
         monthlyData,
-        planData,
+        assignmentData,
         top5,
         // derived
         totalActiveLinks: acLinks.length,
@@ -165,22 +152,10 @@ export default function AdminStatsTab() {
       Icon: TrendingUp,
     },
     {
-      label: "מנויים פגו השבוע",
-      value: stats.expiredThisWeek,
-      gradient: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)",
-      Icon: AlertTriangle,
-    },
-    {
       label: "חשבוניות שנאספו החודש",
       value: stats.invoicesThisMonth,
       gradient: "linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)",
       Icon: FileText,
-    },
-    {
-      label: "שיוכים פעילים",
-      value: stats.totalActiveLinks,
-      gradient: "linear-gradient(135deg, #0891b2 0%, #0e7490 100%)",
-      Icon: Link,
     },
   ];
 
@@ -423,15 +398,15 @@ export default function AdminStatsTab() {
             </BarChart>
           </ResponsiveContainer>
         </div>
-        {/* גרף עוגה — פילוח לפי תוכנית */}
+        {/* גרף עוגה — לקוחות משויכים מול לא משויכים */}
         <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "20px" }}>
           <h3 style={{ fontSize: "14px", fontWeight: 700, color: "#1e3a5f", margin: "0 0 16px 0" }}>
-            🥧 פילוח לקוחות לפי תוכנית
+            👥 לקוחות משויכים מול לא משויכים
           </h3>
           <ResponsiveContainer width="100%" height={180}>
             <PieChart>
               <Pie
-                data={stats.planData}
+                data={stats.assignmentData}
                 dataKey="value"
                 nameKey="name"
                 cx="50%"
@@ -440,8 +415,8 @@ export default function AdminStatsTab() {
                 label={({ name, value }) => `${name} (${value})`}
                 labelLine={false}
               >
-                {stats.planData.map((_: any, index: number) => (
-                  <Cell key={index} fill={["#1e3a5f", "#e8941a", "#16a34a", "#7c3aed", "#0891b2"][index % 5]} />
+                {stats.assignmentData.map((_: any, index: number) => (
+                  <Cell key={index} fill={["#1e3a5f", "#e8941a"][index % 2]} />
                 ))}
               </Pie>
               <Tooltip />
@@ -519,206 +494,6 @@ export default function AdminStatsTab() {
               </div>
             )}
           </div>
-        </div>
-      )}
-
-      {/* SECTION 5 — Global VAT rules */}
-      <VatRulesSection />
-    </div>
-  );
-}
-
-/* ── VAT Rules editor (admin only) ── */
-function VatRulesSection() {
-  const { data: rules = [], isLoading } = useVatRules();
-  const updateRule = useUpdateVatRule();
-  const [drafts, setDrafts] = useState<Record<string, { vat_rate: number; tax_rate: number; no_vat: boolean }>>({});
-
-  useEffect(() => {
-    const next: Record<string, { vat_rate: number; tax_rate: number; no_vat: boolean }> = {};
-    rules.forEach((r) => {
-      next[r.category] = { vat_rate: r.vat_rate, tax_rate: r.tax_rate, no_vat: r.no_vat };
-    });
-    setDrafts(next);
-  }, [rules]);
-
-  const isDirty = (r: VatRule) => {
-    const d = drafts[r.category];
-    if (!d) return false;
-    return d.vat_rate !== r.vat_rate || d.tax_rate !== r.tax_rate || d.no_vat !== r.no_vat;
-  };
-
-  const handleSave = async (category: string) => {
-    const d = drafts[category];
-    if (!d) return;
-    try {
-      await updateRule.mutateAsync({ category, ...d });
-      toast.success(`כלל "${category}" נשמר`);
-    } catch (e: any) {
-      toast.error(e.message || "שגיאה בשמירת הכלל");
-    }
-  };
-
-  return (
-    <div
-      style={{
-        background: "#ffffff",
-        border: "1px solid #e2e8f0",
-        borderRadius: "12px",
-        padding: "16px 20px",
-        fontFamily: "Heebo, sans-serif",
-      }}
-      dir="rtl"
-    >
-      <h3
-        style={{
-          fontSize: "16px",
-          fontWeight: 700,
-          color: "#1e3a5f",
-          margin: "0 0 4px 0",
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-        }}
-      >
-        <Percent size={16} /> כללי מע״מ גלובליים
-      </h3>
-      <div style={{ fontSize: 12, color: "#64748b", marginBottom: 12 }}>
-        עריכת אחוז מע״מ מוכר, אחוז הכרה במס, וסימון פטור ממע״מ לכל קטגוריה. ערכים בין 0 ל-1.
-      </div>
-
-      {isLoading ? (
-        <Skeleton className="h-40 w-full" />
-      ) : (
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-            <thead>
-              <tr style={{ background: "#f8fafc" }}>
-                {["קטגוריה", "מע״מ מוכר", "הוצאה מוכרת", "פטור ממע״מ", "פעולות"].map((h, i) => (
-                  <th
-                    key={h}
-                    style={{
-                      padding: 8,
-                      fontSize: 11,
-                      textTransform: "uppercase",
-                      letterSpacing: ".4px",
-                      color: "#64748b",
-                      fontWeight: 600,
-                      textAlign: i === 0 ? "right" : "center",
-                      borderBottom: "1px solid #e2e8f0",
-                    }}
-                  >
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rules.length === 0 && (
-                <tr>
-                  <td colSpan={5} style={{ padding: 16, textAlign: "center", color: "#64748b" }}>
-                    אין כללים
-                  </td>
-                </tr>
-              )}
-              {rules.map((r) => {
-                const d = drafts[r.category] ?? { vat_rate: r.vat_rate, tax_rate: r.tax_rate, no_vat: r.no_vat };
-                const dirty = isDirty(r);
-                return (
-                  <tr key={r.category} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                    <td style={{ padding: 8, fontWeight: 600, color: "#1e3a5f" }}>{r.category}</td>
-                    <td style={{ padding: 8, textAlign: "center" }}>
-                      <input
-                        type="number"
-                        min={0}
-                        max={1}
-                        step={0.0001}
-                        value={d.vat_rate}
-                        disabled={d.no_vat}
-                        onChange={(e) =>
-                          setDrafts((prev) => ({
-                            ...prev,
-                            [r.category]: { ...d, vat_rate: parseFloat(e.target.value) || 0 },
-                          }))
-                        }
-                        onBlur={() => dirty && handleSave(r.category)}
-                        style={{
-                          width: 80,
-                          padding: "5px 8px",
-                          border: "1px solid #e2e8f0",
-                          borderRadius: 6,
-                          fontSize: 13,
-                          textAlign: "center",
-                          fontFamily: "monospace",
-                          direction: "ltr",
-                          background: d.no_vat ? "#f1f5f9" : "#fff",
-                        }}
-                      />
-                    </td>
-                    <td style={{ padding: 8, textAlign: "center" }}>
-                      <input
-                        type="number"
-                        min={0}
-                        max={1}
-                        step={0.0001}
-                        value={d.tax_rate}
-                        onChange={(e) =>
-                          setDrafts((prev) => ({
-                            ...prev,
-                            [r.category]: { ...d, tax_rate: parseFloat(e.target.value) || 0 },
-                          }))
-                        }
-                        onBlur={() => dirty && handleSave(r.category)}
-                        style={{
-                          width: 80,
-                          padding: "5px 8px",
-                          border: "1px solid #e2e8f0",
-                          borderRadius: 6,
-                          fontSize: 13,
-                          textAlign: "center",
-                          fontFamily: "monospace",
-                          direction: "ltr",
-                        }}
-                      />
-                    </td>
-                    <td style={{ padding: 8, textAlign: "center" }}>
-                      <input
-                        type="checkbox"
-                        checked={d.no_vat}
-                        onChange={(e) => {
-                          const next = { ...d, no_vat: e.target.checked };
-                          if (e.target.checked) next.vat_rate = 0;
-                          setDrafts((prev) => ({ ...prev, [r.category]: next }));
-                        }}
-                        style={{ width: 16, height: 16, cursor: "pointer" }}
-                      />
-                    </td>
-                    <td style={{ padding: 8, textAlign: "center" }}>
-                      <button
-                        onClick={() => handleSave(r.category)}
-                        disabled={!dirty || updateRule.isPending}
-                        style={{
-                          background: dirty ? "#1e3a5f" : "#f1f5f9",
-                          color: dirty ? "#fff" : "#94a3b8",
-                          border: "none",
-                          borderRadius: 6,
-                          padding: "5px 10px",
-                          cursor: dirty ? "pointer" : "not-allowed",
-                          fontSize: 12,
-                          fontFamily: "Heebo, sans-serif",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: 4,
-                        }}
-                      >
-                        <Save size={12} /> שמור
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
         </div>
       )}
     </div>
