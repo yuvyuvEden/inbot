@@ -92,35 +92,29 @@ export function AccountantMessagesTab({ clientIds }: Props) {
     invalidateAll();
   };
 
-  const sendReply = async (thread: Thread) => {
-    const text = replyText.trim();
-    if (!text) return;
-    if (sendingRef.current[thread.invoiceId]) return; // מניעת כפול מוחלטת
-    sendingRef.current[thread.invoiceId] = true;
 
-    setSending(true);
-    // clear text immediately to prevent re-submission
-    setReplyText("");
-    try {
+  const sendReplyMutation = useMutation({
+    mutationFn: async ({ invoiceId, text }: { invoiceId: string; text: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
       await supabase.from("invoice_comments").insert({
-        invoice_id: thread.invoiceId,
+        invoice_id: invoiceId,
         author_id: user?.id as string,
         author_role: "accountant",
         body: text,
         is_read: false,
       });
       await supabase.functions.invoke("accountant-send-email", {
-        body: { invoice_id: thread.invoiceId, body: text },
+        body: { invoice_id: invoiceId, body: text },
       });
+    },
+    onSuccess: () => {
       setView("inbox");
       setSelectedThread(null);
-      invalidateAll();
-    } finally {
-      sendingRef.current[thread.invoiceId] = false;
-      setSending(false);
-    }
-  };
+      queryClient.invalidateQueries({ queryKey: ["all-thread-comments"] });
+      queryClient.invalidateQueries({ queryKey: ["unread-accountant-comments"] });
+    },
+  });
+
 
   const approveInvoice = async (invoiceId: string) => {
     await supabase.from("invoices").update({ status: "approved" }).eq("id", invoiceId);
