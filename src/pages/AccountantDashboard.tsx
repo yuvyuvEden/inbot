@@ -183,7 +183,7 @@ export default function AccountantDashboard() {
       <main style={{ padding: "24px", maxWidth: "1400px", margin: "0 auto", paddingBottom: isMobile ? "80px" : "24px" }}>
         {activeTab === "home" && <AccountantHomeTab clients={clients as any[]} clientIds={clientIds} />}
         {activeTab === "clients" && <AccountantClientsTab clients={clients as any[]} clientIds={clientIds} />}
-        {activeTab === "messages" && <AccountantMessagesTab clientIds={clientIds} />}
+        {activeTab === "messages" && (() => { console.log("RENDERING AccountantMessagesTab"); return <AccountantMessagesTab clientIds={clientIds} />; })()}
         {activeTab === "settings" && <AccountantSettingsTab />}
       </main>
 
