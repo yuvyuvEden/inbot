@@ -18,6 +18,9 @@ interface Thread {
 
 const PAGE_SIZE = 25;
 
+// מניעת שליחה כפולה — module-level, לא מתאפס ב-remount
+const globalSendingLock = new Set<string>();
+
 export function AccountantMessagesTab({ clientIds }: Props) {
   const instanceId = useRef(Math.random().toString(36).slice(2, 7)).current;
   console.log(`MOUNT [${instanceId}]`);
@@ -101,7 +104,9 @@ export function AccountantMessagesTab({ clientIds }: Props) {
   const sendReply = async (invoiceId: string) => {
     console.log(`SEND [${instanceId}]`);
     const text = replyText.trim();
-    if (!text || sending || sendingRef.current[invoiceId]) return;
+    const lockKey = `${invoiceId}-${text}`;
+    if (!text || sending || globalSendingLock.has(lockKey)) return;
+    globalSendingLock.add(lockKey);
 
     // נקה טקסט ועדכן סטטוס מיד — מונע כפול
     sendingRef.current[invoiceId] = true;
@@ -131,6 +136,7 @@ export function AccountantMessagesTab({ clientIds }: Props) {
       // החזר טקסט אם נכשל
       setReplyText(text);
     } finally {
+      globalSendingLock.delete(lockKey);
       sendingRef.current[invoiceId] = false;
       setSending(false);
       // invalidate רק אחרי שהכל הסתיים
