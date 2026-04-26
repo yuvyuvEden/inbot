@@ -165,34 +165,22 @@ export default function AdminStatsTab() {
       Icon: TrendingUp,
     },
     {
-      label: "התראות פתוחות",
-      value: stats.expired.length,
+      label: "מנויים פגו השבוע",
+      value: stats.expiredThisWeek,
       gradient: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)",
       Icon: AlertTriangle,
     },
     {
-      label: "חשבוניות החודש",
+      label: "חשבוניות שנאספו החודש",
       value: stats.invoicesThisMonth,
       gradient: "linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)",
       Icon: FileText,
     },
     {
-      label: 'סה"כ הוצאות החודש',
-      value: `₪${stats.totalExpensesThisMonth.toLocaleString("he-IL")}`,
+      label: "שיוכים פעילים",
+      value: stats.totalActiveLinks,
       gradient: "linear-gradient(135deg, #0891b2 0%, #0e7490 100%)",
-      Icon: Wallet,
-    },
-    {
-      label: "ממתינות לבדיקה",
-      value: stats.pendingReview,
-      gradient: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
-      Icon: Clock,
-    },
-    {
-      label: "בקשות הבהרה פתוחות",
-      value: stats.pendingClarification,
-      gradient: "linear-gradient(135deg, #e8941a 0%, #c2770f 100%)",
-      Icon: MessageSquare,
+      Icon: Link,
     },
   ];
 
