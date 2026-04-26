@@ -8,12 +8,11 @@ import {
   TrendingUp,
   AlertTriangle,
   FileText,
-  Wallet,
-  Clock,
-  MessageSquare,
   Percent,
   Save,
+  Link,
 } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { toast } from "sonner";
 import { useVatRules, useUpdateVatRule, type VatRule } from "@/hooks/useVatRules";
 
@@ -34,10 +33,10 @@ export default function AdminStatsTab() {
       const startOfMonthISO = startOfMonth.toISOString().slice(0, 10);
 
       const [clientsRes, accountantsRes, acRes, invoicesRes] = await Promise.all([
-        supabase.from("clients").select("id, brand_name, is_active, plan_expires_at"),
+        supabase.from("clients").select("id, brand_name, is_active, plan_expires_at, plan_type"),
         supabase.from("accountants").select("id, name, is_active, plan_expires_at, price_per_client"),
         supabase.from("accountant_clients").select("accountant_id").is("unassigned_at", null),
-        supabase.from("invoices").select("id, total, status, invoice_date"),
+        supabase.from("invoices").select("id, total, status, invoice_date, client_id"),
       ]);
       const invoices = invoicesRes.data || [];
 
@@ -71,21 +70,40 @@ export default function AdminStatsTab() {
         }
       });
 
+      // חשבוניות שנאספו החודש
       const invoicesThisMonth = invoices.filter(
         (inv) => inv.invoice_date && inv.invoice_date >= startOfMonthISO
       ).length;
 
-      const totalExpensesThisMonth = invoices
-        .filter((inv) => inv.invoice_date && inv.invoice_date >= startOfMonthISO)
-        .reduce((sum, inv) => sum + (inv.total || 0), 0);
-
-      const pendingClarification = invoices.filter(
-        (inv) => inv.status === "needs_clarification"
+      // מנויים שפגו השבוע
+      const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const expiredThisWeek = expired.filter(
+        (e) => new Date(e.plan_expires_at).getTime() >= new Date(oneWeekAgo).getTime()
       ).length;
 
-      const pendingReview = invoices.filter(
-        (inv) => inv.status === "pending_review"
-      ).length;
+      // נתוני גרף — חשבוניות לפי חודש (6 חודשים אחרונים)
+      const nowDate = new Date();
+      const monthlyData = Array.from({ length: 6 }, (_, i) => {
+        const d = new Date(nowDate.getFullYear(), nowDate.getMonth() - (5 - i), 1);
+        const y = d.getFullYear();
+        const m = d.getMonth() + 1;
+        const label = d.toLocaleDateString("he-IL", { month: "short", year: "2-digit" });
+        const count = invoices.filter((inv) => {
+          if (!inv.invoice_date) return false;
+          const [iy, im] = inv.invoice_date.split("-").map(Number);
+          return iy === y && im === m;
+        }).length;
+        return { label, count };
+      });
+
+      // נתוני גרף עוגה — פילוח לקוחות לפי plan_type
+      const planMap = new Map<string, number>();
+      clients.forEach((c) => {
+        if (!c.is_active) return;
+        const plan = (c as any).plan_type || "ללא תוכנית";
+        planMap.set(plan, (planMap.get(plan) || 0) + 1);
+      });
+      const planData = Array.from(planMap.entries()).map(([name, value]) => ({ name, value }));
 
       const top5 = accountants
         .filter((a) => a.is_active)
@@ -104,9 +122,9 @@ export default function AdminStatsTab() {
         estimatedRevenue,
         expired,
         invoicesThisMonth,
-        totalExpensesThisMonth,
-        pendingClarification,
-        pendingReview,
+        expiredThisWeek,
+        monthlyData,
+        planData,
         top5,
         // derived
         totalActiveLinks: acLinks.length,
@@ -147,34 +165,22 @@ export default function AdminStatsTab() {
       Icon: TrendingUp,
     },
     {
-      label: "התראות פתוחות",
-      value: stats.expired.length,
+      label: "מנויים פגו השבוע",
+      value: stats.expiredThisWeek,
       gradient: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)",
       Icon: AlertTriangle,
     },
     {
-      label: "חשבוניות החודש",
+      label: "חשבוניות שנאספו החודש",
       value: stats.invoicesThisMonth,
       gradient: "linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)",
       Icon: FileText,
     },
     {
-      label: 'סה"כ הוצאות החודש',
-      value: `₪${stats.totalExpensesThisMonth.toLocaleString("he-IL")}`,
+      label: "שיוכים פעילים",
+      value: stats.totalActiveLinks,
       gradient: "linear-gradient(135deg, #0891b2 0%, #0e7490 100%)",
-      Icon: Wallet,
-    },
-    {
-      label: "ממתינות לבדיקה",
-      value: stats.pendingReview,
-      gradient: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
-      Icon: Clock,
-    },
-    {
-      label: "בקשות הבהרה פתוחות",
-      value: stats.pendingClarification,
-      gradient: "linear-gradient(135deg, #e8941a 0%, #c2770f 100%)",
-      Icon: MessageSquare,
+      Icon: Link,
     },
   ];
 
@@ -400,6 +406,49 @@ export default function AdminStatsTab() {
           </div>
         </div>
       )}
+
+      {/* CHARTS SECTION */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }} className="max-md:grid-cols-1">
+        {/* גרף עמודות — חשבוניות לפי חודש */}
+        <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "20px" }}>
+          <h3 style={{ fontSize: "14px", fontWeight: 700, color: "#1e3a5f", margin: "0 0 16px 0" }}>
+            📊 חשבוניות שנאספו — 6 חודשים אחרונים
+          </h3>
+          <ResponsiveContainer width="100%" height={180}>
+            <BarChart data={stats.monthlyData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+              <XAxis dataKey="label" tick={{ fontSize: 11, fontFamily: "Heebo" }} />
+              <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+              <Tooltip formatter={(v: any) => [v, "חשבוניות"]} />
+              <Bar dataKey="count" fill="#1e3a5f" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        {/* גרף עוגה — פילוח לפי תוכנית */}
+        <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "20px" }}>
+          <h3 style={{ fontSize: "14px", fontWeight: 700, color: "#1e3a5f", margin: "0 0 16px 0" }}>
+            🥧 פילוח לקוחות לפי תוכנית
+          </h3>
+          <ResponsiveContainer width="100%" height={180}>
+            <PieChart>
+              <Pie
+                data={stats.planData}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                outerRadius={65}
+                label={({ name, value }) => `${name} (${value})`}
+                labelLine={false}
+              >
+                {stats.planData.map((_: any, index: number) => (
+                  <Cell key={index} fill={["#1e3a5f", "#e8941a", "#16a34a", "#7c3aed", "#0891b2"][index % 5]} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
 
       {/* SECTION 3 — Expiry alerts */}
       {stats.expired.length > 0 && (

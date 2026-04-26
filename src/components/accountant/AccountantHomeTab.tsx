@@ -175,7 +175,7 @@ export function AccountantHomeTab({ clients, clientIds }: Props) {
           }}
         >
           <h2 style={{ fontSize: "16px", fontWeight: 700, color: "#1e3a5f", margin: 0 }}>
-            הלקוחות שלי
+            {filterUrgent ? "לקוחות שצריכים טיפול" : "5 הלקוחות הפעילים ביותר"}
           </h2>
           <button
             onClick={() => setFilterUrgent((f) => !f)}
@@ -214,115 +214,82 @@ export function AccountantHomeTab({ clients, clientIds }: Props) {
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            {displayedClients.map((c: any) => {
-              const cc = (counts as any)[c.id] ?? {
-                monthlyTotal: 0,
-                pending: 0,
-                clarification: 0,
-                archived: 0,
-              };
-              let stripeColor = "#16a34a";
-              if (cc.pending > 0) stripeColor = "#dc2626";
-              else if (cc.clarification > 0) stripeColor = "#f59e0b";
+            {(() => {
+              const toShow = filterUrgent
+                ? displayedClients
+                : [...displayedClients]
+                    .sort((a: any, b: any) => {
+                      const ca = (counts as any)[a.id]?.totalInvoices ?? 0;
+                      const cb = (counts as any)[b.id]?.totalInvoices ?? 0;
+                      return cb - ca;
+                    })
+                    .slice(0, 5);
 
-              return (
-                <div
-                  key={c.id}
-                  style={{
-                    background: "#ffffff",
-                    border: "1px solid #e2e8f0",
-                    borderRight: `3px solid ${stripeColor}`,
-                    borderRadius: "12px",
-                    padding: "14px 18px",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "16px",
-                    transition: "background 0.15s",
-                    cursor: "default",
-                    flexWrap: "wrap",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "#f8fafc";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "#ffffff";
-                  }}
-                >
-                  {/* Right: name */}
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: "160px" }}>
-                    <span style={{ fontSize: "15px", fontWeight: 700, color: "#1e3a5f" }}>
-                      {c.brand_name ?? "—"}
-                    </span>
-                    {c.plan_type && (
-                      <span
-                        style={{
-                          background: "#f0f4f8",
-                          color: "#64748b",
-                          fontSize: "10px",
-                          fontWeight: 600,
-                          padding: "2px 8px",
-                          borderRadius: "9999px",
-                          textTransform: "uppercase",
-                        }}
-                      >
-                        {c.plan_type}
-                      </span>
+              const maxInvoices = Math.max(
+                ...toShow.map((c: any) => (counts as any)[c.id]?.totalInvoices ?? 0),
+                1
+              );
+
+              return toShow.map((c: any) => {
+                const cc = (counts as any)[c.id] ?? { monthlyTotal: 0, pending: 0, clarification: 0, archived: 0, totalInvoices: 0 };
+                const pct = filterUrgent ? null : Math.round((cc.totalInvoices / maxInvoices) * 100);
+
+                let stripeColor = "#16a34a";
+                if (cc.pending > 0) stripeColor = "#dc2626";
+                else if (cc.clarification > 0) stripeColor = "#f59e0b";
+
+                return (
+                  <div
+                    key={c.id}
+                    style={{
+                      background: "#ffffff",
+                      border: "1px solid #e2e8f0",
+                      borderRight: `3px solid ${stripeColor}`,
+                      borderRadius: "12px",
+                      padding: "14px 18px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "10px",
+                      transition: "background 0.15s",
+                      cursor: "default",
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = "#f8fafc"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "#ffffff"; }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: "160px" }}>
+                        <span style={{ fontSize: "15px", fontWeight: 700, color: "#1e3a5f" }}>
+                          {c.brand_name ?? "—"}
+                        </span>
+                        {c.plan_type && (
+                          <span style={{ background: "#f0f4f8", color: "#64748b", fontSize: "10px", fontWeight: 600, padding: "2px 8px", borderRadius: "9999px", textTransform: "uppercase" }}>
+                            {c.plan_type}
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ display: "flex", gap: "8px", flex: 1, flexWrap: "wrap", justifyContent: "center" }}>
+                        {chip("ממתין", cc.pending, "orange")}
+                        {chip("הבהרה", cc.clarification, "red")}
+                        {chip("חשבוניות", cc.totalInvoices, "gray")}
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                        <button
+                          onClick={() => navigate(`/accountant/client/${c.id}`)}
+                          style={{ padding: "6px 14px", borderRadius: "8px", fontSize: "13px", fontWeight: 600, backgroundColor: "#1e3a5f", color: "#ffffff", border: "none", cursor: "pointer", fontFamily: "Heebo, sans-serif", whiteSpace: "nowrap" }}
+                        >
+                          כניסה ←
+                        </button>
+                      </div>
+                    </div>
+                    {pct !== null && (
+                      <div style={{ height: "4px", background: "#f1f5f9", borderRadius: "9999px", overflow: "hidden" }}>
+                        <div style={{ width: `${pct}%`, height: "100%", background: "#e8941a", borderRadius: "9999px", transition: "width 0.3s" }} />
+                      </div>
                     )}
                   </div>
-
-                  {/* Middle: chips */}
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: "8px",
-                      flex: 1,
-                      flexWrap: "wrap",
-                      justifyContent: "center",
-                    }}
-                  >
-                    {chip("ממתין", cc.pending, "orange")}
-                    {chip("הבהרה", cc.clarification, "red")}
-                    {chip("ארכיון", cc.archived, "gray")}
-                  </div>
-
-                  {/* Left: amount + button */}
-                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                    <span
-                      style={{
-                        fontSize: "14px",
-                        fontWeight: 700,
-                        color: cc.monthlyTotal > 0 ? "#16a34a" : "#94a3b8",
-                        fontVariantNumeric: "tabular-nums",
-                        minWidth: "90px",
-                        textAlign: "left",
-                      }}
-                    >
-                      {"₪" +
-                        (cc.monthlyTotal ?? 0).toLocaleString("he-IL", {
-                          maximumFractionDigits: 0,
-                        })}
-                    </span>
-                    <button
-                      onClick={() => navigate(`/accountant/client/${c.id}`)}
-                      style={{
-                        padding: "6px 14px",
-                        borderRadius: "8px",
-                        fontSize: "13px",
-                        fontWeight: 600,
-                        backgroundColor: "#1e3a5f",
-                        color: "#ffffff",
-                        border: "none",
-                        cursor: "pointer",
-                        fontFamily: "Heebo, sans-serif",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      כניסה ←
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              });
+            })()}
           </div>
         )}
       </div>
