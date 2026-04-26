@@ -436,6 +436,11 @@ export default function AdminAccountantsTab({ onGoToBilling }: AdminAccountantsT
                     </span>
                   </div>
                   <div dir="ltr" style={{ fontSize: "13px", color: "#64748b", marginBottom: "8px", textAlign: "right" }}>{a.email}</div>
+                  {a.vat_number && (
+                    <div style={{ fontSize: "12px", color: "#64748b", marginBottom: "8px" }}>
+                      ע״מ / ח״פ: <span style={{ direction: "ltr", display: "inline-block" }}>{a.vat_number}</span>
+                    </div>
+                  )}
                   <div style={{ display: "flex", gap: "16px", marginBottom: "12px", fontSize: "13px", color: "#64748b" }}>
                     <span>לקוחות: <strong style={{ color: a.active_clients_count > 0 ? "#16a34a" : "#94a3b8" }}>{a.active_clients_count}</strong></span>
                     <span>הכנסה: <strong style={{ color: revenue > 0 ? "#16a34a" : "#94a3b8" }}>₪{revenue.toLocaleString("he-IL")}</strong></span>
