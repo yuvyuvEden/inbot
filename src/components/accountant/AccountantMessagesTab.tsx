@@ -32,7 +32,7 @@ export function AccountantMessagesTab({ clientIds }: Props) {
         is_read: false,
       });
       await supabase.functions.invoke("accountant-send-email", {
-        body: { invoice_id: invoiceId, message: text, invoice_number: invoiceNumber, vendor: vendorName }
+        body: { invoice_id: invoiceId, body: text }
       });
       setReplyTexts(prev => ({ ...prev, [invoiceId]: "" }));
       queryClient.invalidateQueries({ queryKey: ["unread-accountant-comments"] });
