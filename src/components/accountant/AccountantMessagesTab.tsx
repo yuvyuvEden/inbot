@@ -23,6 +23,20 @@ export function AccountantMessagesTab({ clientIds }: Props) {
     invalidateAll();
   };
 
+  const approveInvoice = async (invoiceId: string) => {
+    await supabase.from("invoices").update({ status: "approved" }).eq("id", invoiceId);
+    queryClient.invalidateQueries({ queryKey: ["all-thread-comments"] });
+  };
+
+  const archiveInvoice = async (invoiceId: string) => {
+    await supabase.from("invoices").update({
+      is_archived: true,
+      archived_at: new Date().toISOString(),
+      status: "approved"
+    }).eq("id", invoiceId);
+    queryClient.invalidateQueries({ queryKey: ["all-thread-comments"] });
+  };
+
   const sendReply = async (invoiceId: string, _invoiceNumber: string, _vendorName: string, _clientId: string) => {
     const text = replyTexts[invoiceId]?.trim();
     if (!text) return;
@@ -153,6 +167,44 @@ export function AccountantMessagesTab({ clientIds }: Props) {
                 >
                   {sendingReply[invoiceId] ? "שולח..." : "שלח תשובה"}
                 </button>
+
+                <div style={{ display: "flex", gap: "8px", marginTop: "12px", paddingTop: "12px", borderTop: "1px solid #e2e8f0", flexWrap: "wrap" }}>
+                  {first.invoice?.drive_file_url && (
+                    <a
+                      href={first.invoice.drive_file_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ padding: "6px 14px", borderRadius: "6px", backgroundColor: "#f1f5f9", color: "#1e3a5f", fontSize: "12px", fontWeight: 600, textDecoration: "none", fontFamily: "Heebo, sans-serif", border: "1px solid #e2e8f0" }}
+                    >
+                      📄 צפה במסמך
+                    </a>
+                  )}
+
+                  {first.invoice?.status !== "approved" && !first.invoice?.is_archived && (
+                    <button
+                      onClick={() => approveInvoice(invoiceId)}
+                      style={{ padding: "6px 14px", borderRadius: "6px", backgroundColor: "#16a34a", color: "#ffffff", fontSize: "12px", fontWeight: 600, border: "none", cursor: "pointer", fontFamily: "Heebo, sans-serif" }}
+                    >
+                      ✅ אשר
+                    </button>
+                  )}
+
+                  {!first.invoice?.is_archived && (
+                    <button
+                      onClick={() => archiveInvoice(invoiceId)}
+                      style={{ padding: "6px 14px", borderRadius: "6px", backgroundColor: "#64748b", color: "#ffffff", fontSize: "12px", fontWeight: 600, border: "none", cursor: "pointer", fontFamily: "Heebo, sans-serif" }}
+                    >
+                      🗄️ ארכיון
+                    </button>
+                  )}
+
+                  {first.invoice?.status === "approved" && (
+                    <span style={{ padding: "6px 14px", borderRadius: "6px", backgroundColor: "#dcfce7", color: "#16a34a", fontSize: "12px", fontWeight: 600 }}>✅ מאושר</span>
+                  )}
+                  {first.invoice?.is_archived && (
+                    <span style={{ padding: "6px 14px", borderRadius: "6px", backgroundColor: "#f1f5f9", color: "#64748b", fontSize: "12px", fontWeight: 600 }}>🗄️ בארכיון</span>
+                  )}
+                </div>
               </div>
             );
           })}
