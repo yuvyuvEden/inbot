@@ -136,6 +136,7 @@ export function AccountantMessagesTab({ clientIds }: Props) {
       // החזר טקסט אם נכשל
       setReplyText(text);
     } finally {
+      globalSendingLock.delete(lockKey);
       sendingRef.current[invoiceId] = false;
       setSending(false);
       // invalidate רק אחרי שהכל הסתיים
