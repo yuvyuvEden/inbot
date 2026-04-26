@@ -191,26 +191,28 @@ export function useRecentInvoices(clientId: string | undefined) {
   });
 }
 
-export function useUnreadComments(clientId: string | undefined) {
+export function useUnreadThreads(clientId: string | undefined) {
   return useQuery({
-    queryKey: ["unread-comments", clientId],
+    queryKey: ["client-unread-threads", clientId],
     enabled: !!clientId,
     queryFn: async () => {
       const { data: invoices, error: invErr } = await supabase
         .from("invoices")
-        .select("id")
+        .select("id, invoice_comments(author_role, created_at)")
         .eq("client_id", clientId!);
       if (invErr) throw invErr;
-      if (!invoices?.length) return 0;
 
-      const ids = invoices.map((i) => i.id);
-      const { count, error } = await supabase
-        .from("invoice_comments")
-        .select("id", { count: "exact", head: true })
-        .in("invoice_id", ids)
-        .eq("is_read", false);
-      if (error) throw error;
-      return count || 0;
+      return (invoices ?? []).filter((inv: any) => {
+        const comments = (inv.invoice_comments ?? []).sort(
+          (a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+        const lastAccountantMsg = comments.filter((c: any) => c.author_role === "accountant").slice(-1)[0];
+        if (!lastAccountantMsg) return false;
+        const clientRepliedAfter = comments.some(
+          (c: any) => c.author_role === "client" && new Date(c.created_at) > new Date(lastAccountantMsg.created_at)
+        );
+        return !clientRepliedAfter;
+      }).length;
     },
   });
 }
