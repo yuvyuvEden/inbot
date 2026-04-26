@@ -407,6 +407,49 @@ export default function AdminStatsTab() {
         </div>
       )}
 
+      {/* CHARTS SECTION */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }} className="max-md:grid-cols-1">
+        {/* גרף עמודות — חשבוניות לפי חודש */}
+        <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "20px" }}>
+          <h3 style={{ fontSize: "14px", fontWeight: 700, color: "#1e3a5f", margin: "0 0 16px 0" }}>
+            📊 חשבוניות שנאספו — 6 חודשים אחרונים
+          </h3>
+          <ResponsiveContainer width="100%" height={180}>
+            <BarChart data={stats.monthlyData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+              <XAxis dataKey="label" tick={{ fontSize: 11, fontFamily: "Heebo" }} />
+              <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+              <Tooltip formatter={(v: any) => [v, "חשבוניות"]} />
+              <Bar dataKey="count" fill="#1e3a5f" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        {/* גרף עוגה — פילוח לפי תוכנית */}
+        <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "20px" }}>
+          <h3 style={{ fontSize: "14px", fontWeight: 700, color: "#1e3a5f", margin: "0 0 16px 0" }}>
+            🥧 פילוח לקוחות לפי תוכנית
+          </h3>
+          <ResponsiveContainer width="100%" height={180}>
+            <PieChart>
+              <Pie
+                data={stats.planData}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                outerRadius={65}
+                label={({ name, value }) => `${name} (${value})`}
+                labelLine={false}
+              >
+                {stats.planData.map((_: any, index: number) => (
+                  <Cell key={index} fill={["#1e3a5f", "#e8941a", "#16a34a", "#7c3aed", "#0891b2"][index % 5]} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
       {/* SECTION 3 — Expiry alerts */}
       {stats.expired.length > 0 && (
         <div
