@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -10,7 +11,11 @@ import {
   Wallet,
   Clock,
   MessageSquare,
+  Percent,
+  Save,
 } from "lucide-react";
+import { toast } from "sonner";
+import { useVatRules, useUpdateVatRule, type VatRule } from "@/hooks/useVatRules";
 
 interface ExpiredItem {
   id: string;
