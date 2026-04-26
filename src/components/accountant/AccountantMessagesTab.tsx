@@ -104,7 +104,9 @@ export function AccountantMessagesTab({ clientIds }: Props) {
   const sendReply = async (invoiceId: string) => {
     console.log(`SEND [${instanceId}]`);
     const text = replyText.trim();
-    if (!text || sending || sendingRef.current[invoiceId]) return;
+    const lockKey = `${invoiceId}-${text}`;
+    if (!text || sending || globalSendingLock.has(lockKey)) return;
+    globalSendingLock.add(lockKey);
 
     // נקה טקסט ועדכן סטטוס מיד — מונע כפול
     sendingRef.current[invoiceId] = true;
