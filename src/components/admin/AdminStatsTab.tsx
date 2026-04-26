@@ -8,12 +8,11 @@ import {
   TrendingUp,
   AlertTriangle,
   FileText,
-  Wallet,
-  Clock,
-  MessageSquare,
   Percent,
   Save,
+  Link,
 } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { toast } from "sonner";
 import { useVatRules, useUpdateVatRule, type VatRule } from "@/hooks/useVatRules";
 
