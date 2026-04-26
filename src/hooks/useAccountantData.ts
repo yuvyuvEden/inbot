@@ -126,15 +126,40 @@ export function useUnreadAccountantComments(clientIds: string[]) {
         .eq("is_read", false)
         .eq("author_role", "client");
 
-      console.log("RAW comments:", data, "error:", error);
-      console.log("clientIds filter:", clientIds);
-
       if (error) throw error;
-      const filtered = (data ?? []).filter((c: any) =>
+      return (data ?? []).filter((c: any) =>
         clientIds.includes(c.invoices?.client_id)
       );
-      console.log("FILTERED comments:", filtered);
-      return filtered;
+    },
+  });
+}
+
+export function useAllThreadComments(clientIds: string[]) {
+  return useQuery({
+    queryKey: ["all-thread-comments", clientIds],
+    enabled: clientIds.length > 0,
+    queryFn: async () => {
+      const { data: invoices } = await supabase
+        .from("invoices")
+        .select("id, client_id, vendor, invoice_number")
+        .in("client_id", clientIds);
+
+      const invoiceIds = (invoices ?? []).map((i: any) => i.id);
+      if (!invoiceIds.length) return [];
+
+      const { data, error } = await supabase
+        .from("invoice_comments")
+        .select("id, invoice_id, body, author_role, author_id, created_at, is_read, thread_status")
+        .in("invoice_id", invoiceIds)
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+
+      const invoiceMap = new Map((invoices ?? []).map((i: any) => [i.id, i]));
+      return (data ?? []).map((c: any) => ({
+        ...c,
+        invoice: invoiceMap.get(c.invoice_id),
+      }));
     },
   });
 }
