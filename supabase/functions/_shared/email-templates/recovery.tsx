@@ -163,7 +163,3 @@ const footerText = {
   margin: 0,
   textAlign: 'center' as const,
 }
-const footerLink = {
-  color: '#e8941a',
-  textDecoration: 'none',
-}
