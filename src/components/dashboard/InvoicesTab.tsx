@@ -253,7 +253,40 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
       }
     }
   };
-  const deleteInvoice = async () => {
+  const updateDetails = async () => {
+    if (!editDetailsModal) return;
+    const newTotal = parseFloat(editDetailsTotal.replace(/,/g, ""));
+    if (isNaN(newTotal) || newTotal < 0) return;
+
+    const rule = vatRules.find(r => r.category === editDetailsModal.category);
+    const { vat_original, vat_deductible } = calcVat(newTotal, rule);
+
+    const invoice_date = editDetailsDate
+      ? format(editDetailsDate, "yyyy-MM-dd")
+      : editDetailsModal.invoice_date;
+
+    try {
+      await optimisticUpdate("invoices", editDetailsModal.id, editDetailsModal.updated_at, {
+        vendor: editDetailsVendor.trim() || editDetailsModal.vendor,
+        invoice_date,
+        total: newTotal,
+        vat_original,
+        vat_deductible,
+      });
+      toast.success("פרטי החשבונית עודכנו");
+      queryClient.invalidateQueries({ queryKey: ["all-invoices"] });
+      setEditDetailsModal(null);
+    } catch (e) {
+      if (e instanceof ConflictError) {
+        toast.error("החשבונית עודכנה על ידי משתמש אחר — מרענן נתונים");
+        queryClient.invalidateQueries({ queryKey: ["all-invoices"] });
+        setEditDetailsModal(null);
+      } else {
+        console.error("Failed to update invoice details:", e);
+        toast.error("שגיאה בעדכון פרטי חשבונית");
+      }
+    }
+  };
     if (!deleteModal) return;
     const { error } = await supabase
       .from("invoices")
