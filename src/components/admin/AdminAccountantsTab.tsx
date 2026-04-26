@@ -16,6 +16,7 @@ interface AccountantRow {
   name: string;
   email: string;
   phone: string | null;
+  vat_number: string | null;
   plan_type: string | null;
   plan_expires_at: string | null;
   price_per_client: number | null;
