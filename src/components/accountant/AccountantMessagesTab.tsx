@@ -19,6 +19,9 @@ interface Thread {
 const PAGE_SIZE = 25;
 
 export function AccountantMessagesTab({ clientIds }: Props) {
+  const instanceId = useRef(Math.random().toString(36).slice(2, 7)).current;
+  console.log(`MOUNT [${instanceId}]`);
+
   const queryClient = useQueryClient();
   const { data: comments = [], isLoading } = useAllThreadComments(clientIds);
 
