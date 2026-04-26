@@ -475,6 +475,7 @@ export default function AdminAccountantsTab({ onGoToBilling }: AdminAccountantsT
             <tr style={{ background: "linear-gradient(to left, #1e3a5f, #2d5a8e)" }}>
               <th style={thStyle}>שם</th>
               <th style={thStyle}>מייל</th>
+              <th style={thStyle}>ע״מ / ח״פ</th>
               <th style={thStyle}>לקוחות פעילים</th>
               <th style={thStyle}>מנוי</th>
               <th style={thStyle}>מחיר/לקוח</th>
@@ -487,13 +488,13 @@ export default function AdminAccountantsTab({ onGoToBilling }: AdminAccountantsT
             {isLoading ? (
               Array.from({ length: 4 }).map((_, i) => (
                 <tr key={i} className="border-b border-border">
-                  {Array.from({ length: 8 }).map((_, j) => (
+                  {Array.from({ length: 9 }).map((_, j) => (
                     <td key={j} className="p-3"><Skeleton className="h-4 w-16" /></td>
                   ))}
                 </tr>
               ))
             ) : filtered.length === 0 ? (
-              <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">לא נמצאו רואי חשבון</td></tr>
+              <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">לא נמצאו רואי חשבון</td></tr>
             ) : (
               filtered.map((a) => {
                 const revenue = (a.price_per_client || 0) * a.active_clients_count;
