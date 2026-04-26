@@ -787,10 +787,17 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
               style={{ backgroundColor: "#1e3a5f" }}
             >עדכון קטגוריה</button>
             <button
-              onClick={() => { const inv = editPickerModal!; setEditPickerModal(null); setEditVendorModal(inv); setEditVendorValue(inv.vendor || ""); }}
+              onClick={() => {
+                const inv = editPickerModal!;
+                setEditPickerModal(null);
+                setEditDetailsModal(inv);
+                setEditDetailsVendor(inv.vendor || "");
+                setEditDetailsDate(inv.invoice_date ? new Date(inv.invoice_date) : undefined);
+                setEditDetailsTotal(inv.total != null ? inv.total.toString() : "");
+              }}
               className="rounded-lg px-4 py-2.5 text-[13px] font-medium text-white transition-colors hover:opacity-90"
               style={{ backgroundColor: "#e8941a" }}
-            >עדכון שם עסק</button>
+            >עדכון פרטי חשבונית</button>
             <button onClick={() => setEditPickerModal(null)} className="rounded-lg border border-[#e2e8f0] bg-white px-4 py-2 text-[13px] font-medium text-gray-500 hover:bg-gray-50 transition-colors">ביטול</button>
           </div>
         </DialogContent>
