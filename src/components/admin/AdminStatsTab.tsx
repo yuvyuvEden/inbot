@@ -33,10 +33,10 @@ export default function AdminStatsTab() {
       const startOfMonthISO = startOfMonth.toISOString().slice(0, 10);
 
       const [clientsRes, accountantsRes, acRes, invoicesRes] = await Promise.all([
-        supabase.from("clients").select("id, brand_name, is_active, plan_expires_at"),
+        supabase.from("clients").select("id, brand_name, is_active, plan_expires_at, plan_type"),
         supabase.from("accountants").select("id, name, is_active, plan_expires_at, price_per_client"),
         supabase.from("accountant_clients").select("accountant_id").is("unassigned_at", null),
-        supabase.from("invoices").select("id, total, status, invoice_date"),
+        supabase.from("invoices").select("id, total, status, invoice_date, client_id"),
       ]);
       const invoices = invoicesRes.data || [];
 
@@ -70,21 +70,40 @@ export default function AdminStatsTab() {
         }
       });
 
+      // חשבוניות שנאספו החודש
       const invoicesThisMonth = invoices.filter(
         (inv) => inv.invoice_date && inv.invoice_date >= startOfMonthISO
       ).length;
 
-      const totalExpensesThisMonth = invoices
-        .filter((inv) => inv.invoice_date && inv.invoice_date >= startOfMonthISO)
-        .reduce((sum, inv) => sum + (inv.total || 0), 0);
-
-      const pendingClarification = invoices.filter(
-        (inv) => inv.status === "needs_clarification"
+      // מנויים שפגו השבוע
+      const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const expiredThisWeek = expired.filter(
+        (e) => new Date(e.plan_expires_at).getTime() >= new Date(oneWeekAgo).getTime()
       ).length;
 
-      const pendingReview = invoices.filter(
-        (inv) => inv.status === "pending_review"
-      ).length;
+      // נתוני גרף — חשבוניות לפי חודש (6 חודשים אחרונים)
+      const nowDate = new Date();
+      const monthlyData = Array.from({ length: 6 }, (_, i) => {
+        const d = new Date(nowDate.getFullYear(), nowDate.getMonth() - (5 - i), 1);
+        const y = d.getFullYear();
+        const m = d.getMonth() + 1;
+        const label = d.toLocaleDateString("he-IL", { month: "short", year: "2-digit" });
+        const count = invoices.filter((inv) => {
+          if (!inv.invoice_date) return false;
+          const [iy, im] = inv.invoice_date.split("-").map(Number);
+          return iy === y && im === m;
+        }).length;
+        return { label, count };
+      });
+
+      // נתוני גרף עוגה — פילוח לקוחות לפי plan_type
+      const planMap = new Map<string, number>();
+      clients.forEach((c) => {
+        if (!c.is_active) return;
+        const plan = (c as any).plan_type || "ללא תוכנית";
+        planMap.set(plan, (planMap.get(plan) || 0) + 1);
+      });
+      const planData = Array.from(planMap.entries()).map(([name, value]) => ({ name, value }));
 
       const top5 = accountants
         .filter((a) => a.is_active)
@@ -103,9 +122,9 @@ export default function AdminStatsTab() {
         estimatedRevenue,
         expired,
         invoicesThisMonth,
-        totalExpensesThisMonth,
-        pendingClarification,
-        pendingReview,
+        expiredThisWeek,
+        monthlyData,
+        planData,
         top5,
         // derived
         totalActiveLinks: acLinks.length,
