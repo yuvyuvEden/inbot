@@ -99,6 +99,7 @@ export function AccountantMessagesTab({ clientIds }: Props) {
 
 
   const sendReply = async (invoiceId: string) => {
+    console.log(`SEND [${instanceId}]`);
     const text = replyText.trim();
     if (!text || sending || sendingRef.current[invoiceId]) return;
 
