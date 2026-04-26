@@ -97,17 +97,19 @@ export function useClientInvoiceCounts(clientIds: string[]) {
         pending: number;
         clarification: number;
         archived: number;
+        totalInvoices: number;
       }> = {};
 
       for (const inv of invoices as any[]) {
         if (!map[inv.client_id]) {
-          map[inv.client_id] = { monthlyTotal: 0, pending: 0, clarification: 0, archived: 0 };
+          map[inv.client_id] = { monthlyTotal: 0, pending: 0, clarification: 0, archived: 0, totalInvoices: 0 };
         }
         const inMonth = inv.invoice_date && inv.invoice_date >= startOfMonth && inv.invoice_date <= endOfMonth;
         if (inMonth) map[inv.client_id].monthlyTotal += inv.total ?? 0;
         if (inv.status === "pending_review") map[inv.client_id].pending++;
         if (inv.status === "needs_clarification") map[inv.client_id].clarification++;
         if (inv.is_archived && inMonth) map[inv.client_id].archived++;
+        map[inv.client_id].totalInvoices++;
       }
 
       return map;
