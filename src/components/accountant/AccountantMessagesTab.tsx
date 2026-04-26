@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useAllThreadComments } from "@/hooks/useAccountantData";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -29,6 +29,7 @@ export function AccountantMessagesTab({ clientIds }: Props) {
 
   const [replyText, setReplyText] = useState("");
   const [sending, setSending] = useState(false);
+  const sendingRef = useRef<Record<string, boolean>>({});
 
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ["all-thread-comments"] });
@@ -95,7 +96,10 @@ export function AccountantMessagesTab({ clientIds }: Props) {
 
   const sendReply = async (thread: Thread) => {
     const text = replyText.trim();
-    if (!text || sending) return; // מניעת כפול
+    if (!text) return;
+    if (sendingRef.current[thread.invoiceId]) return; // מניעת כפול מוחלטת
+    sendingRef.current[thread.invoiceId] = true;
+
     setSending(true);
     // clear text immediately to prevent re-submission
     setReplyText("");
@@ -115,6 +119,7 @@ export function AccountantMessagesTab({ clientIds }: Props) {
       setSelectedThread(null);
       invalidateAll();
     } finally {
+      sendingRef.current[thread.invoiceId] = false;
       setSending(false);
     }
   };
