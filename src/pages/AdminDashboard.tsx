@@ -3,16 +3,18 @@ import { useAuth } from "@/contexts/AuthContext";
 import AdminClientsTab from "@/components/admin/AdminClientsTab";
 import AdminAccountantsTab from "@/components/admin/AdminAccountantsTab";
 import AdminStatsTab from "@/components/admin/AdminStatsTab";
+import AdminSystemTab from "@/components/admin/AdminSystemTab";
 import { AdminBillingTab } from "@/components/admin/AdminBillingTab";
 import { AdminPlansTab } from "@/components/admin/AdminPlansTab";
-import { BarChart2, Users, Building2, CreditCard, Package } from "lucide-react";
+import { BarChart2, Users, Building2, CreditCard, Package, Settings } from "lucide-react";
 
 const tabs = [
   { key: "stats", label: "סטטיסטיקות", icon: BarChart2 },
-  { key: "accountants", label: "רואי חשבון", icon: Users },
+  { key: "accountants", label: 'רואי חשבון', icon: Users },
   { key: "clients", label: "לקוחות", icon: Building2 },
   { key: "billing", label: "חיוב", icon: CreditCard },
   { key: "plans", label: "חבילות", icon: Package },
+  { key: "system", label: "הגדרות מערכת", icon: Settings },
 ] as const;
 
 type TabKey = (typeof tabs)[number]["key"];
