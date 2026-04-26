@@ -18,6 +18,9 @@ interface Thread {
 
 const PAGE_SIZE = 25;
 
+// מניעת שליחה כפולה — module-level, לא מתאפס ב-remount
+const globalSendingLock = new Set<string>();
+
 export function AccountantMessagesTab({ clientIds }: Props) {
   const instanceId = useRef(Math.random().toString(36).slice(2, 7)).current;
   console.log(`MOUNT [${instanceId}]`);
