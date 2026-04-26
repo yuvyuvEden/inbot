@@ -95,6 +95,7 @@ export function AccountantMessagesTab({ clientIds }: Props) {
 
   const sendReplyMutation = useMutation({
     mutationFn: async ({ invoiceId, text }: { invoiceId: string; text: string }) => {
+      console.log("sendReply called", invoiceId, text, new Date().toISOString());
       const { data: { user } } = await supabase.auth.getUser();
       await supabase.from("invoice_comments").insert({
         invoice_id: invoiceId,
