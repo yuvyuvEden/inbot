@@ -232,7 +232,7 @@ export default function SettingsTab() {
       toast.error("שגיאה בטעינת הגדרות");
     }
     setIsLoading(false);
-  }, [user?.id]);
+  }, [user?.id, vatRules]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
