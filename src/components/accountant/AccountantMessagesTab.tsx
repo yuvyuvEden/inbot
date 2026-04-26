@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useUnreadAccountantComments } from "@/hooks/useAccountantData";
+import { useAllThreadComments } from "@/hooks/useAccountantData";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { MessageSquare } from "lucide-react";
@@ -8,17 +8,22 @@ interface Props { clientIds: string[]; }
 
 export function AccountantMessagesTab({ clientIds }: Props) {
   const queryClient = useQueryClient();
-  const { data: comments = [], isLoading } = useUnreadAccountantComments(clientIds);
+  const { data: comments = [], isLoading } = useAllThreadComments(clientIds);
 
   const [replyTexts, setReplyTexts] = useState<Record<string, string>>({});
   const [sendingReply, setSendingReply] = useState<Record<string, boolean>>({});
 
-  const markAsRead = async (commentId: string) => {
-    await supabase.from("invoice_comments").update({ is_read: true }).eq("id", commentId);
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: ["all-thread-comments"] });
     queryClient.invalidateQueries({ queryKey: ["unread-accountant-comments"] });
   };
 
-  const sendReply = async (invoiceId: string, invoiceNumber: string, vendorName: string, _clientId: string) => {
+  const markAsRead = async (commentId: string) => {
+    await supabase.from("invoice_comments").update({ is_read: true }).eq("id", commentId);
+    invalidateAll();
+  };
+
+  const sendReply = async (invoiceId: string, _invoiceNumber: string, _vendorName: string, _clientId: string) => {
     const text = replyTexts[invoiceId]?.trim();
     if (!text) return;
     setSendingReply(prev => ({ ...prev, [invoiceId]: true }));
@@ -35,7 +40,7 @@ export function AccountantMessagesTab({ clientIds }: Props) {
         body: { invoice_id: invoiceId, body: text }
       });
       setReplyTexts(prev => ({ ...prev, [invoiceId]: "" }));
-      queryClient.invalidateQueries({ queryKey: ["unread-accountant-comments"] });
+      invalidateAll();
     } finally {
       setSendingReply(prev => ({ ...prev, [invoiceId]: false }));
     }
@@ -48,31 +53,32 @@ export function AccountantMessagesTab({ clientIds }: Props) {
     acc[key].push(c);
     return acc;
   }, {});
-  // Sort each group chronologically (ASC)
   Object.keys(grouped).forEach(k => {
     grouped[k].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
   });
+
+  const groupedEntries = Object.entries(grouped) as [string, any[]][];
 
   return (
     <div style={{ backgroundColor: "#ffffff", borderRadius: "12px", padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", border: "1px solid #e2e8f0" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}>
         <MessageSquare size={20} color="#1e3a5f" />
-        <h2 style={{ fontSize: "18px", fontWeight: 700, color: "#1e3a5f", margin: 0 }}>הודעות שלא נקראו</h2>
+        <h2 style={{ fontSize: "18px", fontWeight: 700, color: "#1e3a5f", margin: 0 }}>הודעות</h2>
       </div>
 
       {isLoading ? (
         <p style={{ color: "#64748b" }}>טוען...</p>
-      ) : Object.keys(grouped).length === 0 ? (
+      ) : groupedEntries.length === 0 ? (
         <div style={{ textAlign: "center", padding: "32px 16px" }}>
-          <p style={{ color: "#64748b", fontSize: "14px", margin: 0 }}>אין הודעות חדשות מלקוחות 🎉</p>
+          <p style={{ color: "#64748b", fontSize: "14px", margin: 0 }}>אין הודעות 🎉</p>
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-          {(Object.entries(grouped) as [string, any[]][]).map(([invoiceId, threadComments]) => {
+          {groupedEntries.map(([invoiceId, threadComments]) => {
             const first = threadComments[0];
-            const vendorName = first.invoices?.vendor ?? "חשבונית";
-            const invoiceNumber = first.invoices?.invoice_number ?? "";
-            const clientId = first.invoices?.client_id ?? "";
+            const vendorName = first.invoice?.vendor ?? "חשבונית";
+            const invoiceNumber = first.invoice?.invoice_number ?? "";
+            const clientId = first.invoice?.client_id ?? "";
             return (
               <div
                 key={invoiceId}
@@ -88,35 +94,50 @@ export function AccountantMessagesTab({ clientIds }: Props) {
                 </div>
 
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                  {threadComments.map((comment: any) => (
-                    <div
-                      key={comment.id}
-                      style={{
-                        padding: "10px 12px",
-                        borderRadius: "8px",
-                        backgroundColor: "#ffffff",
-                        border: "1px solid #e2e8f0",
-                      }}
-                    >
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px", gap: "8px", flexWrap: "wrap" }}>
-                        <div style={{ fontSize: "12px", color: "#64748b", fontWeight: 600 }}>
-                          לקוח
-                        </div>
-                        <div style={{ fontSize: "11px", color: "#94a3b8" }}>
-                          {new Date(comment.created_at).toLocaleString("he-IL")}
+                  {threadComments.map((comment: any) => {
+                    const isAccountant = comment.author_role === "accountant";
+                    const isUnreadClient = !isAccountant && !comment.is_read;
+                    return (
+                      <div
+                        key={comment.id}
+                        style={{
+                          display: "flex",
+                          justifyContent: isAccountant ? "flex-start" : "flex-end",
+                          width: "100%",
+                        }}
+                      >
+                        <div
+                          style={{
+                            maxWidth: "85%",
+                            padding: "10px 12px",
+                            borderRadius: "8px",
+                            backgroundColor: isAccountant ? "#dbeafe" : "#f1f5f9",
+                            border: "1px solid #e2e8f0",
+                          }}
+                        >
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px", gap: "12px", flexWrap: "wrap" }}>
+                            <div style={{ fontSize: "12px", color: isAccountant ? "#1e40af" : "#64748b", fontWeight: 600 }}>
+                              {isAccountant ? 'רו"ח' : "לקוח"}
+                            </div>
+                            <div style={{ fontSize: "11px", color: "#94a3b8" }}>
+                              {new Date(comment.created_at).toLocaleString("he-IL")}
+                            </div>
+                          </div>
+                          <p style={{ margin: 0, color: "#334155", fontSize: "13px", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
+                            {comment.body}
+                          </p>
+                          {isUnreadClient && (
+                            <button
+                              onClick={() => markAsRead(comment.id)}
+                              style={{ marginTop: "8px", padding: "4px 10px", borderRadius: "6px", backgroundColor: "transparent", color: "#1e3a5f", border: "1px solid #1e3a5f", cursor: "pointer", fontSize: "11px", fontFamily: "Heebo, sans-serif" }}
+                            >
+                              ✓ סמן כנקרא
+                            </button>
+                          )}
                         </div>
                       </div>
-                      <p style={{ margin: 0, color: "#334155", fontSize: "13px", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
-                        {comment.body}
-                      </p>
-                      <button
-                        onClick={() => markAsRead(comment.id)}
-                        style={{ marginTop: "8px", padding: "4px 10px", borderRadius: "6px", backgroundColor: "transparent", color: "#1e3a5f", border: "1px solid #1e3a5f", cursor: "pointer", fontSize: "11px", fontFamily: "Heebo, sans-serif" }}
-                      >
-                        ✓ סמן כנקרא
-                      </button>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 <textarea
