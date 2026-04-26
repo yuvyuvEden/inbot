@@ -95,37 +95,47 @@ export function AccountantMessagesTab({ clientIds }: Props) {
   };
 
 
-  const sendReplyMutation = useMutation({
-    mutationFn: async ({ invoiceId, text }: { invoiceId: string; text: string }) => {
-      console.log("sendReply called", invoiceId, text, new Date().toISOString());
-      const { data: { user } } = await supabase.auth.getUser();
+  const sendReply = async (invoiceId: string) => {
+    const text = replyText.trim();
+    if (!text || sending || sendingRef.current[invoiceId]) return;
 
-      // שמור הודעה — זה חייב להצליח
+    // נקה טקסט ועדכן סטטוס מיד — מונע כפול
+    sendingRef.current[invoiceId] = true;
+    setReplyText("");
+    setSending(true);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
       const { error } = await supabase.from("invoice_comments").insert({
         invoice_id: invoiceId,
-        author_id: user?.id,
+        author_id: user?.id as string,
         author_role: "accountant",
         body: text,
         is_read: false,
       });
       if (error) throw error;
 
-      // שלח מייל — אם נכשל, לא חוסם
       try {
         await supabase.functions.invoke("accountant-send-email", {
           body: { invoice_id: invoiceId, body: text },
         });
-      } catch (emailError) {
-        console.warn("Email notification failed:", emailError);
+      } catch (emailErr) {
+        console.warn("Email failed:", emailErr);
       }
-    },
-    onSuccess: () => {
-      setView("inbox");
-      setSelectedThread(null);
-      queryClient.invalidateQueries({ queryKey: ["all-thread-comments"] });
-      queryClient.invalidateQueries({ queryKey: ["unread-accountant-comments"] });
-    },
-  });
+    } catch (err) {
+      console.error("Failed to send reply:", err);
+      // החזר טקסט אם נכשל
+      setReplyText(text);
+    } finally {
+      sendingRef.current[invoiceId] = false;
+      setSending(false);
+      // invalidate רק אחרי שהכל הסתיים
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["all-thread-comments"] });
+        queryClient.invalidateQueries({ queryKey: ["unread-accountant-comments"] });
+      }, 500);
+    }
+  };
 
 
   const approveInvoice = async (invoiceId: string) => {
