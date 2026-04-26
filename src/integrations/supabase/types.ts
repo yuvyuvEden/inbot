@@ -75,6 +75,7 @@ export type Database = {
           updated_at: string
           updated_by: string | null
           user_id: string | null
+          vat_number: string | null
         }
         Insert: {
           auto_renew?: boolean | null
@@ -94,6 +95,7 @@ export type Database = {
           updated_at?: string
           updated_by?: string | null
           user_id?: string | null
+          vat_number?: string | null
         }
         Update: {
           auto_renew?: boolean | null
@@ -113,6 +115,7 @@ export type Database = {
           updated_at?: string
           updated_by?: string | null
           user_id?: string | null
+          vat_number?: string | null
         }
         Relationships: []
       }

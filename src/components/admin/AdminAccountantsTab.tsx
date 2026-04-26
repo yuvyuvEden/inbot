@@ -16,6 +16,7 @@ interface AccountantRow {
   name: string;
   email: string;
   phone: string | null;
+  vat_number: string | null;
   plan_type: string | null;
   plan_expires_at: string | null;
   price_per_client: number | null;
@@ -56,6 +57,7 @@ const emptyAccountant: Omit<AccountantRow, "active_clients_count"> = {
   name: "",
   email: "",
   phone: null,
+  vat_number: null,
   plan_type: "accountant_monthly",
   plan_expires_at: null,
   price_per_client: 0,
@@ -249,7 +251,7 @@ export default function AdminAccountantsTab({ onGoToBilling }: AdminAccountantsT
     queryFn: async () => {
       const { data, error } = await supabase
         .from("accountants")
-        .select("id, name, email, phone, plan_type, plan_expires_at, price_per_client, monthly_fee, auto_renew, is_active, user_id, base_client_count, billing_day, free_months")
+        .select("id, name, email, phone, vat_number, plan_type, plan_expires_at, price_per_client, monthly_fee, auto_renew, is_active, user_id, base_client_count, billing_day, free_months")
         .order("created_at", { ascending: false });
       if (error) throw error;
 
@@ -259,6 +261,7 @@ export default function AdminAccountantsTab({ onGoToBilling }: AdminAccountantsT
 
       return (data || []).map((a) => ({
         ...a,
+        vat_number: (a as any).vat_number ?? null,
         active_clients_count: countMap.get(a.id) || 0,
       })) as AccountantRow[];
     },
@@ -270,6 +273,7 @@ export default function AdminAccountantsTab({ onGoToBilling }: AdminAccountantsT
         name: a.name,
         email: a.email,
         phone: a.phone,
+        vat_number: a.vat_number || null,
         plan_type: a.plan_type,
         plan_expires_at: a.plan_expires_at,
         price_per_client: a.price_per_client,
@@ -341,7 +345,9 @@ export default function AdminAccountantsTab({ onGoToBilling }: AdminAccountantsT
   });
 
   const filtered = (accountants || []).filter((a) =>
-    a.name.toLowerCase().includes(search.toLowerCase()) || a.email.toLowerCase().includes(search.toLowerCase())
+    a.name.toLowerCase().includes(search.toLowerCase()) ||
+    a.email.toLowerCase().includes(search.toLowerCase()) ||
+    (a.vat_number ?? "").includes(search)
   );
 
   const openNew = () => {
@@ -430,6 +436,11 @@ export default function AdminAccountantsTab({ onGoToBilling }: AdminAccountantsT
                     </span>
                   </div>
                   <div dir="ltr" style={{ fontSize: "13px", color: "#64748b", marginBottom: "8px", textAlign: "right" }}>{a.email}</div>
+                  {a.vat_number && (
+                    <div style={{ fontSize: "12px", color: "#64748b", marginBottom: "8px" }}>
+                      ע״מ / ח״פ: <span style={{ direction: "ltr", display: "inline-block" }}>{a.vat_number}</span>
+                    </div>
+                  )}
                   <div style={{ display: "flex", gap: "16px", marginBottom: "12px", fontSize: "13px", color: "#64748b" }}>
                     <span>לקוחות: <strong style={{ color: a.active_clients_count > 0 ? "#16a34a" : "#94a3b8" }}>{a.active_clients_count}</strong></span>
                     <span>הכנסה: <strong style={{ color: revenue > 0 ? "#16a34a" : "#94a3b8" }}>₪{revenue.toLocaleString("he-IL")}</strong></span>
@@ -464,6 +475,7 @@ export default function AdminAccountantsTab({ onGoToBilling }: AdminAccountantsT
             <tr style={{ background: "linear-gradient(to left, #1e3a5f, #2d5a8e)" }}>
               <th style={thStyle}>שם</th>
               <th style={thStyle}>מייל</th>
+              <th style={thStyle}>ע״מ / ח״פ</th>
               <th style={thStyle}>לקוחות פעילים</th>
               <th style={thStyle}>מנוי</th>
               <th style={thStyle}>מחיר/לקוח</th>
@@ -476,13 +488,13 @@ export default function AdminAccountantsTab({ onGoToBilling }: AdminAccountantsT
             {isLoading ? (
               Array.from({ length: 4 }).map((_, i) => (
                 <tr key={i} className="border-b border-border">
-                  {Array.from({ length: 8 }).map((_, j) => (
+                  {Array.from({ length: 9 }).map((_, j) => (
                     <td key={j} className="p-3"><Skeleton className="h-4 w-16" /></td>
                   ))}
                 </tr>
               ))
             ) : filtered.length === 0 ? (
-              <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">לא נמצאו רואי חשבון</td></tr>
+              <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">לא נמצאו רואי חשבון</td></tr>
             ) : (
               filtered.map((a) => {
                 const revenue = (a.price_per_client || 0) * a.active_clients_count;
@@ -506,6 +518,7 @@ export default function AdminAccountantsTab({ onGoToBilling }: AdminAccountantsT
                   >
                     <td className="p-3 font-medium" style={{ color: "#1a202c" }}>{a.name}</td>
                     <td className="p-3" dir="ltr" style={{ color: "#64748b", fontSize: "13px" }}>{a.email}</td>
+                    <td className="p-3" dir="ltr" style={{ color: "#64748b", fontSize: "13px", textAlign: "right" }}>{a.vat_number || "—"}</td>
                     <td className="p-3">
                       <span
                         style={{
@@ -610,6 +623,17 @@ export default function AdminAccountantsTab({ onGoToBilling }: AdminAccountantsT
                 <Input dir="ltr" value={editAcc.phone || ""} onChange={(e) => setEditAcc({ ...editAcc, phone: e.target.value || null })} />
               </label>
               <label className="block space-y-1">
+                <span className="text-sm font-medium">
+                  מספר ע״מ / ח״פ <span style={{ color: '#dc2626' }}>*</span>
+                </span>
+                <Input
+                  dir="ltr"
+                  value={editAcc.vat_number || ""}
+                  onChange={(e) => setEditAcc({ ...editAcc, vat_number: e.target.value || null })}
+                  placeholder="מספר עוסק מורשה או ח״פ"
+                />
+              </label>
+              <label className="block space-y-1">
                 <span className="text-sm font-medium">סוג מנוי <span style={{ color: '#94a3b8', fontSize: '11px' }}>(אופציונלי)</span></span>
                 <Select value={editAcc.plan_type || "accountant_monthly"} onValueChange={(v) => setEditAcc({ ...editAcc, plan_type: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
@@ -688,6 +712,10 @@ export default function AdminAccountantsTab({ onGoToBilling }: AdminAccountantsT
                   }
                   if (!editAcc.email.trim()) {
                     toast.error("מייל הוא שדה חובה");
+                    return;
+                  }
+                  if (!editAcc.vat_number?.trim()) {
+                    toast.error("יש להזין מספר ע״מ / ח״פ");
                     return;
                   }
                   saveMutation.mutate(editAcc);

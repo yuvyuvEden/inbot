@@ -1,0 +1,1 @@
+ALTER TABLE public.accountants ADD COLUMN IF NOT EXISTS vat_number TEXT;
