@@ -225,6 +225,7 @@ export function AccountantMessagesTab({ clientIds }: Props) {
           />
           <button
             onClick={() => {
+              console.log("button clicked", new Date().toISOString());
               const text = replyText.trim();
               if (!text || sendReplyMutation.isPending) return;
               setReplyText("");
