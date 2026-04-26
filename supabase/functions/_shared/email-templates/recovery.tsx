@@ -9,7 +9,9 @@ import {
   Head,
   Heading,
   Html,
+  Link,
   Preview,
+  Section,
   Text,
 } from 'npm:@react-email/components@0.0.22'
 
@@ -22,22 +24,36 @@ export const RecoveryEmail = ({
   siteName,
   confirmationUrl,
 }: RecoveryEmailProps) => (
-  <Html lang="en" dir="ltr">
+  <Html lang="he" dir="rtl">
     <Head />
-    <Preview>Reset your password for {siteName}</Preview>
+    <Preview>איפוס סיסמה — INBOT</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Reset your password</Heading>
-        <Text style={text}>
-          We received a request to reset your password for {siteName}. Click
-          the button below to choose a new password.
-        </Text>
-        <Button style={button} href={confirmationUrl}>
-          Reset Password
-        </Button>
-        <Text style={footer}>
-          If you didn't request a password reset, you can safely ignore this
-          email. Your password will not be changed.
+        <Section style={card}>
+          <Heading style={h1}>איפוס סיסמה</Heading>
+          <Text style={text}>
+            קיבלנו בקשה לאיפוס הסיסמה לחשבון שלך ב-INBOT.
+          </Text>
+          <Text style={text}>
+            לחץ על הכפתור למטה לבחירת סיסמה חדשה. הקישור תקף ל-60 דקות.
+          </Text>
+          <Section style={buttonWrap}>
+            <Button style={button} href={confirmationUrl}>
+              איפוס סיסמה
+            </Button>
+          </Section>
+          <Text style={footerNote}>
+            אם לא ביקשת איפוס סיסמה — התעלם ממייל זה. הסיסמה שלך לא תשתנה.
+          </Text>
+          <Text style={footerNote}>
+            לעזרה:{' '}
+            <Link href="mailto:support@inbot.co.il" style={link}>
+              support@inbot.co.il
+            </Link>
+          </Text>
+        </Section>
+        <Text style={copyright}>
+          © 2026 INBOT · כל הזכויות שמורות · app.inbot.co.il
         </Text>
       </Container>
     </Body>
@@ -46,26 +62,55 @@ export const RecoveryEmail = ({
 
 export default RecoveryEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
+const main = {
+  backgroundColor: '#ffffff',
+  fontFamily: "'Heebo', Arial, sans-serif",
+  direction: 'rtl' as const,
+  textAlign: 'right' as const,
+}
+const container = { padding: '32px 24px', maxWidth: '560px' }
+const card = {
+  backgroundColor: '#ffffff',
+  padding: '32px 28px',
+  borderRadius: '12px',
+  border: '1px solid #e5e7eb',
+}
 const h1 = {
-  fontSize: '22px',
+  fontSize: '24px',
   fontWeight: 'bold' as const,
-  color: '#000000',
+  color: '#0a2540',
   margin: '0 0 20px',
+  textAlign: 'right' as const,
 }
 const text = {
-  fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
+  fontSize: '15px',
+  color: '#334155',
+  lineHeight: '1.7',
+  margin: '0 0 14px',
+  textAlign: 'right' as const,
 }
+const buttonWrap = { textAlign: 'right' as const, margin: '24px 0' }
 const button = {
-  backgroundColor: '#000000',
+  backgroundColor: '#e8941a',
   color: '#ffffff',
-  fontSize: '14px',
+  fontSize: '15px',
+  fontWeight: 'bold' as const,
   borderRadius: '8px',
-  padding: '12px 20px',
+  padding: '12px 28px',
   textDecoration: 'none',
+  display: 'inline-block',
 }
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
+const footerNote = {
+  fontSize: '13px',
+  color: '#64748b',
+  lineHeight: '1.6',
+  margin: '12px 0 0',
+  textAlign: 'right' as const,
+}
+const link = { color: '#e8941a', textDecoration: 'none' }
+const copyright = {
+  fontSize: '12px',
+  color: '#94a3b8',
+  textAlign: 'center' as const,
+  margin: '24px 0 0',
+}
