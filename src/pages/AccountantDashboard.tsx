@@ -7,7 +7,7 @@ import { AccountantHomeTab } from "@/components/accountant/AccountantHomeTab";
 import { AccountantClientsTab } from "@/components/accountant/AccountantClientsTab";
 import { AccountantMessagesTab } from "@/components/accountant/AccountantMessagesTab";
 import { AccountantSettingsTab } from "@/components/accountant/AccountantSettingsTab";
-import { useMyClients } from "@/hooks/useAccountantData";
+import { useMyClients, useUnreadAccountantComments } from "@/hooks/useAccountantData";
 import { LogOut, ShieldAlert, Home, Users, MessageSquare, Settings } from "lucide-react";
 
 const LOGO_URL = "https://jkqpkbcdtbelgpuwncam.supabase.co/storage/v1/object/public/assets//LOGO.jpeg";
@@ -40,6 +40,8 @@ export default function AccountantDashboard() {
     isAdminView ? adminViewId : undefined
   );
   const clientIds = (clients as any[]).map((c: any) => c.id);
+  const { data: unreadComments = [] } = useUnreadAccountantComments(clientIds);
+  const unreadCount = unreadComments.length;
 
   const accountantName = session?.user?.user_metadata?.full_name ?? "רואה חשבון";
 
