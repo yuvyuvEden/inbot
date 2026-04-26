@@ -287,6 +287,7 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
       }
     }
   };
+  const deleteInvoice = async () => {
     if (!deleteModal) return;
     const { error } = await supabase
       .from("invoices")
