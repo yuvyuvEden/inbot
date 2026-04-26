@@ -9,6 +9,7 @@ import {
   Download, Globe, FileText, Brain, UserCheck, Tags, SlidersHorizontal, HelpCircle,
   AlertTriangle, RefreshCw,
 } from "lucide-react";
+import { useVatRules } from "@/hooks/useVatRules";
 
 /* ── types ─────────────────────────────────────── */
 interface AdvancedSettings {
@@ -39,24 +40,7 @@ interface TaxRule {
   isDefaultTax: boolean;
 }
 
-/* ── Tax rule defaults (Israeli tax law) ── */
-const VAT_DEFAULTS: Record<string, number> = {
-  "דלק": 67, "תחזוקת רכב": 67, "אגרות כביש": 67, "תקשורת": 67, "מוניות": 67,
-  "חניה": 100, "שכירות": 100, "חשמל": 25, "מים": 25, "ניהול ואחזקה": 25,
-  "כיבוד למשרד": 0, "ארוחות ומסעדות": 0, "מתנות ורווחה": 0, "תרומות": 0,
-  "ביטוח רכב": 0, "ביטוח עסקי": 0, "ביטוח פנסיוני": 0, "ביטוח לאומי": 0,
-  "מס הכנסה ומע\"מ": 0, "עמלות בנק": 0, "ריבית ומימון": 0, "תחבורה ציבורית": 0,
-  "ארנונה ואגרות": 0,
-};
-const TAX_DEFAULTS: Record<string, number> = {
-  "דלק": 45, "תחזוקת רכב": 45, "ביטוח רכב": 45, "אגרות כביש": 45,
-  "מוניות": 45, "תחבורה ציבורית": 45, "חניה": 45,
-  "כיבוד למשרד": 80, "ארוחות ומסעדות": 0,
-  "שכירות": 25, "חשמל": 25, "מים": 25, "ארנונה ואגרות": 25, "ניהול ואחזקה": 25,
-  "תקשורת": 50,
-};
-const getDefaultVat = (cat: string) => VAT_DEFAULTS[cat] ?? 100;
-const getDefaultTax = (cat: string) => TAX_DEFAULTS[cat] ?? 100;
+/* ── Tax rule defaults — נטענים מטבלת vat_rules הגלובלית ── */
 
 /* ── Tooltip helper ── */
 const SubCardTooltip = ({ text }: { text: string }) => (
@@ -140,6 +124,15 @@ const subCardHeader: React.CSSProperties = {
 /* ── component ─────────────────────────────────── */
 export default function SettingsTab() {
   const { user } = useAuth();
+  const { data: vatRules = [] } = useVatRules();
+  const getDefaultVat = (cat: string) => {
+    const rule = vatRules.find(r => r.category === cat);
+    return rule ? Math.round(rule.vat_rate * 100) : 100;
+  };
+  const getDefaultTax = (cat: string) => {
+    const rule = vatRules.find(r => r.category === cat);
+    return rule ? Math.round(rule.tax_rate * 100) : 100;
+  };
   const [clientId, setClientId] = useState<string | null>(null);
   const [settings, setSettings] = useState<AdvancedSettings>(DEFAULT_SETTINGS);
   const [vatRate, setVatRate] = useState(1.18);
