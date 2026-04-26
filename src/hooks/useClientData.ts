@@ -198,7 +198,7 @@ export function useUnreadThreads(clientId: string | undefined) {
     queryFn: async () => {
       const { data: invoices, error: invErr } = await supabase
         .from("invoices")
-        .select("id, invoice_comments(author_role, created_at)")
+        .select("id, invoice_comments(author_role, created_at, is_read)")
         .eq("client_id", clientId!);
       if (invErr) throw invErr;
 
@@ -206,12 +206,21 @@ export function useUnreadThreads(clientId: string | undefined) {
         const comments = (inv.invoice_comments ?? []).sort(
           (a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
         );
-        const lastAccountantMsg = comments.filter((c: any) => c.author_role === "accountant").slice(-1)[0];
+        // מציאת ההודעה האחרונה של הרו"ח
+        const lastAccountantMsg = comments
+          .filter((c: any) => c.author_role === "accountant")
+          .slice(-1)[0];
+        // אם אין הודעת רו"ח — אין badge
         if (!lastAccountantMsg) return false;
+        // אם הלקוח כבר ענה אחרי ההודעה האחרונה של הרו"ח — אין badge
         const clientRepliedAfter = comments.some(
-          (c: any) => c.author_role === "client" && new Date(c.created_at) > new Date(lastAccountantMsg.created_at)
+          (c: any) =>
+            c.author_role === "client" &&
+            new Date(c.created_at) > new Date(lastAccountantMsg.created_at)
         );
-        return !clientRepliedAfter;
+        if (clientRepliedAfter) return false;
+        // badge רק אם ההודעה האחרונה של הרו"ח טרם נקראה
+        return lastAccountantMsg.is_read === false;
       }).length;
     },
   });
