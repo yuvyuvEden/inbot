@@ -83,9 +83,10 @@ export function AccountantMessagesTab({ clientIds }: Props) {
   }, [comments]);
 
   const filteredThreads = useMemo(() => {
-    if (filter === "unanswered")
+    if (filter === "received")
       return threads.filter((t) => !t.accountantHasReplied && !t.isResolved);
-    if (filter === "unread") return threads.filter((t) => t.hasUnreadClientMessage);
+    if (filter === "sent")
+      return threads.filter((t) => t.accountantHasReplied && !t.isResolved);
     return threads;
   }, [threads, filter]);
 
