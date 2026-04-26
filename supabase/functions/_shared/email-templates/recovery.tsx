@@ -9,6 +9,7 @@ import {
   Head,
   Heading,
   Html,
+  Img,
   Link,
   Preview,
   Section,
@@ -20,8 +21,11 @@ interface RecoveryEmailProps {
   confirmationUrl: string
 }
 
+const LOGO_URL =
+  'https://jkqpkbcdtbelgpuwncam.supabase.co/storage/v1/object/public/assets//LOGO.jpeg'
+
 export const RecoveryEmail = ({
-  siteName,
+  siteName: _siteName,
   confirmationUrl,
 }: RecoveryEmailProps) => (
   <Html lang="he" dir="rtl">
@@ -30,31 +34,46 @@ export const RecoveryEmail = ({
     <Body style={main}>
       <Container style={container}>
         <Section style={card}>
-          <Heading style={h1}>איפוס סיסמה</Heading>
-          <Text style={text}>
-            קיבלנו בקשה לאיפוס הסיסמה לחשבון שלך ב-INBOT.
-          </Text>
-          <Text style={text}>
-            לחץ על הכפתור למטה לבחירת סיסמה חדשה. הקישור תקף ל-60 דקות.
-          </Text>
-          <Section style={buttonWrap}>
-            <Button style={button} href={confirmationUrl}>
-              איפוס סיסמה
-            </Button>
+          {/* Navy header with logo */}
+          <Section style={header}>
+            <Img
+              src={LOGO_URL}
+              alt="INBOT"
+              width="120"
+              height="40"
+              style={logo}
+            />
           </Section>
-          <Text style={footerNote}>
-            אם לא ביקשת איפוס סיסמה — התעלם ממייל זה. הסיסמה שלך לא תשתנה.
-          </Text>
-          <Text style={footerNote}>
-            לעזרה:{' '}
-            <Link href="mailto:support@inbot.co.il" style={link}>
-              support@inbot.co.il
-            </Link>
-          </Text>
+
+          {/* Orange accent strip */}
+          <Section style={accent} />
+
+          {/* Body */}
+          <Section style={bodySection}>
+            <Heading style={h1}>איפוס סיסמה</Heading>
+            <Text style={text}>
+              קיבלנו בקשה לאיפוס הסיסמה שלך. לחץ על הכפתור למטה. הקישור תקף ל-60 דקות.
+            </Text>
+            <Section style={buttonWrap}>
+              <Button style={button} href={confirmationUrl}>
+                איפוס סיסמה
+              </Button>
+            </Section>
+            <Text style={footerNote}>
+              אם לא ביקשת איפוס סיסמה — התעלם ממייל זה. הסיסמה שלך לא תשתנה.
+            </Text>
+          </Section>
+
+          {/* Footer */}
+          <Section style={footer}>
+            <Text style={footerText}>
+              © 2026 INBOT ·{' '}
+              <Link href="mailto:support@inbot.co.il" style={footerLink}>
+                support@inbot.co.il
+              </Link>
+            </Text>
+          </Section>
         </Section>
-        <Text style={copyright}>
-          © 2026 INBOT · כל הזכויות שמורות · app.inbot.co.il
-        </Text>
       </Container>
     </Body>
   </Html>
@@ -67,18 +86,44 @@ const main = {
   fontFamily: "'Heebo', Arial, sans-serif",
   direction: 'rtl' as const,
   textAlign: 'right' as const,
+  margin: 0,
+  padding: '24px 0',
 }
-const container = { padding: '32px 24px', maxWidth: '560px' }
+const container = {
+  maxWidth: '560px',
+  margin: '0 auto',
+  padding: '0 16px',
+}
 const card = {
   backgroundColor: '#ffffff',
-  padding: '32px 28px',
-  borderRadius: '12px',
   border: '1px solid #e5e7eb',
+  borderRadius: '12px',
+  overflow: 'hidden',
+}
+const header = {
+  backgroundColor: '#1e3a5f',
+  padding: '24px',
+  textAlign: 'center' as const,
+}
+const logo = {
+  display: 'inline-block',
+  margin: '0 auto',
+  maxHeight: '40px',
+  width: 'auto',
+}
+const accent = {
+  height: '4px',
+  backgroundColor: '#e8941a',
+  fontSize: 0,
+  lineHeight: '4px',
+}
+const bodySection = {
+  padding: '32px 28px',
 }
 const h1 = {
   fontSize: '24px',
   fontWeight: 'bold' as const,
-  color: '#0a2540',
+  color: '#1e3a5f',
   margin: '0 0 20px',
   textAlign: 'right' as const,
 }
@@ -86,17 +131,20 @@ const text = {
   fontSize: '15px',
   color: '#334155',
   lineHeight: '1.7',
-  margin: '0 0 14px',
+  margin: '0 0 24px',
   textAlign: 'right' as const,
 }
-const buttonWrap = { textAlign: 'right' as const, margin: '24px 0' }
+const buttonWrap = {
+  textAlign: 'right' as const,
+  margin: '0 0 28px',
+}
 const button = {
   backgroundColor: '#e8941a',
   color: '#ffffff',
   fontSize: '15px',
   fontWeight: 'bold' as const,
   borderRadius: '8px',
-  padding: '12px 28px',
+  padding: '12px 32px',
   textDecoration: 'none',
   display: 'inline-block',
 }
@@ -104,13 +152,22 @@ const footerNote = {
   fontSize: '13px',
   color: '#64748b',
   lineHeight: '1.6',
-  margin: '12px 0 0',
+  margin: 0,
   textAlign: 'right' as const,
 }
-const link = { color: '#e8941a', textDecoration: 'none' }
-const copyright = {
-  fontSize: '12px',
-  color: '#94a3b8',
+const footer = {
+  backgroundColor: '#f8fafc',
+  borderTop: '1px solid #e2e8f0',
+  padding: '16px 24px',
   textAlign: 'center' as const,
-  margin: '24px 0 0',
+}
+const footerText = {
+  fontSize: '12px',
+  color: '#64748b',
+  margin: 0,
+  textAlign: 'center' as const,
+}
+const footerLink = {
+  color: '#e8941a',
+  textDecoration: 'none',
 }
