@@ -49,7 +49,15 @@ export function AccountantMessagesTab({ clientIds }: Props) {
       const hasUnreadClientMessage = sorted.some(
         (c) => c.author_role === "client" && !c.is_read
       );
-      const accountantHasReplied = sorted.some((c) => c.author_role === "accountant");
+      // נענו = יש הודעת רו"ח שנשלחה אחרי ההודעה האחרונה של הלקוח
+      const lastClientMessage = sorted.filter((c) => c.author_role === "client").slice(-1)[0];
+      const accountantHasReplied = lastClientMessage
+        ? sorted.some(
+            (c) =>
+              c.author_role === "accountant" &&
+              new Date(c.created_at) > new Date(lastClientMessage.created_at)
+          )
+        : true; // אם אין הודעת לקוח — נחשב כנענה
       const isResolved = invoice?.status === "approved" || invoice?.is_archived === true;
       return {
         invoiceId,
