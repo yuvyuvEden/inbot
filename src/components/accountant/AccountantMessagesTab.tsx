@@ -1,41 +1,17 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useUnreadAccountantComments } from "@/hooks/useAccountantData";
 import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { MessageSquare } from "lucide-react";
 
 interface Props { clientIds: string[]; }
 
 export function AccountantMessagesTab({ clientIds }: Props) {
   const queryClient = useQueryClient();
-
-  const { data: comments = [], isLoading } = useQuery({
-    queryKey: ["accountant-unread-messages", clientIds],
-    enabled: clientIds.length > 0,
-    queryFn: async () => {
-      const { data: invoices } = await supabase
-        .from("invoices")
-        .select("id, client_id, vendor, invoice_number")
-        .in("client_id", clientIds);
-      const invoiceIds = (invoices ?? []).map((i: any) => i.id);
-      if (!invoiceIds.length) return [];
-      const { data, error } = await supabase
-        .from("invoice_comments")
-        .select("id, invoice_id, body, created_at, is_read, author_role")
-        .in("invoice_id", invoiceIds)
-        .eq("author_role", "client")
-        .eq("is_read", false)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      const invoiceMap = new Map((invoices ?? []).map((i: any) => [i.id, i]));
-      return (data ?? []).map((c: any) => ({
-        ...c,
-        invoice: invoiceMap.get(c.invoice_id),
-      }));
-    },
-  });
+  const { data: comments = [], isLoading } = useUnreadAccountantComments(clientIds);
 
   const markAsRead = async (commentId: string) => {
     await supabase.from("invoice_comments").update({ is_read: true }).eq("id", commentId);
-    queryClient.invalidateQueries({ queryKey: ["accountant-unread-messages"] });
+    queryClient.invalidateQueries({ queryKey: ["unread-accountant-comments"] });
   };
 
   return (
@@ -65,7 +41,7 @@ export function AccountantMessagesTab({ clientIds }: Props) {
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px", gap: "8px", flexWrap: "wrap" }}>
                 <div style={{ fontWeight: 600, color: "#1e3a5f", fontSize: "14px" }}>
-                  {comment.invoice?.vendor ?? "חשבונית"} #{comment.invoice?.invoice_number ?? ""}
+                  {comment.invoices?.vendor ?? "חשבונית"} #{comment.invoices?.invoice_number ?? ""}
                 </div>
                 <div style={{ fontSize: "12px", color: "#94a3b8" }}>
                   {new Date(comment.created_at).toLocaleString("he-IL")}
