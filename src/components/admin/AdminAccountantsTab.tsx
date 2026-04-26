@@ -57,6 +57,7 @@ const emptyAccountant: Omit<AccountantRow, "active_clients_count"> = {
   name: "",
   email: "",
   phone: null,
+  vat_number: null,
   plan_type: "accountant_monthly",
   plan_expires_at: null,
   price_per_client: 0,
