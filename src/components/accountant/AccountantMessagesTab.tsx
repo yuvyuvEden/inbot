@@ -145,6 +145,9 @@ export function AccountantMessagesTab({ clientIds }: Props) {
         queryClient.invalidateQueries({ queryKey: ["all-thread-comments"] });
         queryClient.invalidateQueries({ queryKey: ["unread-accountant-comments"] });
       }, 500);
+      setFilter("sent");
+      setView("inbox");
+      setSelectedThread(null);
     }
   };
 
