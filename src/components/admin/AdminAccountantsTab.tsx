@@ -251,7 +251,7 @@ export default function AdminAccountantsTab({ onGoToBilling }: AdminAccountantsT
     queryFn: async () => {
       const { data, error } = await supabase
         .from("accountants")
-        .select("id, name, email, phone, plan_type, plan_expires_at, price_per_client, monthly_fee, auto_renew, is_active, user_id, base_client_count, billing_day, free_months")
+        .select("id, name, email, phone, vat_number, plan_type, plan_expires_at, price_per_client, monthly_fee, auto_renew, is_active, user_id, base_client_count, billing_day, free_months")
         .order("created_at", { ascending: false });
       if (error) throw error;
 
