@@ -1,7 +1,7 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo } from "react";
 import { useAllThreadComments } from "@/hooks/useAccountantData";
 import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { MessageSquare } from "lucide-react";
 
 interface Props { clientIds: string[]; }
@@ -28,8 +28,6 @@ export function AccountantMessagesTab({ clientIds }: Props) {
   const [page, setPage] = useState(0);
 
   const [replyText, setReplyText] = useState("");
-  const [sending, setSending] = useState(false);
-  const sendingRef = useRef<Record<string, boolean>>({});
 
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ["all-thread-comments"] });
@@ -94,35 +92,29 @@ export function AccountantMessagesTab({ clientIds }: Props) {
     invalidateAll();
   };
 
-  const sendReply = async (thread: Thread) => {
-    const text = replyText.trim();
-    if (!text) return;
-    if (sendingRef.current[thread.invoiceId]) return; // מניעת כפול מוחלטת
-    sendingRef.current[thread.invoiceId] = true;
 
-    setSending(true);
-    // clear text immediately to prevent re-submission
-    setReplyText("");
-    try {
+  const sendReplyMutation = useMutation({
+    mutationFn: async ({ invoiceId, text }: { invoiceId: string; text: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
       await supabase.from("invoice_comments").insert({
-        invoice_id: thread.invoiceId,
+        invoice_id: invoiceId,
         author_id: user?.id as string,
         author_role: "accountant",
         body: text,
         is_read: false,
       });
       await supabase.functions.invoke("accountant-send-email", {
-        body: { invoice_id: thread.invoiceId, body: text },
+        body: { invoice_id: invoiceId, body: text },
       });
+    },
+    onSuccess: () => {
       setView("inbox");
       setSelectedThread(null);
-      invalidateAll();
-    } finally {
-      sendingRef.current[thread.invoiceId] = false;
-      setSending(false);
-    }
-  };
+      queryClient.invalidateQueries({ queryKey: ["all-thread-comments"] });
+      queryClient.invalidateQueries({ queryKey: ["unread-accountant-comments"] });
+    },
+  });
+
 
   const approveInvoice = async (invoiceId: string) => {
     await supabase.from("invoices").update({ status: "approved" }).eq("id", invoiceId);
@@ -231,11 +223,16 @@ export function AccountantMessagesTab({ clientIds }: Props) {
             style={{ width: "100%", minHeight: "70px", padding: "8px 12px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "13px", fontFamily: "Heebo, sans-serif", boxSizing: "border-box", resize: "vertical" }}
           />
           <button
-            onClick={() => sendReply(t)}
-            disabled={sending || !replyText.trim()}
-            style={{ marginTop: "8px", padding: "8px 20px", borderRadius: "8px", backgroundColor: "#1e3a5f", color: "#ffffff", border: "none", cursor: sending ? "not-allowed" : "pointer", fontSize: "13px", fontFamily: "Heebo, sans-serif", fontWeight: 600, opacity: sending || !replyText.trim() ? 0.6 : 1 }}
+            onClick={() => {
+              const text = replyText.trim();
+              if (!text || sendReplyMutation.isPending) return;
+              setReplyText("");
+              sendReplyMutation.mutate({ invoiceId: t.invoiceId, text });
+            }}
+            disabled={sendReplyMutation.isPending || !replyText.trim()}
+            style={{ marginTop: "8px", padding: "8px 20px", borderRadius: "8px", backgroundColor: "#1e3a5f", color: "#ffffff", border: "none", cursor: sendReplyMutation.isPending ? "not-allowed" : "pointer", fontSize: "13px", fontFamily: "Heebo, sans-serif", fontWeight: 600, opacity: sendReplyMutation.isPending || !replyText.trim() ? 0.6 : 1 }}
           >
-            {sending ? "שולח..." : "שלח תשובה"}
+            {sendReplyMutation.isPending ? "שולח..." : "שלח תשובה"}
           </button>
 
           <div style={{ display: "flex", gap: "8px", marginTop: "12px", paddingTop: "12px", borderTop: "1px solid #e2e8f0", flexWrap: "wrap" }}>
