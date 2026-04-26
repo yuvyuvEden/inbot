@@ -30,7 +30,7 @@ export function AccountantMessagesTab({ clientIds }: Props) {
 
   const [view, setView] = useState<"inbox" | "thread">("inbox");
   const [selectedThread, setSelectedThread] = useState<Thread | null>(null);
-  const [filter, setFilter] = useState<"all" | "unread" | "unanswered">("unanswered");
+  const [filter, setFilter] = useState<"received" | "sent" | "all">("received");
   const [page, setPage] = useState(0);
 
   const [replyText, setReplyText] = useState("");
@@ -83,9 +83,10 @@ export function AccountantMessagesTab({ clientIds }: Props) {
   }, [comments]);
 
   const filteredThreads = useMemo(() => {
-    if (filter === "unanswered")
+    if (filter === "received")
       return threads.filter((t) => !t.accountantHasReplied && !t.isResolved);
-    if (filter === "unread") return threads.filter((t) => t.hasUnreadClientMessage);
+    if (filter === "sent")
+      return threads.filter((t) => t.accountantHasReplied && !t.isResolved);
     return threads;
   }, [threads, filter]);
 
@@ -144,6 +145,9 @@ export function AccountantMessagesTab({ clientIds }: Props) {
         queryClient.invalidateQueries({ queryKey: ["all-thread-comments"] });
         queryClient.invalidateQueries({ queryKey: ["unread-accountant-comments"] });
       }, 500);
+      setFilter("sent");
+      setView("inbox");
+      setSelectedThread(null);
     }
   };
 
@@ -309,8 +313,8 @@ export function AccountantMessagesTab({ clientIds }: Props) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 20px", borderBottom: "1px solid #e2e8f0" }}>
         <div style={{ display: "flex", gap: "6px" }}>
           {[
-            { key: "unanswered", label: "טרם נענו" },
-            { key: "unread", label: "טרם נקראו" },
+            { key: "received", label: "התקבלו" },
+            { key: "sent", label: "נשלחו" },
             { key: "all", label: "הכל" },
           ].map((f) => (
             <button
