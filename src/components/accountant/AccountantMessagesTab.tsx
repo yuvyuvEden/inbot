@@ -68,7 +68,7 @@ export function AccountantMessagesTab({ clientIds }: Props) {
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-          {Object.entries(grouped).map(([invoiceId, threadComments]) => {
+          {(Object.entries(grouped) as [string, any[]][]).map(([invoiceId, threadComments]) => {
             const first = threadComments[0];
             const vendorName = first.invoices?.vendor ?? "חשבונית";
             const invoiceNumber = first.invoices?.invoice_number ?? "";
