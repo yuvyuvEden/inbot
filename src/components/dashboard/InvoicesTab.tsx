@@ -148,6 +148,9 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
     },
   });
 
+  const { data: vatRules = [] } = useVatRules();
+
+
   const categories = useMemo(() => {
     if (!invoices) return [];
     return Array.from(new Set(invoices.map(i => i.category).filter(Boolean) as string[])).sort();
