@@ -19,6 +19,9 @@ interface Thread {
 const PAGE_SIZE = 25;
 
 export function AccountantMessagesTab({ clientIds }: Props) {
+  const instanceId = useRef(Math.random().toString(36).slice(2, 7)).current;
+  console.log(`MOUNT [${instanceId}]`);
+
   const queryClient = useQueryClient();
   const { data: comments = [], isLoading } = useAllThreadComments(clientIds);
 
@@ -96,6 +99,7 @@ export function AccountantMessagesTab({ clientIds }: Props) {
 
 
   const sendReply = async (invoiceId: string) => {
+    console.log(`SEND [${instanceId}]`);
     const text = replyText.trim();
     if (!text || sending || sendingRef.current[invoiceId]) return;
 
@@ -245,7 +249,10 @@ export function AccountantMessagesTab({ clientIds }: Props) {
             style={{ width: "100%", minHeight: "70px", padding: "8px 12px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "13px", fontFamily: "Heebo, sans-serif", boxSizing: "border-box", resize: "vertical" }}
           />
           <button
-            onClick={() => sendReply(t.invoiceId)}
+            onClick={() => {
+              console.log(`CLICK [${instanceId}]`);
+              sendReply(t.invoiceId);
+            }}
             disabled={sending || !replyText.trim()}
             style={{ marginTop: "8px", padding: "8px 20px", borderRadius: "8px", backgroundColor: "#1e3a5f", color: "#ffffff", border: "none", cursor: sending ? "not-allowed" : "pointer", fontSize: "13px", fontFamily: "Heebo, sans-serif", fontWeight: 600, opacity: sending || !replyText.trim() ? 0.6 : 1 }}
           >
