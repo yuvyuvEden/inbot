@@ -261,6 +261,7 @@ export default function AdminAccountantsTab({ onGoToBilling }: AdminAccountantsT
 
       return (data || []).map((a) => ({
         ...a,
+        vat_number: (a as any).vat_number ?? null,
         active_clients_count: countMap.get(a.id) || 0,
       })) as AccountantRow[];
     },
