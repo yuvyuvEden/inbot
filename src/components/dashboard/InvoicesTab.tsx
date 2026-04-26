@@ -835,6 +835,81 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
         </DialogContent>
       </Dialog>
 
+      {/* ── Edit Details Modal ── */}
+      <Dialog open={!!editDetailsModal} onOpenChange={open => !open && setEditDetailsModal(null)}>
+        <DialogContent className="max-w-[440px] rounded-2xl p-8" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold" style={{ color: "#1e3a5f" }}>
+              עדכון פרטי חשבונית — {editDetailsModal?.vendor || ""}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="mt-4 space-y-4">
+            <div>
+              <label className="block text-[12px] font-medium text-gray-600 mb-1">שם ספק</label>
+              <input
+                value={editDetailsVendor}
+                onChange={e => setEditDetailsVendor(e.target.value)}
+                className="w-full rounded-lg border border-[#e2e8f0] bg-white px-3 py-2 text-[14px] outline-none focus:ring-1 focus:ring-primary"
+                placeholder="שם ספק"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[12px] font-medium text-gray-600 mb-1">תאריך</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn("w-full justify-start gap-2 h-[40px] font-normal", !editDetailsDate && "text-muted-foreground")}>
+                    <CalendarIcon size={14} />
+                    {editDetailsDate ? format(editDetailsDate, "dd/MM/yyyy") : "בחר תאריך"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={editDetailsDate} onSelect={setEditDetailsDate} initialFocus className={cn("p-3 pointer-events-auto")} />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <div>
+              <label className="block text-[12px] font-medium text-gray-600 mb-1">סכום כולל מע״מ (₪)</label>
+              <input
+                value={editDetailsTotal}
+                onChange={e => setEditDetailsTotal(e.target.value)}
+                className="w-full rounded-lg border border-[#e2e8f0] bg-white px-3 py-2 text-[14px] outline-none focus:ring-1 focus:ring-primary"
+                style={{ direction: "ltr" }}
+                placeholder="0.00"
+                type="number"
+                min="0"
+                step="0.01"
+              />
+              {editDetailsTotal && !isNaN(parseFloat(editDetailsTotal)) && (() => {
+                const total = parseFloat(editDetailsTotal);
+                const rule = vatRules.find(r => r.category === editDetailsModal?.category);
+                const { vat_original, vat_deductible } = calcVat(total, rule);
+                const vatPct = rule ? Math.round(rule.vat_rate * 100) : 100;
+                return (
+                  <div className="mt-2 text-[12px] text-gray-500">
+                    מע״מ גולמי: ₪{vat_original.toLocaleString("he-IL")} · מע״מ לניכוי ({vatPct}%): ₪{vat_deductible.toLocaleString("he-IL")}
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+
+          <div className="mt-6 flex justify-end gap-2">
+            <button
+              onClick={() => setEditDetailsModal(null)}
+              className="rounded-lg border border-[#e2e8f0] bg-white px-4 py-2 text-[13px] font-medium hover:bg-gray-50 transition-colors"
+            >ביטול</button>
+            <button
+              onClick={updateDetails}
+              className="rounded-lg px-4 py-2 text-[13px] font-medium text-white transition-colors"
+              style={{ backgroundColor: "#1e3a5f" }}
+            >שמור</button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* ── Delete Modal ── */}
       <Dialog open={!!deleteModal} onOpenChange={open => !open && setDeleteModal(null)}>
         <DialogContent className="max-w-[400px] rounded-2xl p-8" dir="rtl">
