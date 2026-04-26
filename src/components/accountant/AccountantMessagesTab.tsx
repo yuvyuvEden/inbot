@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef } from "react";
 import { useAllThreadComments } from "@/hooks/useAccountantData";
 import { supabase } from "@/integrations/supabase/client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { MessageSquare } from "lucide-react";
 
 interface Props { clientIds: string[]; }
