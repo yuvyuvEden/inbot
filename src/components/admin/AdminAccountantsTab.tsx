@@ -255,7 +255,7 @@ export default function AdminAccountantsTab({ onGoToBilling }: AdminAccountantsT
         .order("created_at", { ascending: false });
       if (error) throw error;
 
-      const { data: acData } = await supabase.from("accountant_clients").select("accountant_id");
+      const { data: acData } = await supabase.from("accountant_clients").select("accountant_id").is("unassigned_at", null);
       const countMap = new Map<string, number>();
       (acData || []).forEach((ac) => countMap.set(ac.accountant_id, (countMap.get(ac.accountant_id) || 0) + 1));
 
