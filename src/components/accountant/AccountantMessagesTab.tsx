@@ -30,7 +30,7 @@ export function AccountantMessagesTab({ clientIds }: Props) {
 
   const [view, setView] = useState<"inbox" | "thread">("inbox");
   const [selectedThread, setSelectedThread] = useState<Thread | null>(null);
-  const [filter, setFilter] = useState<"all" | "unread" | "unanswered">("unanswered");
+  const [filter, setFilter] = useState<"received" | "sent" | "all">("received");
   const [page, setPage] = useState(0);
 
   const [replyText, setReplyText] = useState("");
