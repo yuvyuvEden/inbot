@@ -623,6 +623,17 @@ export default function AdminAccountantsTab({ onGoToBilling }: AdminAccountantsT
                 <Input dir="ltr" value={editAcc.phone || ""} onChange={(e) => setEditAcc({ ...editAcc, phone: e.target.value || null })} />
               </label>
               <label className="block space-y-1">
+                <span className="text-sm font-medium">
+                  מספר ע״מ / ח״פ <span style={{ color: '#dc2626' }}>*</span>
+                </span>
+                <Input
+                  dir="ltr"
+                  value={editAcc.vat_number || ""}
+                  onChange={(e) => setEditAcc({ ...editAcc, vat_number: e.target.value || null })}
+                  placeholder="מספר עוסק מורשה או ח״פ"
+                />
+              </label>
+              <label className="block space-y-1">
                 <span className="text-sm font-medium">סוג מנוי <span style={{ color: '#94a3b8', fontSize: '11px' }}>(אופציונלי)</span></span>
                 <Select value={editAcc.plan_type || "accountant_monthly"} onValueChange={(v) => setEditAcc({ ...editAcc, plan_type: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
