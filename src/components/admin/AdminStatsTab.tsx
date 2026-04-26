@@ -152,22 +152,10 @@ export default function AdminStatsTab() {
       Icon: TrendingUp,
     },
     {
-      label: "מנויים פגו השבוע",
-      value: stats.expiredThisWeek,
-      gradient: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)",
-      Icon: AlertTriangle,
-    },
-    {
       label: "חשבוניות שנאספו החודש",
       value: stats.invoicesThisMonth,
       gradient: "linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)",
       Icon: FileText,
-    },
-    {
-      label: "שיוכים פעילים",
-      value: stats.totalActiveLinks,
-      gradient: "linear-gradient(135deg, #0891b2 0%, #0e7490 100%)",
-      Icon: Link,
     },
   ];
 
