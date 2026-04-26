@@ -204,6 +204,9 @@ export function AccountantMessagesTab({ clientIds }: Props) {
             <h2 style={{ fontSize: "16px", fontWeight: 700, color: "#1e3a5f", margin: 0 }}>
               {t.invoice?.vendor} #{t.invoice?.invoice_number}
             </h2>
+            <span style={{ fontSize: "13px", color: "#64748b" }}>
+              | {t.invoice?.brand_name}
+            </span>
             {t.invoice?.status === "approved" && (
               <span style={{ fontSize: "11px", background: "#dcfce7", color: "#16a34a", padding: "2px 8px", borderRadius: "10px" }}>✅ מאושר</span>
             )}
@@ -370,6 +373,9 @@ export function AccountantMessagesTab({ clientIds }: Props) {
               onMouseLeave={(e) => (e.currentTarget.style.background = thread.hasUnreadClientMessage ? "#fffbeb" : "#ffffff")}
             >
               <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: "12px", color: "#e8941a", fontWeight: 700, marginBottom: "2px" }}>
+                  {thread.invoice?.brand_name}
+                </div>
                 <div style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "4px", flexWrap: "wrap" }}>
                   <span style={{ fontWeight: thread.hasUnreadClientMessage ? 700 : 500, color: "#1e3a5f", fontSize: "14px" }}>
                     {thread.invoice?.vendor} #{thread.invoice?.invoice_number}

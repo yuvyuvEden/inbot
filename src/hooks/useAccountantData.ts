@@ -141,7 +141,7 @@ export function useAllThreadComments(clientIds: string[]) {
     queryFn: async () => {
       const { data: invoices } = await supabase
         .from("invoices")
-        .select("id, client_id, vendor, invoice_number, drive_file_url, status, is_archived")
+        .select("id, client_id, vendor, invoice_number, drive_file_url, status, is_archived, clients(brand_name)")
         .in("client_id", clientIds);
 
       const invoiceIds = (invoices ?? []).map((i: any) => i.id);
@@ -158,7 +158,7 @@ export function useAllThreadComments(clientIds: string[]) {
       const invoiceMap = new Map((invoices ?? []).map((i: any) => [i.id, i]));
       return (data ?? []).map((c: any) => ({
         ...c,
-        invoice: invoiceMap.get(c.invoice_id),
+        invoice: { ...invoiceMap.get(c.invoice_id), brand_name: invoiceMap.get(c.invoice_id)?.clients?.brand_name },
       }));
     },
   });
