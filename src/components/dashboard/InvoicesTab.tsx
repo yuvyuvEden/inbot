@@ -13,6 +13,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { optimisticUpdate, ConflictError } from "@/hooks/useOptimisticLock";
+import { useVatRules, calcVat } from "@/hooks/useVatRules";
 
 const STATUS_OPTIONS = [
   { value: "", label: "סטטוס: הכל" },
@@ -121,6 +122,10 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
   const [editCatValue, setEditCatValue] = useState("");
   const [editVendorModal, setEditVendorModal] = useState<Invoice | null>(null);
   const [editVendorValue, setEditVendorValue] = useState("");
+  const [editDetailsModal, setEditDetailsModal] = useState<Invoice | null>(null);
+  const [editDetailsVendor, setEditDetailsVendor] = useState("");
+  const [editDetailsDate, setEditDetailsDate] = useState<Date | undefined>(undefined);
+  const [editDetailsTotal, setEditDetailsTotal] = useState("");
   const [deleteModal, setDeleteModal] = useState<Invoice | null>(null);
   const [archiveModal, setArchiveModal] = useState<Invoice | null>(null);
   const [approveModal, setApproveModal] = useState<Invoice | null>(null);
@@ -142,6 +147,9 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
       return (data || []) as Invoice[];
     },
   });
+
+  const { data: vatRules = [] } = useVatRules();
+
 
   const categories = useMemo(() => {
     if (!invoices) return [];
@@ -242,6 +250,40 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
         setEditVendorModal(null);
       } else {
         toast.error("שגיאה בעדכון שם עסק");
+      }
+    }
+  };
+  const updateDetails = async () => {
+    if (!editDetailsModal) return;
+    const newTotal = parseFloat(editDetailsTotal.replace(/,/g, ""));
+    if (isNaN(newTotal) || newTotal < 0) return;
+
+    const rule = vatRules.find(r => r.category === editDetailsModal.category);
+    const { vat_original, vat_deductible } = calcVat(newTotal, rule);
+
+    const invoice_date = editDetailsDate
+      ? format(editDetailsDate, "yyyy-MM-dd")
+      : editDetailsModal.invoice_date;
+
+    try {
+      await optimisticUpdate("invoices", editDetailsModal.id, editDetailsModal.updated_at, {
+        vendor: editDetailsVendor.trim() || editDetailsModal.vendor,
+        invoice_date,
+        total: newTotal,
+        vat_original,
+        vat_deductible,
+      });
+      toast.success("פרטי החשבונית עודכנו");
+      queryClient.invalidateQueries({ queryKey: ["all-invoices"] });
+      setEditDetailsModal(null);
+    } catch (e) {
+      if (e instanceof ConflictError) {
+        toast.error("החשבונית עודכנה על ידי משתמש אחר — מרענן נתונים");
+        queryClient.invalidateQueries({ queryKey: ["all-invoices"] });
+        setEditDetailsModal(null);
+      } else {
+        console.error("Failed to update invoice details:", e);
+        toast.error("שגיאה בעדכון פרטי חשבונית");
       }
     }
   };
@@ -745,10 +787,17 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
               style={{ backgroundColor: "#1e3a5f" }}
             >עדכון קטגוריה</button>
             <button
-              onClick={() => { const inv = editPickerModal!; setEditPickerModal(null); setEditVendorModal(inv); setEditVendorValue(inv.vendor || ""); }}
+              onClick={() => {
+                const inv = editPickerModal!;
+                setEditPickerModal(null);
+                setEditDetailsModal(inv);
+                setEditDetailsVendor(inv.vendor || "");
+                setEditDetailsDate(inv.invoice_date ? new Date(inv.invoice_date) : undefined);
+                setEditDetailsTotal(inv.total != null ? inv.total.toString() : "");
+              }}
               className="rounded-lg px-4 py-2.5 text-[13px] font-medium text-white transition-colors hover:opacity-90"
               style={{ backgroundColor: "#e8941a" }}
-            >עדכון שם עסק</button>
+            >עדכון פרטי חשבונית</button>
             <button onClick={() => setEditPickerModal(null)} className="rounded-lg border border-[#e2e8f0] bg-white px-4 py-2 text-[13px] font-medium text-gray-500 hover:bg-gray-50 transition-colors">ביטול</button>
           </div>
         </DialogContent>
@@ -782,6 +831,81 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
           <div className="mt-6 flex justify-end gap-2">
             <button onClick={() => setEditVendorModal(null)} className="rounded-lg border border-[#e2e8f0] bg-white px-4 py-2 text-[13px] font-medium hover:bg-gray-50 transition-colors">ביטול</button>
             <button onClick={updateVendor} disabled={!editVendorValue.trim()} className="rounded-lg px-4 py-2 text-[13px] font-medium text-white transition-colors disabled:opacity-50" style={{ backgroundColor: "#1e3a5f" }}>שמור</button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Edit Details Modal ── */}
+      <Dialog open={!!editDetailsModal} onOpenChange={open => !open && setEditDetailsModal(null)}>
+        <DialogContent className="max-w-[440px] rounded-2xl p-8" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold" style={{ color: "#1e3a5f" }}>
+              עדכון פרטי חשבונית — {editDetailsModal?.vendor || ""}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="mt-4 space-y-4">
+            <div>
+              <label className="block text-[12px] font-medium text-gray-600 mb-1">שם ספק</label>
+              <input
+                value={editDetailsVendor}
+                onChange={e => setEditDetailsVendor(e.target.value)}
+                className="w-full rounded-lg border border-[#e2e8f0] bg-white px-3 py-2 text-[14px] outline-none focus:ring-1 focus:ring-primary"
+                placeholder="שם ספק"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[12px] font-medium text-gray-600 mb-1">תאריך</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn("w-full justify-start gap-2 h-[40px] font-normal", !editDetailsDate && "text-muted-foreground")}>
+                    <CalendarIcon size={14} />
+                    {editDetailsDate ? format(editDetailsDate, "dd/MM/yyyy") : "בחר תאריך"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={editDetailsDate} onSelect={setEditDetailsDate} initialFocus className={cn("p-3 pointer-events-auto")} />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <div>
+              <label className="block text-[12px] font-medium text-gray-600 mb-1">סכום כולל מע״מ (₪)</label>
+              <input
+                value={editDetailsTotal}
+                onChange={e => setEditDetailsTotal(e.target.value)}
+                className="w-full rounded-lg border border-[#e2e8f0] bg-white px-3 py-2 text-[14px] outline-none focus:ring-1 focus:ring-primary"
+                style={{ direction: "ltr" }}
+                placeholder="0.00"
+                type="number"
+                min="0"
+                step="0.01"
+              />
+              {editDetailsTotal && !isNaN(parseFloat(editDetailsTotal)) && (() => {
+                const total = parseFloat(editDetailsTotal);
+                const rule = vatRules.find(r => r.category === editDetailsModal?.category);
+                const { vat_original, vat_deductible } = calcVat(total, rule);
+                const vatPct = rule ? Math.round(rule.vat_rate * 100) : 100;
+                return (
+                  <div className="mt-2 text-[12px] text-gray-500">
+                    מע״מ גולמי: ₪{vat_original.toLocaleString("he-IL")} · מע״מ לניכוי ({vatPct}%): ₪{vat_deductible.toLocaleString("he-IL")}
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+
+          <div className="mt-6 flex justify-end gap-2">
+            <button
+              onClick={() => setEditDetailsModal(null)}
+              className="rounded-lg border border-[#e2e8f0] bg-white px-4 py-2 text-[13px] font-medium hover:bg-gray-50 transition-colors"
+            >ביטול</button>
+            <button
+              onClick={updateDetails}
+              className="rounded-lg px-4 py-2 text-[13px] font-medium text-white transition-colors"
+              style={{ backgroundColor: "#1e3a5f" }}
+            >שמור</button>
           </div>
         </DialogContent>
       </Dialog>
