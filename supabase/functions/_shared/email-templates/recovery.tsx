@@ -67,10 +67,7 @@ export const RecoveryEmail = ({
           {/* Footer */}
           <Section style={footer}>
             <Text style={footerText}>
-              © 2026 INBOT ·{' '}
-              <Link href="mailto:support@inbot.co.il" style={footerLink}>
-                support@inbot.co.il
-              </Link>
+              © 2026 INBOT · כל הזכויות שמורות
             </Text>
           </Section>
         </Section>

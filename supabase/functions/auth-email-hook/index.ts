@@ -20,7 +20,7 @@ const EMAIL_SUBJECTS: Record<string, string> = {
   signup: 'Confirm your email',
   invite: "You've been invited",
   magiclink: 'Your login link',
-  recovery: 'Reset your password',
+  recovery: 'איפוס סיסמה — INBOT',
   email_change: 'Confirm your new email',
   reauthentication: 'Your verification code',
 }
@@ -36,7 +36,7 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 }
 
 // Configuration
-const SITE_NAME = "biz-bill-helper"
+const SITE_NAME = "INBOT"
 const SENDER_DOMAIN = "notify.app.inbot.co.il"
 const ROOT_DOMAIN = "app.inbot.co.il"
 const FROM_DOMAIN = "notify.app.inbot.co.il" // Domain shown in From address (may be root or sender subdomain)
