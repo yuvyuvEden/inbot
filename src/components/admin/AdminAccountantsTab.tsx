@@ -273,6 +273,7 @@ export default function AdminAccountantsTab({ onGoToBilling }: AdminAccountantsT
         name: a.name,
         email: a.email,
         phone: a.phone,
+        vat_number: a.vat_number || null,
         plan_type: a.plan_type,
         plan_expires_at: a.plan_expires_at,
         price_per_client: a.price_per_client,
