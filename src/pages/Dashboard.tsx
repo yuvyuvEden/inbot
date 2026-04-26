@@ -73,7 +73,7 @@ export default function Dashboard() {
   const [period, setPeriod] = useState("this_month");
   const { data: kpis, isLoading: kpisLoading } = useInvoiceKPIs(effectiveClientId, period);
   const { data: prevKpis } = useInvoiceKPIsDelta(effectiveClientId, period);
-  const { data: unreadCount } = useUnreadComments(effectiveClientId);
+  const { data: unreadCount } = useUnreadThreads(effectiveClientId);
   const { data: timeline, isLoading: timelineLoading } = useExpenseTimeline(effectiveClientId, period);
   const { data: categories, isLoading: categoriesLoading } = useCategoryBreakdown(effectiveClientId, period);
   const { data: recentInvoices, isLoading: recentLoading } = useRecentInvoices(effectiveClientId);
