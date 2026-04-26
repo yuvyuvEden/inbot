@@ -142,6 +142,7 @@ export default function AccountantDashboard() {
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             style={{
+              position: "relative",
               padding: "14px 20px",
               background: "none",
               border: "none",
@@ -156,6 +157,24 @@ export default function AccountantDashboard() {
             }}
           >
             {tab.label}
+            {tab.id === "messages" && unreadCount > 0 && (
+              <span style={{
+                marginInlineStart: "8px",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                minWidth: "20px",
+                height: "20px",
+                padding: "0 6px",
+                borderRadius: "10px",
+                backgroundColor: "#e8941a",
+                color: "#ffffff",
+                fontSize: "11px",
+                fontWeight: 700,
+              }}>
+                {unreadCount}
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -185,13 +204,37 @@ export default function AccountantDashboard() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               style={{
+                position: "relative",
                 display: "flex", flexDirection: "column", alignItems: "center",
                 gap: "2px", background: "none", border: "none", cursor: "pointer",
                 color: activeTab === tab.id ? "#e8941a" : "#94a3b8",
                 fontSize: "10px", padding: "8px", fontFamily: "Heebo, sans-serif"
               }}
             >
-              {tab.icon}
+              <span style={{ position: "relative", display: "inline-flex" }}>
+                {tab.icon}
+                {tab.id === "messages" && unreadCount > 0 && (
+                  <span style={{
+                    position: "absolute",
+                    top: "-6px",
+                    insetInlineEnd: "-10px",
+                    minWidth: "16px",
+                    height: "16px",
+                    padding: "0 4px",
+                    borderRadius: "8px",
+                    backgroundColor: "#e8941a",
+                    color: "#ffffff",
+                    fontSize: "10px",
+                    fontWeight: 700,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    lineHeight: 1,
+                  }}>
+                    {unreadCount}
+                  </span>
+                )}
+              </span>
               {tab.label}
             </button>
           ))}
