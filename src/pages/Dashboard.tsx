@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   useClientRecord, useInvoiceKPIs, useInvoiceKPIsDelta,
-  useUnreadComments, useExpenseTimeline, useCategoryBreakdown, useRecentInvoices,
+  useUnreadThreads, useExpenseTimeline, useCategoryBreakdown, useRecentInvoices,
 } from "@/hooks/useClientData";
 import KPICards from "@/components/dashboard/KPICards";
 import ExpenseChart from "@/components/dashboard/ExpenseChart";
