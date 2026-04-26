@@ -28,7 +28,7 @@ export default function AdminStatsTab() {
       const [clientsRes, accountantsRes, acRes, invoicesRes] = await Promise.all([
         supabase.from("clients").select("id, brand_name, is_active, plan_expires_at, plan_type"),
         supabase.from("accountants").select("id, name, is_active, plan_expires_at, price_per_client"),
-        supabase.from("accountant_clients").select("accountant_id").is("unassigned_at", null),
+        supabase.from("accountant_clients").select("accountant_id, client_id").is("unassigned_at", null),
         supabase.from("invoices").select("id, total, status, invoice_date, client_id"),
       ]);
       const invoices = invoicesRes.data || [];
