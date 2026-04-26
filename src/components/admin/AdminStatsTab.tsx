@@ -1,20 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Users,
   UserCheck,
   TrendingUp,
-  AlertTriangle,
   FileText,
-  Percent,
-  Save,
-  Link,
 } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
-import { toast } from "sonner";
-import { useVatRules, useUpdateVatRule, type VatRule } from "@/hooks/useVatRules";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 interface ExpiredItem {
   id: string;
