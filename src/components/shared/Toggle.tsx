@@ -4,7 +4,6 @@ interface ToggleProps {
   disabled?: boolean;
   size?: 'sm' | 'md';
   activeColor?: string;
-  inactiveColor?: string;
 }
 
 export function Toggle({
@@ -13,7 +12,6 @@ export function Toggle({
   disabled = false,
   size = 'md',
   activeColor = '#e8941a',
-  inactiveColor = '#d1d5db',
 }: ToggleProps) {
   const sizes = {
     sm: { width: 36, height: 20, ball: 14, offset: 3 },
@@ -34,11 +32,11 @@ export function Toggle({
         width: `${s.width}px`,
         height: `${s.height}px`,
         borderRadius: '9999px',
-        backgroundColor: checked ? activeColor : inactiveColor,
+        backgroundColor: checked ? activeColor : '#d1d5db',
         cursor: disabled ? 'not-allowed' : 'pointer',
         opacity: disabled ? 0.5 : 1,
         border: 'none',
-        padding: '0',
+        padding: 0,
         transition: 'background-color 0.2s',
         flexShrink: 0,
       }}
