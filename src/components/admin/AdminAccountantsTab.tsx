@@ -518,6 +518,7 @@ export default function AdminAccountantsTab({ onGoToBilling }: AdminAccountantsT
                   >
                     <td className="p-3 font-medium" style={{ color: "#1a202c" }}>{a.name}</td>
                     <td className="p-3" dir="ltr" style={{ color: "#64748b", fontSize: "13px" }}>{a.email}</td>
+                    <td className="p-3" dir="ltr" style={{ color: "#64748b", fontSize: "13px", textAlign: "right" }}>{a.vat_number || "—"}</td>
                     <td className="p-3">
                       <span
                         style={{
