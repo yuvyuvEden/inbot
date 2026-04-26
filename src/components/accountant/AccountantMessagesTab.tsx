@@ -29,6 +29,7 @@ export function AccountantMessagesTab({ clientIds }: Props) {
 
   const [replyText, setReplyText] = useState("");
   const [sending, setSending] = useState(false);
+  const sendingRef = useRef<Record<string, boolean>>({});
 
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ["all-thread-comments"] });
