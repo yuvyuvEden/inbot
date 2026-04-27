@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { AlertTriangle, Phone, Mail } from "lucide-react";
 
 interface Props {
+  clientId: string;
   brandName: string;
 }
 
@@ -13,7 +14,7 @@ const PLANS = [
   { key: "pro", label: "Pro", description: "חשבוניות ללא הגבלה + AI Chat" },
 ];
 
-export function GracePeriodModal({ brandName }: Props) {
+export function GracePeriodModal({ clientId, brandName }: Props) {
   const { signOut } = useAuth();
   const [selectedPlan, setSelectedPlan] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -28,7 +29,7 @@ export function GracePeriodModal({ brandName }: Props) {
     const { error } = await supabase
       .from("clients")
       .update({ plan_type: selectedPlan })
-      .eq("brand_name", brandName);
+      .eq("id", clientId);
     setLoading(false);
     if (error) {
       toast.error("שגיאה בשמירת הבחירה");
