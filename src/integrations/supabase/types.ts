@@ -246,6 +246,7 @@ export type Database = {
           fetch_domains: Json
           free_months: number
           gemini_api_key: string | null
+          grace_until: string | null
           id: string
           invoice_limit_override: number | null
           invoice_platforms: Json
@@ -292,6 +293,7 @@ export type Database = {
           fetch_domains?: Json
           free_months?: number
           gemini_api_key?: string | null
+          grace_until?: string | null
           id?: string
           invoice_limit_override?: number | null
           invoice_platforms?: Json
@@ -338,6 +340,7 @@ export type Database = {
           fetch_domains?: Json
           free_months?: number
           gemini_api_key?: string | null
+          grace_until?: string | null
           id?: string
           invoice_limit_override?: number | null
           invoice_platforms?: Json
