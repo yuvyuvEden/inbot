@@ -104,6 +104,7 @@ const AdminDashboard = () => {
         )}
         {activeTab === "plans" && <AdminPlansTab />}
         {activeTab === "system" && <AdminSystemTab />}
+        {activeTab === "logs" && <AdminLogsTab />}
       </main>
 
       {/* Mobile Bottom Navigation */}
