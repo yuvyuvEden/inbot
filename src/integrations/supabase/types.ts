@@ -926,7 +926,7 @@ export type Database = {
     }
     Functions: {
       delete_accountant_full: {
-        Args: { p_accountant_id: string }
+        Args: { target_accountant_id: string }
         Returns: undefined
       }
       delete_email: {
