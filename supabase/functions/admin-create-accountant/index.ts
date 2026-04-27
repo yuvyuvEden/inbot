@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { name, email, phone, plan_type, price_per_client, monthly_fee } = await req.json();
+    const { name, email, phone, vat_number, plan_type, price_per_client, monthly_fee } = await req.json();
 
     if (!name || !email) {
       return new Response(JSON.stringify({ error: "name and email are required" }), {
@@ -86,6 +86,7 @@ Deno.serve(async (req) => {
         name,
         email,
         phone: phone || null,
+        vat_number: vat_number || null,
         plan_type: plan_type || "accountant_monthly",
         price_per_client: price_per_client || 0,
         monthly_fee: monthly_fee || 0,
@@ -107,7 +108,7 @@ Deno.serve(async (req) => {
       type: "invite",
       email,
       options: {
-        redirectTo: `${Deno.env.get("SUPABASE_URL")?.replace(".supabase.co", "")}/accountant`,
+        redirectTo: `https://app.inbot.co.il/accountant`,
       },
     });
 
