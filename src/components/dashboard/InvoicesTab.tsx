@@ -260,7 +260,7 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
     if (isNaN(newTotal) || newTotal < 0) return;
 
     const rule = vatRules.find(r => r.category === editDetailsModal.category);
-    const { vat_original, vat_deductible } = calcVat(newTotal, rule);
+    const { vat_original, vat_deductible } = calcVat(newTotal, rule, vatRatePercent);
 
     const invoice_date = editDetailsDate
       ? format(editDetailsDate, "yyyy-MM-dd")
