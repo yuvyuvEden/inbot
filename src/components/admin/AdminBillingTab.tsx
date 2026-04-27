@@ -1,7 +1,6 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import {
   useBillingLogWithNames,
   useBillingStats,
@@ -20,10 +19,14 @@ import {
   RefreshCw,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Search,
-  Zap,
   Trash2,
   X,
+  MoreVertical,
+  History,
+  FileText,
 } from "lucide-react";
 
 const fmt = (n: number) =>
@@ -94,13 +97,15 @@ interface Props {
 export function AdminBillingTab({ initialAccountantId, onClearFilter }: Props) {
   const currentMonthStr = new Date().toISOString().slice(0, 7);
 
-  const [billingSubTab, setBillingSubTab] = useState<"all" | "accountants" | "direct" | "managed">("all");
+  const [billingSubTab, setBillingSubTab] = useState<"accountants" | "clients">("accountants");
   const [filterStatus, setFilterStatus] = useState("");
-  const [filterPeriod, setFilterPeriod] = useState("");
+  const [filterPeriod, setFilterPeriod] = useState(currentMonthStr);
   const [filterType, setFilterType] = useState("");
   const [searchName, setSearchName] = useState("");
   const [accSearch, setAccSearch] = useState("");
+  const [clientSearch, setClientSearch] = useState("");
   const [statsPeriod, setStatsPeriod] = useState(currentMonthStr);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   const [showMarkPaidModal, setShowMarkPaidModal] = useState<any | null>(null);
   const [markPaidMethod, setMarkPaidMethod] = useState("external");
@@ -110,7 +115,12 @@ export function AdminBillingTab({ initialAccountantId, onClearFilter }: Props) {
   const [showWaiveModal, setShowWaiveModal] = useState<any | null>(null);
   const [waiveReason, setWaiveReason] = useState("");
 
-  const [generateAllLoading, setGenerateAllLoading] = useState(false);
+  // Per-row dropdown menu (accountants table)
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  // History drawer for an accountant
+  const [selectedAccountantHistory, setSelectedAccountantHistory] = useState<any | null>(null);
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   useEffect(() => {
@@ -122,6 +132,17 @@ export function AdminBillingTab({ initialAccountantId, onClearFilter }: Props) {
   useEffect(() => {
     if (initialAccountantId) setBillingSubTab("accountants");
   }, [initialAccountantId]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const onDocClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpenMenuId(null);
+      }
+    };
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, []);
 
   const { data: stats } = useBillingStats();
   const { data: allLogs = [], isLoading: logsLoading } = useBillingLogWithNames();
@@ -153,7 +174,7 @@ export function AdminBillingTab({ initialAccountantId, onClearFilter }: Props) {
       const { data: allClients, error } = await supabase
         .from("clients")
         .select(
-          "id, brand_name, legal_name, plan_type, billing_cycle, billing_day, free_months, plan_expires_at, is_active, locked_monthly_price, locked_yearly_price, monthly_price, yearly_price, plan_id, plans(name, monthly_price, yearly_price)"
+          "id, brand_name, legal_name, vat_number, plan_type, billing_cycle, billing_day, free_months, plan_expires_at, is_active, locked_monthly_price, locked_yearly_price, monthly_price, yearly_price, plan_id, plans(name, monthly_price, yearly_price)"
         )
         .eq("is_active", true)
         .order("brand_name");
@@ -180,7 +201,7 @@ export function AdminBillingTab({ initialAccountantId, onClearFilter }: Props) {
       if (!clientIds.length) return [];
       const { data: clients } = await supabase
         .from("clients")
-        .select("id, brand_name, legal_name, plan_type, is_active")
+        .select("id, brand_name, legal_name, vat_number, plan_type, is_active")
         .in("id", clientIds);
       const clientMap = new Map((clients ?? []).map((c: any) => [c.id, c]));
       return (data ?? []).map((ac: any) => ({
@@ -209,12 +230,9 @@ export function AdminBillingTab({ initialAccountantId, onClearFilter }: Props) {
     );
   }, [allLogs, currentMonthStr]);
 
-  // סינון לוגים
+  // סינון לוגים — היסטוריה כללית
   const filteredLogs = useMemo(() => {
     return allLogs.filter((l: any) => {
-      if (billingSubTab === "accountants" && l.entity_type !== "accountant") return false;
-      if (billingSubTab === "direct" && l.entity_type !== "client_direct") return false;
-      if (billingSubTab === "managed" && l.entity_type !== "client_managed") return false;
       if (filterStatus && l.status !== filterStatus) return false;
       if (filterPeriod && l.billing_period !== filterPeriod) return false;
       if (filterType && l.entity_type !== filterType) return false;
@@ -223,15 +241,19 @@ export function AdminBillingTab({ initialAccountantId, onClearFilter }: Props) {
         !(l.entity_name ?? "").toString().toLowerCase().includes(searchName.toLowerCase())
       )
         return false;
-      if (
-        initialAccountantId &&
-        billingSubTab === "accountants" &&
-        l.entity_id !== initialAccountantId
-      )
-        return false;
+      if (initialAccountantId && l.entity_id !== initialAccountantId) return false;
       return true;
     });
-  }, [allLogs, billingSubTab, filterStatus, filterPeriod, filterType, searchName, initialAccountantId]);
+  }, [allLogs, filterStatus, filterPeriod, filterType, searchName, initialAccountantId]);
+
+  // לוגים של רו"ח נבחר (לדראוור)
+  const accountantHistoryLogs = useMemo(() => {
+    if (!selectedAccountantHistory) return [];
+    return allLogs.filter(
+      (l: any) =>
+        l.entity_type === "accountant" && l.entity_id === selectedAccountantHistory.id
+    );
+  }, [allLogs, selectedAccountantHistory]);
 
   // KPIs לפי תקופה נבחרת
   const periodLogs = useMemo(
@@ -260,6 +282,23 @@ export function AdminBillingTab({ initialAccountantId, onClearFilter }: Props) {
     if (accSearch) list = list.filter((a: any) => a.name?.toLowerCase().includes(accSearch.toLowerCase()));
     return list;
   }, [accountants, accSearch, initialAccountantId]);
+
+  // איחוד לקוחות (ישירים + מנוהלים)
+  const mergedClients = useMemo(() => {
+    const direct = (directClients ?? []).map((c: any) => ({ ...c, _type: "direct" as const }));
+    const managed = (managedClients ?? []).map((c: any) => ({ ...c, _type: "managed" as const }));
+    const all = [...direct, ...managed];
+    if (!clientSearch) return all;
+    const q = clientSearch.toLowerCase();
+    return all.filter((c: any) => {
+      return (
+        (c.brand_name ?? "").toLowerCase().includes(q) ||
+        (c.legal_name ?? "").toLowerCase().includes(q) ||
+        (c.vat_number ?? "").toLowerCase().includes(q) ||
+        (c.accountant_name ?? "").toLowerCase().includes(q)
+      );
+    });
+  }, [directClients, managedClients, clientSearch]);
 
   // יצירת חיוב לרו"ח
   const generateAccountantBill = async (acc: any, activeCount: number) => {
@@ -322,31 +361,11 @@ export function AdminBillingTab({ initialAccountantId, onClearFilter }: Props) {
     }
   };
 
-  const generateAllBills = async () => {
-    setGenerateAllLoading(true);
-    let success = 0, skipped = 0, failed = 0;
-    for (const acc of accountants) {
-      try {
-        await generateAccountantBill(acc, acc.base_client_count ?? 10);
-        success++;
-      } catch (e: any) {
-        if (e.message?.includes("קיים כבר")) skipped++;
-        else failed++;
-      }
-    }
-    setGenerateAllLoading(false);
-    toast.success(`הושלם: ${success} נוצרו, ${skipped} קיימים, ${failed} נכשלו`);
-  };
-
   const accountantNameById = useMemo(() => {
     const m = new Map<string, string>();
     accountants.forEach((a: any) => m.set(a.id, a.name));
     return m;
   }, [accountants]);
-
-  const showAccountantsTable = billingSubTab === "all" || billingSubTab === "accountants";
-  const showDirectTable = billingSubTab === "all" || billingSubTab === "direct";
-  const showManagedTable = billingSubTab === "all" || billingSubTab === "managed";
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "20px", fontFamily: "Heebo, sans-serif" }}>
@@ -389,10 +408,8 @@ export function AdminBillingTab({ initialAccountantId, onClearFilter }: Props) {
       {/* Sub-tabs */}
       <div style={isMobile ? { display: "flex", gap: "6px", overflowX: "auto", scrollbarWidth: "none", padding: "4px", background: "#f1f5f9", borderRadius: "10px", WebkitOverflowScrolling: "touch" } : { display: "flex", gap: "6px", background: "#f1f5f9", padding: "4px", borderRadius: "10px", width: "fit-content" }}>
         {[
-          { k: "all", label: "📊 הכל", count: allLogs.length },
-          { k: "accountants", label: "🏢 רואי חשבון", count: allLogs.filter((l: any) => l.entity_type === "accountant").length },
-          { k: "direct", label: "👤 לקוחות ישירים", count: allLogs.filter((l: any) => l.entity_type === "client_direct").length },
-          { k: "managed", label: "🔗 לקוחות מנוהלים", count: allLogs.filter((l: any) => l.entity_type === "client_managed").length },
+          { k: "accountants", label: "🏢 רואי חשבון", count: accountants.length },
+          { k: "clients", label: "👤 לקוחות", count: (directClients?.length ?? 0) + (managedClients?.length ?? 0) },
         ].map((t) => (
           <button key={t.k}
             onClick={() => setBillingSubTab(t.k as any)}
@@ -416,7 +433,7 @@ export function AdminBillingTab({ initialAccountantId, onClearFilter }: Props) {
           padding: "10px 14px", color: "#1e40af", fontSize: "13px", fontWeight: 600,
         }}>
           <span>מסונן לפי: {accountantNameById.get(initialAccountantId) ?? "—"}</span>
-          <button onClick={() => { onClearFilter?.(); setBillingSubTab("all"); }}
+          <button onClick={() => { onClearFilter?.(); setBillingSubTab("accountants"); }}
             style={{ background: "none", border: "none", cursor: "pointer", color: "#1e40af", display: "flex", alignItems: "center", gap: "4px" }}>
             <X size={14} /> נקה פילטר
           </button>
@@ -424,8 +441,8 @@ export function AdminBillingTab({ initialAccountantId, onClearFilter }: Props) {
       )}
 
       {/* ACCOUNTANTS TABLE */}
-      {showAccountantsTable && (
-        <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "10px", overflow: "hidden" }}>
+      {billingSubTab === "accountants" && (
+        <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "10px", overflow: "visible" }}>
           <div style={{
             padding: "14px 18px", borderBottom: "1px solid #e2e8f0",
             display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", flexWrap: "wrap",
@@ -433,69 +450,118 @@ export function AdminBillingTab({ initialAccountantId, onClearFilter }: Props) {
             <h3 style={{ margin: 0, fontSize: "16px", color: "#1e3a5f", fontWeight: 700 }}>
               רואי חשבון — חיוב חודשי
             </h3>
-            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-              <input
-                placeholder="חיפוש רו״ח..." value={accSearch}
-                onChange={(e) => setAccSearch(e.target.value)}
-                style={inputStyle}
-              />
-              <button onClick={generateAllBills} disabled={generateAllLoading}
-                style={{
-                  padding: "6px 14px", borderRadius: "6px", fontSize: "13px",
-                  backgroundColor: "#e8941a", color: "#ffffff", border: "none",
-                  cursor: generateAllLoading ? "not-allowed" : "pointer",
-                  fontFamily: "Heebo, sans-serif", display: "inline-flex", alignItems: "center", gap: "6px",
-                  opacity: generateAllLoading ? 0.6 : 1,
-                }}>
-                <Zap size={14} /> {generateAllLoading ? "מחשב..." : "חשב לכולם"}
-              </button>
-            </div>
+            <input
+              placeholder="חיפוש רו״ח..." value={accSearch}
+              onChange={(e) => setAccSearch(e.target.value)}
+              style={inputStyle}
+            />
           </div>
           <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", width: "100%" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", minWidth: "700px" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", minWidth: "780px" }}>
               <thead>
                 <tr style={{ background: "#f8fafc", textAlign: "right" }}>
-                  {["שם", "בסיס לקוחות", "מחיר בסיס", "מחיר נוסף", "יום חיוב", "חינם", "חיוב חודשי משוער", "פעולה"].map((h) => (
+                  {["שם", "לקוחות פעילים", "חבילת בסיס", "מחיר לקוח נוסף", 'סה"כ משוער לפני מע"מ', "סטטוס חיוב החודש", "פעולות"].map((h) => (
                     <th key={h} style={{ padding: "10px 14px", fontSize: "12px", color: "#64748b", fontWeight: 600 }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {filteredAccountants.length === 0 && (
-                  <tr><td colSpan={8} style={{ padding: "24px", textAlign: "center", color: "#94a3b8" }}>אין רואי חשבון פעילים</td></tr>
+                  <tr><td colSpan={7} style={{ padding: "24px", textAlign: "center", color: "#94a3b8" }}>אין רואי חשבון פעילים</td></tr>
                 )}
                 {filteredAccountants.map((acc: any) => {
-                  const calc = calcAccountantBill(acc.base_client_count ?? 10, acc.base_client_count ?? 10, acc.monthly_fee ?? 0, acc.price_per_client ?? 0);
+                  const activeCount = acc.base_client_count ?? 10;
+                  const calc = calcAccountantBill(activeCount, acc.base_client_count ?? 10, acc.monthly_fee ?? 0, acc.price_per_client ?? 0);
                   const isFree = (acc.free_months ?? 0) > 0;
                   const alreadyBilled = billedAccountantIds.has(acc.id);
                   return (
                     <tr key={acc.id} style={{ borderTop: "1px solid #f1f5f9" }}>
                       <td style={{ padding: "10px 14px", fontWeight: 600, color: "#1e3a5f" }}>{acc.name}</td>
-                      <td style={{ padding: "10px 14px" }}>{acc.base_client_count ?? 10}</td>
+                      <td style={{ padding: "10px 14px" }}>{activeCount}</td>
                       <td style={{ padding: "10px 14px" }}>{fmt(acc.monthly_fee ?? 0)}</td>
                       <td style={{ padding: "10px 14px" }}>{fmt(acc.price_per_client ?? 0)} / לקוח</td>
-                      <td style={{ padding: "10px 14px" }}>{acc.billing_day ?? 1} לחודש</td>
-                      <td style={{ padding: "10px 14px" }}>
-                        {isFree ? <span style={{ background: "#f8fafc", color: "#64748b", padding: "2px 8px", borderRadius: "10px", fontSize: "11px" }}>{acc.free_months} חודשים</span> : "—"}
-                      </td>
                       <td style={{ padding: "10px 14px", fontWeight: 600 }}>
                         {isFree ? "פטור" : fmt(calc.totalBeforeVat)}
-                        {!isFree && <div style={{ fontSize: "10px", color: "#94a3b8" }}>לפני מע"מ</div>}
                       </td>
                       <td style={{ padding: "10px 14px" }}>
-                        <button
-                          onClick={() => generateAccountantBill(acc, acc.base_client_count ?? 10)}
-                          disabled={alreadyBilled}
-                          title={alreadyBilled ? "חיוב קיים לתקופה זו" : ""}
-                          style={{
-                            padding: "5px 12px", borderRadius: "6px", fontSize: "12px",
-                            backgroundColor: alreadyBilled ? "#cbd5e1" : "#1e3a5f",
-                            color: "#ffffff", border: "none",
-                            cursor: alreadyBilled ? "not-allowed" : "pointer",
-                            fontFamily: "Heebo, sans-serif", display: "inline-flex", alignItems: "center", gap: "4px",
+                        {alreadyBilled ? (
+                          <span style={{
+                            display: "inline-flex", alignItems: "center", gap: "4px",
+                            background: "#f0fdf4", color: "#16a34a",
+                            padding: "3px 10px", borderRadius: "10px", fontSize: "11px", fontWeight: 600,
                           }}>
-                          <Plus size={12} /> צור חיוב
+                            חויב ✓
+                          </span>
+                        ) : (
+                          <span style={{
+                            background: "#f1f5f9", color: "#64748b",
+                            padding: "3px 10px", borderRadius: "10px", fontSize: "11px", fontWeight: 600,
+                          }}>
+                            טרם חויב
+                          </span>
+                        )}
+                      </td>
+                      <td style={{ padding: "10px 14px", position: "relative" }}>
+                        <button
+                          onClick={() => setOpenMenuId(openMenuId === acc.id ? null : acc.id)}
+                          title="פעולות"
+                          style={{
+                            padding: "4px 8px", borderRadius: "6px",
+                            backgroundColor: "transparent", color: "#64748b",
+                            border: "1px solid #e2e8f0", cursor: "pointer",
+                            display: "inline-flex", alignItems: "center",
+                          }}>
+                          <MoreVertical size={14} />
                         </button>
+                        {openMenuId === acc.id && (
+                          <div
+                            ref={menuRef}
+                            style={{
+                              position: "absolute", top: "100%", right: "14px", marginTop: "4px",
+                              background: "#ffffff", border: "1px solid #e2e8f0",
+                              borderRadius: "8px", boxShadow: "0 4px 16px rgba(15, 23, 42, 0.12)",
+                              zIndex: 50, minWidth: "180px", overflow: "hidden",
+                            }}>
+                            <button
+                              onClick={() => {
+                                setSelectedAccountantHistory(acc);
+                                setOpenMenuId(null);
+                              }}
+                              style={{
+                                display: "flex", alignItems: "center", gap: "8px",
+                                width: "100%", padding: "10px 12px", border: "none",
+                                background: "transparent", textAlign: "right",
+                                cursor: "pointer", fontSize: "13px", color: "#1e3a5f",
+                                fontFamily: "Heebo, sans-serif",
+                              }}
+                              onMouseEnter={(e) => (e.currentTarget.style.background = "#f8fafc")}
+                              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+                              <History size={14} /> 📄 היסטוריית חיוב
+                            </button>
+                            <button
+                              onClick={async () => {
+                                setOpenMenuId(null);
+                                if (!alreadyBilled) {
+                                  await generateAccountantBill(acc, activeCount);
+                                }
+                              }}
+                              disabled={alreadyBilled}
+                              style={{
+                                display: "flex", alignItems: "center", gap: "8px",
+                                width: "100%", padding: "10px 12px", border: "none",
+                                borderTop: "1px solid #f1f5f9",
+                                background: "transparent", textAlign: "right",
+                                cursor: alreadyBilled ? "not-allowed" : "pointer",
+                                opacity: alreadyBilled ? 0.5 : 1,
+                                fontSize: "13px", color: "#1e3a5f",
+                                fontFamily: "Heebo, sans-serif",
+                              }}
+                              onMouseEnter={(e) => { if (!alreadyBilled) e.currentTarget.style.background = "#f8fafc"; }}
+                              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+                              <Plus size={14} /> ➕ צור חיוב ידני
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   );
@@ -506,56 +572,103 @@ export function AdminBillingTab({ initialAccountantId, onClearFilter }: Props) {
         </div>
       )}
 
-      {/* DIRECT CLIENTS TABLE */}
-      {showDirectTable && (
+      {/* CLIENTS TABLE (direct + managed) */}
+      {billingSubTab === "clients" && (
         <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "10px", overflow: "hidden" }}>
-          <div style={{ padding: "14px 18px", borderBottom: "1px solid #e2e8f0" }}>
-            <h3 style={{ margin: 0, fontSize: "16px", color: "#1e3a5f", fontWeight: 700 }}>לקוחות ישירים — חיוב חודשי</h3>
+          <div style={{
+            padding: "14px 18px", borderBottom: "1px solid #e2e8f0",
+            display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", flexWrap: "wrap",
+          }}>
+            <h3 style={{ margin: 0, fontSize: "16px", color: "#1e3a5f", fontWeight: 700 }}>
+              לקוחות — חיוב חודשי
+            </h3>
+            <input
+              placeholder="חיפוש לפי שם / ע.מ / רו״ח..."
+              value={clientSearch}
+              onChange={(e) => setClientSearch(e.target.value)}
+              style={{ ...inputStyle, minWidth: "240px" }}
+            />
           </div>
           <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", width: "100%" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", minWidth: "650px" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", minWidth: "760px" }}>
               <thead>
                 <tr style={{ background: "#f8fafc", textAlign: "right" }}>
-                  {["שם עסק", "חבילה", "מחזור", "מחיר", "יום חיוב", "חינם", "חיוב משוער", "פעולה"].map((h) => (
+                  {["שם עסק", "סוג", 'רו"ח משויך', "חבילה", "מחיר", "סטטוס"].map((h) => (
                     <th key={h} style={{ padding: "10px 14px", fontSize: "12px", color: "#64748b", fontWeight: 600 }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {directClients.length === 0 && (
-                  <tr><td colSpan={8} style={{ padding: "24px", textAlign: "center", color: "#94a3b8" }}>אין לקוחות ישירים</td></tr>
+                {mergedClients.length === 0 && (
+                  <tr><td colSpan={6} style={{ padding: "24px", textAlign: "center", color: "#94a3b8" }}>אין לקוחות</td></tr>
                 )}
-                {directClients.map((c: any) => {
-                  const isFree = (c.free_months ?? 0) > 0;
+                {mergedClients.map((c: any) => {
+                  const isManaged = c._type === "managed";
                   const planMonthly = c.plans?.monthly_price ?? c.monthly_price ?? 0;
                   const planYearly = c.plans?.yearly_price ?? c.yearly_price ?? 0;
-                  const amount = c.billing_cycle === "yearly"
-                    ? (c.locked_yearly_price ?? planYearly)
-                    : (c.locked_monthly_price ?? planMonthly);
-                  const alreadyBilled = billedDirectIds.has(c.id);
+                  const amount = !isManaged
+                    ? (c.billing_cycle === "yearly"
+                      ? (c.locked_yearly_price ?? planYearly)
+                      : (c.locked_monthly_price ?? planMonthly))
+                    : 0;
+                  const isFree = (c.free_months ?? 0) > 0;
+                  const alreadyBilled = !isManaged && billedDirectIds.has(c.id);
                   return (
-                    <tr key={c.id} style={{ borderTop: "1px solid #f1f5f9" }}>
-                      <td style={{ padding: "10px 14px", fontWeight: 600, color: "#1e3a5f" }}>{c.brand_name ?? c.legal_name}</td>
-                      <td style={{ padding: "10px 14px" }}>{c.plans?.name ?? "—"}</td>
-                      <td style={{ padding: "10px 14px" }}>{c.billing_cycle === "yearly" ? "שנתי" : "חודשי"}</td>
-                      <td style={{ padding: "10px 14px" }}>{fmt(amount)}</td>
-                      <td style={{ padding: "10px 14px" }}>{c.billing_day ?? 1}</td>
-                      <td style={{ padding: "10px 14px" }}>
-                        {isFree ? <span style={{ background: "#f8fafc", color: "#64748b", padding: "2px 8px", borderRadius: "10px", fontSize: "11px" }}>{c.free_months} חודשים</span> : "—"}
+                    <tr key={`${c._type}-${c.id}`} style={{ borderTop: "1px solid #f1f5f9" }}>
+                      <td style={{ padding: "10px 14px", fontWeight: 600, color: "#1e3a5f" }}>
+                        {c.brand_name ?? c.legal_name ?? "—"}
                       </td>
-                      <td style={{ padding: "10px 14px", fontWeight: 600 }}>{isFree ? "פטור" : fmt(amount)}</td>
                       <td style={{ padding: "10px 14px" }}>
-                        <button onClick={() => generateClientBill(c)} disabled={alreadyBilled}
-                          title={alreadyBilled ? "חיוב קיים לתקופה זו" : ""}
-                          style={{
-                            padding: "5px 12px", borderRadius: "6px", fontSize: "12px",
-                            backgroundColor: alreadyBilled ? "#cbd5e1" : "#e8941a",
-                            color: "#ffffff", border: "none",
-                            cursor: alreadyBilled ? "not-allowed" : "pointer",
-                            fontFamily: "Heebo, sans-serif", display: "inline-flex", alignItems: "center", gap: "4px",
+                        {isManaged ? (
+                          <span
+                            title={`רו״ח: ${c.accountant_name}`}
+                            style={{
+                              background: "#eff6ff", color: "#1e40af",
+                              padding: "2px 8px", borderRadius: "10px",
+                              fontSize: "11px", fontWeight: 600,
+                            }}>
+                            🔵 מנוהל
+                          </span>
+                        ) : (
+                          <span style={{
+                            background: "#fff7ed", color: "#ea580c",
+                            padding: "2px 8px", borderRadius: "10px",
+                            fontSize: "11px", fontWeight: 600,
                           }}>
-                          <Plus size={12} /> צור חיוב
-                        </button>
+                            🟠 עצמאי
+                          </span>
+                        )}
+                      </td>
+                      <td style={{ padding: "10px 14px" }}>
+                        {isManaged ? c.accountant_name : "—"}
+                      </td>
+                      <td style={{ padding: "10px 14px" }}>
+                        {isManaged ? (c.plan_type ?? "—") : (c.plans?.name ?? c.plan_type ?? "—")}
+                      </td>
+                      <td style={{ padding: "10px 14px", fontWeight: 600 }}>
+                        {isManaged ? "—" : (isFree ? "פטור" : fmt(amount))}
+                      </td>
+                      <td style={{ padding: "10px 14px" }}>
+                        {isManaged ? (
+                          <span style={{ color: "#64748b", fontSize: "12px" }}>
+                            מחוייב דרך רו״ח {c.accountant_name}
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => generateClientBill(c)}
+                            disabled={alreadyBilled}
+                            title={alreadyBilled ? "חיוב קיים לתקופה זו" : ""}
+                            style={{
+                              padding: "5px 12px", borderRadius: "6px", fontSize: "12px",
+                              backgroundColor: alreadyBilled ? "#cbd5e1" : "#e8941a",
+                              color: "#ffffff", border: "none",
+                              cursor: alreadyBilled ? "not-allowed" : "pointer",
+                              fontFamily: "Heebo, sans-serif",
+                              display: "inline-flex", alignItems: "center", gap: "4px",
+                            }}>
+                            <Plus size={12} /> {alreadyBilled ? "חויב" : "צור חיוב"}
+                          </button>
+                        )}
                       </td>
                     </tr>
                   );
@@ -566,180 +679,232 @@ export function AdminBillingTab({ initialAccountantId, onClearFilter }: Props) {
         </div>
       )}
 
-      {/* MANAGED CLIENTS TABLE */}
-      {showManagedTable && (
-        <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "10px", overflow: "hidden" }}>
-          <div style={{ padding: "14px 18px", borderBottom: "1px solid #e2e8f0" }}>
-            <h3 style={{ margin: 0, fontSize: "16px", color: "#1e3a5f", fontWeight: 700 }}>לקוחות מנוהלים — מכוסים ע״י רו״ח</h3>
-            <div style={{ marginTop: "6px", fontSize: "12px", color: "#64748b" }}>
-              לקוחות אלו מחוייבים דרך רואה החשבון שלהם
-            </div>
-          </div>
-          <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", width: "100%" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", minWidth: "400px" }}>
-              <thead>
-                <tr style={{ background: "#f8fafc", textAlign: "right" }}>
-                  {["שם עסק", "רו\"ח אחראי", "חבילת רו\"ח", "סטטוס"].map((h) => (
-                    <th key={h} style={{ padding: "10px 14px", fontSize: "12px", color: "#64748b", fontWeight: 600 }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {managedClients.length === 0 && (
-                  <tr><td colSpan={4} style={{ padding: "24px", textAlign: "center", color: "#94a3b8" }}>אין לקוחות מנוהלים</td></tr>
-                )}
-                {managedClients.map((c: any) => (
-                  <tr key={c.id ?? c.accountant_id} style={{ borderTop: "1px solid #f1f5f9" }}>
-                    <td style={{ padding: "10px 14px", fontWeight: 600, color: "#1e3a5f" }}>{c.brand_name ?? c.legal_name ?? "—"}</td>
-                    <td style={{ padding: "10px 14px" }}>{c.accountant_name}</td>
-                    <td style={{ padding: "10px 14px" }}>{c.plan_type ?? "—"}</td>
-                    <td style={{ padding: "10px 14px" }}>
-                      <span style={{ background: "#f0fdf4", color: "#16a34a", padding: "3px 10px", borderRadius: "10px", fontSize: "11px", fontWeight: 600 }}>
-                        מכוסה ✓
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* HISTORY */}
+      {/* HISTORY (collapsible) */}
       <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "10px", overflow: "hidden" }}>
-        <div style={{
-          padding: "14px 18px", borderBottom: "1px solid #e2e8f0",
-          display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", flexWrap: "wrap",
-        }}>
-          <h3 style={{ margin: 0, fontSize: "16px", color: "#1e3a5f", fontWeight: 700 }}>היסטוריית חיוב</h3>
-          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
-            <div style={{ position: "relative" }}>
-              <Search size={14} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} />
-              <input placeholder="חיפוש שם..." value={searchName} onChange={(e) => setSearchName(e.target.value)}
-                style={{ ...inputStyle, paddingRight: "30px" }} />
+        <button
+          onClick={() => setHistoryOpen((v) => !v)}
+          style={{
+            width: "100%", padding: "14px 18px",
+            display: "flex", justifyContent: "space-between", alignItems: "center",
+            background: "transparent", border: "none", cursor: "pointer",
+            fontFamily: "Heebo, sans-serif", textAlign: "right",
+          }}>
+          <span style={{ fontSize: "16px", color: "#1e3a5f", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "8px" }}>
+            <FileText size={16} /> 📋 היסטוריית חיוב ({allLogs.length} רשומות)
+          </span>
+          {historyOpen ? <ChevronUp size={18} color="#64748b" /> : <ChevronDown size={18} color="#64748b" />}
+        </button>
+
+        {historyOpen && (
+          <>
+            <div style={{
+              padding: "12px 18px", borderTop: "1px solid #e2e8f0",
+              display: "flex", justifyContent: "flex-end", gap: "8px", flexWrap: "wrap", alignItems: "center",
+            }}>
+              <div style={{ position: "relative" }}>
+                <Search size={14} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} />
+                <input placeholder="חיפוש שם..." value={searchName} onChange={(e) => setSearchName(e.target.value)}
+                  style={{ ...inputStyle, paddingRight: "30px" }} />
+              </div>
+              <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} style={inputStyle}>
+                <option value="">כל הסטטוסים</option>
+                <option value="pending">ממתין</option>
+                <option value="paid">שולם</option>
+                <option value="failed">נכשל</option>
+                <option value="waived">פטור</option>
+              </select>
+              <select value={filterPeriod} onChange={(e) => setFilterPeriod(e.target.value)} style={inputStyle}>
+                <option value="">כל התקופות</option>
+                {last12Months().map((p) => <option key={p} value={p}>{fmtPeriod(p)}</option>)}
+              </select>
+              <select value={filterType} onChange={(e) => setFilterType(e.target.value)} style={inputStyle}>
+                <option value="">כל הסוגים</option>
+                <option value="accountant">רו"ח</option>
+                <option value="client_direct">לקוח ישיר</option>
+                <option value="client_managed">לקוח מנוהל</option>
+              </select>
             </div>
-            <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} style={inputStyle}>
-              <option value="">כל הסטטוסים</option>
-              <option value="pending">ממתין</option>
-              <option value="paid">שולם</option>
-              <option value="failed">נכשל</option>
-              <option value="waived">פטור</option>
-            </select>
-            <select value={filterPeriod} onChange={(e) => setFilterPeriod(e.target.value)} style={inputStyle}>
-              <option value="">כל התקופות</option>
-              {last12Months().map((p) => <option key={p} value={p}>{fmtPeriod(p)}</option>)}
-            </select>
-            <select value={filterType} onChange={(e) => setFilterType(e.target.value)} style={inputStyle}>
-              <option value="">כל הסוגים</option>
-              <option value="accountant">רו"ח</option>
-              <option value="client_direct">לקוח ישיר</option>
-              <option value="client_managed">לקוח מנוהל</option>
-            </select>
-          </div>
-        </div>
-        <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", width: "100%" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "11px", minWidth: "900px" }}>
-            <thead>
-              <tr style={{ background: "#f8fafc", textAlign: "right" }}>
-                {["שם", "סוג", "תקופה", "בסיס", "נוספים", 'לפני מע"מ', 'מע"מ', 'כולל מע"מ', "אסמכתא", "שולם ב", "סטטוס", "פעולות"].map((h) => (
-                  <th key={h} style={{ padding: "10px 14px", fontSize: "12px", color: "#64748b", fontWeight: 600 }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {logsLoading ? (
-                <tr><td colSpan={12} style={{ padding: "24px", textAlign: "center", color: "#94a3b8" }}>טוען...</td></tr>
-              ) : filteredLogs.length === 0 ? (
-                <tr><td colSpan={12} style={{ padding: "24px", textAlign: "center", color: "#94a3b8" }}>אין רשומות</td></tr>
-              ) : (
-                filteredLogs.map((log: any) => {
-                  const st = STATUS_MAP[log.status as StatusKey] ?? STATUS_MAP.pending;
-                  const Icon = st.icon;
-                  const tb = TYPE_BADGE[log.entity_type] ?? TYPE_BADGE.accountant;
-                  const noteShort = log.notes && log.notes.length > 20 ? log.notes.slice(0, 20) + "…" : (log.notes ?? "—");
-                  return (
-                    <tr key={log.id} style={{ borderTop: "1px solid #f1f5f9" }}>
-                      <td style={{ padding: "10px 14px", fontWeight: 600, color: "#1e3a5f" }}>{log.entity_name ?? "—"}</td>
-                      <td style={{ padding: "10px 14px" }}>
-                        <span style={{ background: tb.bg, color: tb.color, padding: "2px 8px", borderRadius: "10px", fontSize: "11px", fontWeight: 600 }}>
-                          {tb.label}
-                        </span>
-                      </td>
-                      <td style={{ padding: "10px 14px" }}>{fmtPeriod(log.billing_period)}</td>
-                      <td style={{ padding: "10px 14px" }}>{fmt(log.base_amount)}</td>
-                      <td style={{ padding: "10px 14px" }}>{fmt(log.extra_amount)}</td>
-                      <td style={{ padding: "10px 14px" }}>{fmt(log.total_before_vat)}</td>
-                      <td style={{ padding: "10px 14px" }}>{fmt(log.vat_amount)}</td>
-                      <td style={{ padding: "10px 14px", fontWeight: 600 }}>{fmt(log.total_with_vat)}</td>
-                      <td style={{ padding: "10px 14px", color: "#64748b" }} title={log.notes ?? ""}>{noteShort}</td>
-                      <td style={{ padding: "10px 14px" }}>{fmtDate(log.paid_at)}</td>
-                      <td style={{ padding: "10px 14px" }}>
-                        <span style={{
-                          display: "inline-flex", alignItems: "center", gap: "4px",
-                          background: st.bg, color: st.color,
-                          padding: "3px 10px", borderRadius: "10px", fontSize: "11px", fontWeight: 600,
-                        }}>
-                          <Icon size={12} /> {st.label}
-                        </span>
-                      </td>
-                      <td style={{ padding: "10px 14px" }}>
-                        <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
-                          {log.status === "pending" && (
-                            <>
+            <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", width: "100%" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "11px", minWidth: "900px" }}>
+                <thead>
+                  <tr style={{ background: "#f8fafc", textAlign: "right" }}>
+                    {["שם", "סוג", "תקופה", "בסיס", "נוספים", 'לפני מע"מ', 'מע"מ', 'כולל מע"מ', "אסמכתא", "שולם ב", "סטטוס", "פעולות"].map((h) => (
+                      <th key={h} style={{ padding: "10px 14px", fontSize: "12px", color: "#64748b", fontWeight: 600 }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {logsLoading ? (
+                    <tr><td colSpan={12} style={{ padding: "24px", textAlign: "center", color: "#94a3b8" }}>טוען...</td></tr>
+                  ) : filteredLogs.length === 0 ? (
+                    <tr><td colSpan={12} style={{ padding: "24px", textAlign: "center", color: "#94a3b8" }}>אין רשומות</td></tr>
+                  ) : (
+                    filteredLogs.map((log: any) => {
+                      const st = STATUS_MAP[log.status as StatusKey] ?? STATUS_MAP.pending;
+                      const Icon = st.icon;
+                      const tb = TYPE_BADGE[log.entity_type] ?? TYPE_BADGE.accountant;
+                      const noteShort = log.notes && log.notes.length > 20 ? log.notes.slice(0, 20) + "…" : (log.notes ?? "—");
+                      return (
+                        <tr key={log.id} style={{ borderTop: "1px solid #f1f5f9" }}>
+                          <td style={{ padding: "10px 14px", fontWeight: 600, color: "#1e3a5f" }}>{log.entity_name ?? "—"}</td>
+                          <td style={{ padding: "10px 14px" }}>
+                            <span style={{ background: tb.bg, color: tb.color, padding: "2px 8px", borderRadius: "10px", fontSize: "11px", fontWeight: 600 }}>
+                              {tb.label}
+                            </span>
+                          </td>
+                          <td style={{ padding: "10px 14px" }}>{fmtPeriod(log.billing_period)}</td>
+                          <td style={{ padding: "10px 14px" }}>{fmt(log.base_amount)}</td>
+                          <td style={{ padding: "10px 14px" }}>{fmt(log.extra_amount)}</td>
+                          <td style={{ padding: "10px 14px" }}>{fmt(log.total_before_vat)}</td>
+                          <td style={{ padding: "10px 14px" }}>{fmt(log.vat_amount)}</td>
+                          <td style={{ padding: "10px 14px", fontWeight: 600 }}>{fmt(log.total_with_vat)}</td>
+                          <td style={{ padding: "10px 14px", color: "#64748b" }} title={log.notes ?? ""}>{noteShort}</td>
+                          <td style={{ padding: "10px 14px" }}>{fmtDate(log.paid_at)}</td>
+                          <td style={{ padding: "10px 14px" }}>
+                            <span style={{
+                              display: "inline-flex", alignItems: "center", gap: "4px",
+                              background: st.bg, color: st.color,
+                              padding: "3px 10px", borderRadius: "10px", fontSize: "11px", fontWeight: 600,
+                            }}>
+                              <Icon size={12} /> {st.label}
+                            </span>
+                          </td>
+                          <td style={{ padding: "10px 14px" }}>
+                            <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
+                              {log.status === "pending" && (
+                                <>
+                                  <button
+                                    onClick={() => {
+                                      setShowMarkPaidModal(log);
+                                      setMarkPaidMethod("external");
+                                      setMarkPaidNotes("");
+                                      setMarkPaidExtId("");
+                                    }}
+                                    title="סמן שולם"
+                                    style={{
+                                      padding: "4px 8px", borderRadius: "6px", fontSize: "11px",
+                                      backgroundColor: "#16a34a", color: "#ffffff", border: "none", cursor: "pointer",
+                                      fontFamily: "Heebo, sans-serif",
+                                    }}>
+                                    ✓
+                                  </button>
+                                  <button
+                                    onClick={() => { setShowWaiveModal(log); setWaiveReason(""); }}
+                                    title="ויתור"
+                                    style={{
+                                      padding: "4px 8px", borderRadius: "6px", fontSize: "11px",
+                                      backgroundColor: "#64748b", color: "#ffffff", border: "none", cursor: "pointer",
+                                      fontFamily: "Heebo, sans-serif",
+                                    }}>
+                                    🎁
+                                  </button>
+                                </>
+                              )}
                               <button
                                 onClick={() => {
-                                  setShowMarkPaidModal(log);
-                                  setMarkPaidMethod("external");
-                                  setMarkPaidNotes("");
-                                  setMarkPaidExtId("");
+                                  if (window.confirm("למחוק רשומת חיוב זו?")) deleteEntry.mutate(log.id);
                                 }}
-                                title="סמן שולם"
+                                title="מחק"
                                 style={{
                                   padding: "4px 8px", borderRadius: "6px", fontSize: "11px",
-                                  backgroundColor: "#16a34a", color: "#ffffff", border: "none", cursor: "pointer",
-                                  fontFamily: "Heebo, sans-serif",
+                                  backgroundColor: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca", cursor: "pointer",
+                                  fontFamily: "Heebo, sans-serif", display: "inline-flex", alignItems: "center",
                                 }}>
-                                ✓
+                                <Trash2 size={11} />
                               </button>
-                              <button
-                                onClick={() => { setShowWaiveModal(log); setWaiveReason(""); }}
-                                title="ויתור"
-                                style={{
-                                  padding: "4px 8px", borderRadius: "6px", fontSize: "11px",
-                                  backgroundColor: "#64748b", color: "#ffffff", border: "none", cursor: "pointer",
-                                  fontFamily: "Heebo, sans-serif",
-                                }}>
-                                🎁
-                              </button>
-                            </>
-                          )}
-                          <button
-                            onClick={() => {
-                              if (window.confirm("למחוק רשומת חיוב זו?")) deleteEntry.mutate(log.id);
-                            }}
-                            title="מחק"
-                            style={{
-                              padding: "4px 8px", borderRadius: "6px", fontSize: "11px",
-                              backgroundColor: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca", cursor: "pointer",
-                              fontFamily: "Heebo, sans-serif", display: "inline-flex", alignItems: "center",
-                            }}>
-                            <Trash2 size={11} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
       </div>
+
+      {/* ACCOUNTANT HISTORY DRAWER */}
+      {selectedAccountantHistory && (
+        <>
+          <div
+            onClick={() => setSelectedAccountantHistory(null)}
+            style={{
+              position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 1100,
+            }}
+          />
+          <div
+            style={{
+              position: "fixed", top: 0, right: 0, bottom: 0,
+              width: "min(420px, 100vw)", background: "#ffffff",
+              boxShadow: "-4px 0 16px rgba(15, 23, 42, 0.12)",
+              zIndex: 1101, display: "flex", flexDirection: "column",
+              fontFamily: "Heebo, sans-serif",
+            }}>
+            <div style={{
+              padding: "14px 18px", borderBottom: "1px solid #e2e8f0",
+              display: "flex", justifyContent: "space-between", alignItems: "center",
+              background: "#1e3a5f", color: "#ffffff",
+            }}>
+              <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 700 }}>
+                היסטוריית חיוב — {selectedAccountantHistory.name}
+              </h3>
+              <button
+                onClick={() => setSelectedAccountantHistory(null)}
+                style={{
+                  background: "transparent", border: "none", color: "#ffffff",
+                  cursor: "pointer", display: "flex", alignItems: "center",
+                }}>
+                <X size={18} />
+              </button>
+            </div>
+            <div style={{ flex: 1, overflowY: "auto", padding: "12px" }}>
+              {accountantHistoryLogs.length === 0 ? (
+                <div style={{ padding: "24px", textAlign: "center", color: "#94a3b8", fontSize: "13px" }}>
+                  אין רשומות חיוב לרו״ח זה
+                </div>
+              ) : (
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "11px" }}>
+                  <thead>
+                    <tr style={{ background: "#f8fafc", textAlign: "right" }}>
+                      {["תקופה", 'לפני מע"מ', 'כולל מע"מ', "סטטוס"].map((h) => (
+                        <th key={h} style={{ padding: "8px 6px", fontSize: "11px", color: "#64748b", fontWeight: 600 }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {accountantHistoryLogs.map((log: any) => {
+                      const st = STATUS_MAP[log.status as StatusKey] ?? STATUS_MAP.pending;
+                      const Icon = st.icon;
+                      return (
+                        <tr key={log.id} style={{ borderTop: "1px solid #f1f5f9" }}>
+                          <td style={{ padding: "8px 6px" }}>{fmtPeriod(log.billing_period)}</td>
+                          <td style={{ padding: "8px 6px" }}>{fmt(log.total_before_vat)}</td>
+                          <td style={{ padding: "8px 6px", fontWeight: 600 }}>{fmt(log.total_with_vat)}</td>
+                          <td style={{ padding: "8px 6px" }}>
+                            <span style={{
+                              display: "inline-flex", alignItems: "center", gap: "3px",
+                              background: st.bg, color: st.color,
+                              padding: "2px 8px", borderRadius: "10px", fontSize: "10px", fontWeight: 600,
+                            }}>
+                              <Icon size={10} /> {st.label}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        </>
+      )}
 
       {/* MARK PAID MODAL */}
       {showMarkPaidModal && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1200 }}
           onClick={() => setShowMarkPaidModal(null)}>
           <div onClick={(e) => e.stopPropagation()}
             style={{ background: "#ffffff", borderRadius: "12px", padding: "24px", width: "min(440px, 92vw)", fontFamily: "Heebo, sans-serif" }}>
@@ -793,7 +958,7 @@ export function AdminBillingTab({ initialAccountantId, onClearFilter }: Props) {
 
       {/* WAIVE MODAL */}
       {showWaiveModal && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1200 }}
           onClick={() => setShowWaiveModal(null)}>
           <div onClick={(e) => e.stopPropagation()}
             style={{ background: "#ffffff", borderRadius: "12px", padding: "24px", width: "min(420px, 92vw)", fontFamily: "Heebo, sans-serif" }}>
