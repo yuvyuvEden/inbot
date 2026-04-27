@@ -186,12 +186,11 @@ export default function AiChatTab() {
     if (!client?.id) return;
     (async () => {
       setIsDataLoading(true);
-      const [invRes, clientRes] = await Promise.all([
-        supabase.from("invoices").select("id, invoice_date, vendor, invoice_number, total, vat_original, vat_deductible, tax_deductible, category, document_type, allocation_number, drive_file_url").eq("client_id", client.id),
-        supabase.from("clients").select("gemini_api_key").eq("id", client.id).maybeSingle(),
-      ]);
+      const invRes = await supabase
+        .from("invoices")
+        .select("id, invoice_date, vendor, invoice_number, total, vat_original, vat_deductible, tax_deductible, category, document_type, allocation_number, drive_file_url")
+        .eq("client_id", client.id);
       if (invRes.data) setAllInvoices(invRes.data);
-      if (clientRes.data) setGeminiKey(clientRes.data.gemini_api_key);
       setIsDataLoading(false);
 
       if (invRes.data && invRes.data.length === 0) {
