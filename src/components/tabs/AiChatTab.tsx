@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useClientRecord } from "@/hooks/useClientData";
 import { toast } from "sonner";
-import { Bot, User, Send, Trash2, AlertTriangle } from "lucide-react";
+import { Bot, User, Send, Trash2 } from "lucide-react";
 
 interface Invoice {
   id: string;
@@ -169,7 +169,7 @@ export default function AiChatTab() {
   const { data: client } = useClientRecord();
   const [allInvoices, setAllInvoices] = useState<Invoice[]>([]);
   const [isDataLoading, setIsDataLoading] = useState(true);
-  const [geminiKey, setGeminiKey] = useState<string | null>(null);
+  
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([WELCOME_MSG]);
   const [chatInput, setChatInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -202,7 +202,7 @@ export default function AiChatTab() {
 
   const sendChat = async (overrideText?: string) => {
     const question = (overrideText ?? chatInput).trim();
-    if (!question || isLoading || !geminiKey) return;
+    if (!question || isLoading) return;
 
     const userMsg: ChatMessage = { id: `u-${Date.now()}`, role: "user", text: question };
     const loadingMsg: ChatMessage = { id: "loading-msg", role: "bot", text: "...", loading: true };
@@ -237,19 +237,29 @@ Data summary: ${JSON.stringify(summary)}`;
         { role: "user", parts: [{ text: question }] },
       ];
 
+      const fullPrompt = contents
+        .map((c) => `${c.role}: ${c.parts.map((p) => p.text).join(" ")}`)
+        .join("\n\n");
+
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+
       const resp = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-proxy`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ contents, generationConfig: { temperature: 0.1, maxOutputTokens: 1024 } }),
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ prompt: fullPrompt }),
         }
       );
 
-      if (!resp.ok) throw new Error("API error");
+      if (!resp.ok) throw new Error(`Gemini proxy error: ${resp.status}`);
 
-      const data = await resp.json();
-      const answer = data.candidates?.[0]?.content?.parts?.[0]?.text || "לא הצלחתי לקבל תשובה";
+      const { text } = await resp.json();
+      const answer = text || "לא הצלחתי לקבל תשובה";
 
       setChatHistory((h) => {
         const filtered = h.filter((m) => m.id !== "loading-msg");
