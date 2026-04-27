@@ -47,7 +47,16 @@ function parseDDMMYYYY(s: string): Date | null {
 }
 
 function formatBotText(text: string): string {
-  return text
+  // סניטציה — escape תווי HTML לפני כל עיבוד
+  const escaped = text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+
+  // המרת Markdown בסיסי ל-HTML בטוח
+  return escaped
     .replace(/\n/g, "<br/>")
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
     .replace(/\*(.+?)\*/g, "<em>$1</em>");
