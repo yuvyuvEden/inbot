@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { optimisticUpdate, ConflictError } from "@/hooks/useOptimisticLock";
 import { useVatRules, calcVat } from "@/hooks/useVatRules";
+import { useVatRatePercent } from "@/hooks/useSystemSettings";
 
 const STATUS_OPTIONS = [
   { value: "", label: "סטטוס: הכל" },
