@@ -25,7 +25,7 @@ const AdminDashboard = () => {
   const { signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<TabKey>(() => {
     const saved = localStorage.getItem("admin-active-tab");
-    const valid: TabKey[] = ["stats", "accountants", "clients", "billing", "plans", "system"];
+    const valid: TabKey[] = ["stats", "accountants", "clients", "billing", "plans", "system", "logs"];
     return valid.includes(saved as TabKey) ? (saved as TabKey) : "stats";
   });
   const [billingFilterId, setBillingFilterId] = useState<string | undefined>(undefined);
