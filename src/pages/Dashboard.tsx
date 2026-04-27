@@ -92,6 +92,12 @@ export default function Dashboard() {
     },
   });
 
+  // בדיקת grace period — מציג modal חסימה אם פג
+  const isGraceExpired = useMemo(() => {
+    if (!clientRecord?.grace_until) return false;
+    return new Date(clientRecord.grace_until) < new Date();
+  }, [clientRecord]);
+
   const exitAdminView = () => {
     sessionStorage.removeItem("admin_view_id");
     sessionStorage.removeItem("admin_view_name");
@@ -101,6 +107,10 @@ export default function Dashboard() {
 
   return (
     <div dir="rtl" className="min-h-screen bg-background font-sans">
+      {isGraceExpired && !isAdminView && (
+        <GracePeriodModal brandName={clientRecord?.brand_name ?? ""} />
+      )}
+
       {/* Admin View Banner */}
       {isAdminView && (
         <div style={{
