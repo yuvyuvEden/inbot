@@ -102,9 +102,32 @@ Deno.serve(async (req) => {
     // ── שליפת פרטי הרו"ח השולח
     const { data: accountant } = await supabaseAdmin
       .from("accountants")
-      .select("name, email")
+      .select("id, name, email")
       .eq("user_id", user.id)
       .single();
+
+    // בדיקה שהרו"ח משויך ללקוח של החשבונית
+    if (!accountant) {
+      return new Response(JSON.stringify({ error: "Accountant record not found" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { data: assignment } = await supabaseAdmin
+      .from("accountant_clients")
+      .select("id")
+      .eq("accountant_id", accountant.id)
+      .eq("client_id", invoice.client_id)
+      .is("unassigned_at", null)
+      .maybeSingle();
+
+    if (!assignment) {
+      return new Response(JSON.stringify({ error: "Forbidden: not assigned to this client" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const accountantName = accountant?.name ?? "רואה החשבון שלך";
 
