@@ -107,8 +107,8 @@ export default function Dashboard() {
 
   return (
     <div dir="rtl" className="min-h-screen bg-background font-sans">
-      {isGraceExpired && !isAdminView && (
-        <GracePeriodModal brandName={clientRecord?.brand_name ?? ""} />
+      {isGraceExpired && !isAdminView && clientRecord?.id && (
+        <GracePeriodModal clientId={clientRecord.id} brandName={clientRecord.brand_name ?? ""} />
       )}
 
       {/* Admin View Banner */}
