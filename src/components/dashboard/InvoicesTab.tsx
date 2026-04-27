@@ -886,7 +886,7 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
               {editDetailsTotal && !isNaN(parseFloat(editDetailsTotal)) && (() => {
                 const total = parseFloat(editDetailsTotal);
                 const rule = vatRules.find(r => r.category === editDetailsModal?.category);
-                const { vat_original, vat_deductible } = calcVat(total, rule);
+                const { vat_original, vat_deductible } = calcVat(total, rule, vatRatePercent);
                 const vatPct = rule ? Math.round(rule.vat_rate * 100) : 100;
                 return (
                   <div className="mt-2 text-[12px] text-gray-500">
