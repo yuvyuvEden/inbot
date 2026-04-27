@@ -4,9 +4,10 @@ import AdminClientsTab from "@/components/admin/AdminClientsTab";
 import AdminAccountantsTab from "@/components/admin/AdminAccountantsTab";
 import AdminStatsTab from "@/components/admin/AdminStatsTab";
 import AdminSystemTab from "@/components/admin/AdminSystemTab";
+import AdminLogsTab from "@/components/admin/AdminLogsTab";
 import { AdminBillingTab } from "@/components/admin/AdminBillingTab";
 import { AdminPlansTab } from "@/components/admin/AdminPlansTab";
-import { BarChart2, Users, Building2, CreditCard, Package, Settings } from "lucide-react";
+import { BarChart2, Users, Building2, CreditCard, Package, Settings, ScrollText } from "lucide-react";
 
 const tabs = [
   { key: "stats", label: "סטטיסטיקות", icon: BarChart2 },
@@ -15,6 +16,7 @@ const tabs = [
   { key: "billing", label: "חיוב", icon: CreditCard },
   { key: "plans", label: "חבילות", icon: Package },
   { key: "system", label: "הגדרות מערכת", icon: Settings },
+  { key: "logs", label: "לוגים", icon: ScrollText },
 ] as const;
 
 type TabKey = (typeof tabs)[number]["key"];
@@ -23,7 +25,7 @@ const AdminDashboard = () => {
   const { signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<TabKey>(() => {
     const saved = localStorage.getItem("admin-active-tab");
-    const valid: TabKey[] = ["stats", "accountants", "clients", "billing", "plans", "system"];
+    const valid: TabKey[] = ["stats", "accountants", "clients", "billing", "plans", "system", "logs"];
     return valid.includes(saved as TabKey) ? (saved as TabKey) : "stats";
   });
   const [billingFilterId, setBillingFilterId] = useState<string | undefined>(undefined);
@@ -102,6 +104,7 @@ const AdminDashboard = () => {
         )}
         {activeTab === "plans" && <AdminPlansTab />}
         {activeTab === "system" && <AdminSystemTab />}
+        {activeTab === "logs" && <AdminLogsTab />}
       </main>
 
       {/* Mobile Bottom Navigation */}
