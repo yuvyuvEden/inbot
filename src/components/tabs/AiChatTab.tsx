@@ -280,18 +280,10 @@ Data summary: ${JSON.stringify(summary)}`;
     toast("השיחה נוקתה");
   };
 
-  const noKey = !geminiKey && !isDataLoading;
-
   return (
     <div className="flex flex-col overflow-hidden rounded-xl border border-border bg-white" style={{ height: "calc(100vh - 180px)", minHeight: 500 }}>
       {/* Messages area */}
       <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-5">
-        {noKey && (
-          <div className="mx-auto flex items-center gap-2 rounded-lg border px-4 py-3 text-[13px]" style={{ background: "#fffbeb", borderColor: "#fde68a", color: "#b45309" }}>
-            <AlertTriangle size={16} />
-            ⚠️ מפתח Gemini לא מוגדר. עבור להגדרות כדי להגדיר אותו.
-          </div>
-        )}
 
         {chatHistory.map((msg) => (
           <div key={msg.id} className={`flex gap-2.5 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
