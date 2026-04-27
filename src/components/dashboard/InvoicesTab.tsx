@@ -150,7 +150,7 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
   });
 
   const { data: vatRules = [] } = useVatRules();
-
+  const vatRatePercent = useVatRatePercent();
 
   const categories = useMemo(() => {
     if (!invoices) return [];
