@@ -4,9 +4,10 @@ import AdminClientsTab from "@/components/admin/AdminClientsTab";
 import AdminAccountantsTab from "@/components/admin/AdminAccountantsTab";
 import AdminStatsTab from "@/components/admin/AdminStatsTab";
 import AdminSystemTab from "@/components/admin/AdminSystemTab";
+import AdminLogsTab from "@/components/admin/AdminLogsTab";
 import { AdminBillingTab } from "@/components/admin/AdminBillingTab";
 import { AdminPlansTab } from "@/components/admin/AdminPlansTab";
-import { BarChart2, Users, Building2, CreditCard, Package, Settings } from "lucide-react";
+import { BarChart2, Users, Building2, CreditCard, Package, Settings, ScrollText } from "lucide-react";
 
 const tabs = [
   { key: "stats", label: "סטטיסטיקות", icon: BarChart2 },
@@ -15,6 +16,7 @@ const tabs = [
   { key: "billing", label: "חיוב", icon: CreditCard },
   { key: "plans", label: "חבילות", icon: Package },
   { key: "system", label: "הגדרות מערכת", icon: Settings },
+  { key: "logs", label: "לוגים", icon: ScrollText },
 ] as const;
 
 type TabKey = (typeof tabs)[number]["key"];
