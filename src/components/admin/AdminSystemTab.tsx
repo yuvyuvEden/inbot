@@ -9,6 +9,31 @@ export default function AdminSystemTab() {
   const [dirty, setDirty] = useState<Record<string, Partial<VatRule>>>({});
   const [saving, setSaving] = useState<string | null>(null);
 
+  const { data: settings = [], isLoading: settingsLoading } = useSystemSettings();
+  const { mutateAsync: updateSetting } = useUpdateSystemSetting();
+  const [settingsDirty, setSettingsDirty] = useState<Record<string, string>>({});
+  const [savingSetting, setSavingSetting] = useState<string | null>(null);
+
+  const getSettingVal = (key: string, fallback: string) =>
+    settingsDirty[key] !== undefined ? settingsDirty[key] : fallback;
+
+  const saveSetting = async (key: string, value: string) => {
+    setSavingSetting(key);
+    try {
+      await updateSetting({ key, value });
+      setSettingsDirty((prev) => {
+        const n = { ...prev };
+        delete n[key];
+        return n;
+      });
+      toast.success("ההגדרה עודכנה");
+    } catch {
+      toast.error("שגיאה בשמירה");
+    } finally {
+      setSavingSetting(null);
+    }
+  };
+
   const getVal = (cat: string, field: keyof VatRule, fallback: any) =>
     dirty[cat]?.[field] !== undefined ? (dirty[cat] as any)[field] : fallback;
 
