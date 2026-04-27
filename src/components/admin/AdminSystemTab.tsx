@@ -1,4 +1,5 @@
 import { useVatRules, useUpdateVatRule, type VatRule } from "@/hooks/useVatRules";
+import { useSystemSettings, useUpdateSystemSetting } from "@/hooks/useSystemSettings";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -7,6 +8,31 @@ export default function AdminSystemTab() {
   const { mutateAsync: updateRule } = useUpdateVatRule();
   const [dirty, setDirty] = useState<Record<string, Partial<VatRule>>>({});
   const [saving, setSaving] = useState<string | null>(null);
+
+  const { data: settings = [], isLoading: settingsLoading } = useSystemSettings();
+  const { mutateAsync: updateSetting } = useUpdateSystemSetting();
+  const [settingsDirty, setSettingsDirty] = useState<Record<string, string>>({});
+  const [savingSetting, setSavingSetting] = useState<string | null>(null);
+
+  const getSettingVal = (key: string, fallback: string) =>
+    settingsDirty[key] !== undefined ? settingsDirty[key] : fallback;
+
+  const saveSetting = async (key: string, value: string) => {
+    setSavingSetting(key);
+    try {
+      await updateSetting({ key, value });
+      setSettingsDirty((prev) => {
+        const n = { ...prev };
+        delete n[key];
+        return n;
+      });
+      toast.success("ההגדרה עודכנה");
+    } catch {
+      toast.error("שגיאה בשמירה");
+    } finally {
+      setSavingSetting(null);
+    }
+  };
 
   const getVal = (cat: string, field: keyof VatRule, fallback: any) =>
     dirty[cat]?.[field] !== undefined ? (dirty[cat] as any)[field] : fallback;
@@ -46,7 +72,108 @@ export default function AdminSystemTab() {
   }
 
   return (
-    <div className="space-y-4" style={{ fontFamily: "Heebo, sans-serif" }} dir="rtl">
+    <div className="space-y-6" style={{ fontFamily: "Heebo, sans-serif" }} dir="rtl">
+      <div>
+        <h2 style={{ fontSize: "20px", fontWeight: 800, color: "#1e3a5f", margin: 0 }}>
+          הגדרות מערכת כלליות
+        </h2>
+        <p style={{ fontSize: "13px", color: "#64748b", marginTop: "4px" }}>
+          הגדרות גלובליות המשפיעות על כל המערכת.
+        </p>
+      </div>
+
+      <div
+        style={{
+          background: "#ffffff",
+          border: "1px solid #e2e8f0",
+          borderRadius: "12px",
+          overflow: "hidden",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+        }}
+      >
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr style={{ background: "linear-gradient(to left, #1e3a5f, #2d5a8e)" }}>
+              {["הגדרה", "תיאור", "ערך נוכחי", "שמירה"].map((h) => (
+                <th
+                  key={h}
+                  style={{
+                    color: "#ffffff",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    padding: "12px 16px",
+                    textAlign: "right",
+                  }}
+                >
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {settingsLoading ? (
+              <tr>
+                <td colSpan={4} style={{ padding: "16px", textAlign: "center", color: "#94a3b8", fontSize: "13px" }}>
+                  טוען...
+                </td>
+              </tr>
+            ) : (
+              settings.map((s) => {
+                const isDirty = settingsDirty[s.key] !== undefined;
+                return (
+                  <tr key={s.key} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                    <td style={{ padding: "12px 16px", fontWeight: 600, color: "#1e3a5f", fontSize: "13px" }}>
+                      {s.key}
+                    </td>
+                    <td style={{ padding: "12px 16px", color: "#64748b", fontSize: "13px" }}>
+                      {s.description ?? "—"}
+                    </td>
+                    <td style={{ padding: "12px 16px" }}>
+                      <input
+                        type="text"
+                        value={getSettingVal(s.key, s.value)}
+                        onChange={(e) =>
+                          setSettingsDirty((prev) => ({ ...prev, [s.key]: e.target.value }))
+                        }
+                        style={{
+                          width: "100px",
+                          textAlign: "center",
+                          border: "1px solid #e2e8f0",
+                          borderRadius: "6px",
+                          padding: "4px 8px",
+                          fontFamily: "monospace",
+                          direction: "ltr",
+                        }}
+                      />
+                    </td>
+                    <td style={{ padding: "12px 16px" }}>
+                      <button
+                        onClick={() => saveSetting(s.key, getSettingVal(s.key, s.value))}
+                        disabled={!isDirty || savingSetting === s.key}
+                        style={{
+                          padding: "5px 14px",
+                          borderRadius: "6px",
+                          fontSize: "12px",
+                          fontWeight: 600,
+                          backgroundColor: isDirty ? "#1e3a5f" : "#e2e8f0",
+                          color: isDirty ? "#fff" : "#94a3b8",
+                          border: "none",
+                          cursor: isDirty ? "pointer" : "default",
+                          transition: "all 0.15s",
+                          fontFamily: "Heebo, sans-serif",
+                        }}
+                      >
+                        {savingSetting === s.key ? "..." : "שמור"}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+
       <div>
         <h2 style={{ fontSize: "20px", fontWeight: 800, color: "#1e3a5f", margin: 0 }}>
           כללי מע״מ גלובליים

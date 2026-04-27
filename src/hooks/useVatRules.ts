@@ -47,12 +47,13 @@ export function useUpdateVatRule() {
 export function calcVat(
   total: number,
   rule: VatRule | undefined,
-  vatRate = 1.18
+  vatRatePercent = 18
 ): { vat_original: number; vat_deductible: number } {
   if (!rule || rule.no_vat || total <= 0) {
     return { vat_original: 0, vat_deductible: 0 };
   }
-  const vat_original = Math.round((total / vatRate) * (vatRate - 1) * 100) / 100;
+  const divisor = 1 + vatRatePercent / 100;
+  const vat_original = Math.round((total / divisor) * (vatRatePercent / 100) * 100) / 100;
   const vat_deductible = Math.round(vat_original * rule.vat_rate * 100) / 100;
   return { vat_original, vat_deductible };
 }

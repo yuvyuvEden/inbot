@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { optimisticUpdate, ConflictError } from "@/hooks/useOptimisticLock";
 import { useVatRules, calcVat } from "@/hooks/useVatRules";
+import { useVatRatePercent } from "@/hooks/useSystemSettings";
 
 const STATUS_OPTIONS = [
   { value: "", label: "סטטוס: הכל" },
@@ -149,7 +150,7 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
   });
 
   const { data: vatRules = [] } = useVatRules();
-
+  const vatRatePercent = useVatRatePercent();
 
   const categories = useMemo(() => {
     if (!invoices) return [];
@@ -259,7 +260,7 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
     if (isNaN(newTotal) || newTotal < 0) return;
 
     const rule = vatRules.find(r => r.category === editDetailsModal.category);
-    const { vat_original, vat_deductible } = calcVat(newTotal, rule);
+    const { vat_original, vat_deductible } = calcVat(newTotal, rule, vatRatePercent);
 
     const invoice_date = editDetailsDate
       ? format(editDetailsDate, "yyyy-MM-dd")
@@ -885,7 +886,7 @@ export default function InvoicesTab({ clientId, hasAccountant = false, showAccou
               {editDetailsTotal && !isNaN(parseFloat(editDetailsTotal)) && (() => {
                 const total = parseFloat(editDetailsTotal);
                 const rule = vatRules.find(r => r.category === editDetailsModal?.category);
-                const { vat_original, vat_deductible } = calcVat(total, rule);
+                const { vat_original, vat_deductible } = calcVat(total, rule, vatRatePercent);
                 const vatPct = rule ? Math.round(rule.vat_rate * 100) : 100;
                 return (
                   <div className="mt-2 text-[12px] text-gray-500">
