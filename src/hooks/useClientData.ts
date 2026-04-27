@@ -10,7 +10,7 @@ export function useClientRecord() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("clients")
-        .select("id, brand_name")
+        .select("id, brand_name, grace_until")
         .eq("user_id", user!.id)
         .maybeSingle();
       if (error) throw error;
