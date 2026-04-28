@@ -246,6 +246,11 @@ const Login = () => {
           >
             {formLoading ? "נרשם..." : "הירשם"}
           </button>
+          <p className="mt-3 text-center text-[12px] text-muted-foreground">
+            <Link to="/register" className="hover:text-foreground transition-colors">
+              הרשמה מפורטת עם פרטי עסק ←
+            </Link>
+          </p>
         </form>
       )}
 
