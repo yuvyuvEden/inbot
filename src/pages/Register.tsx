@@ -1,11 +1,11 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Check, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import AuthCard from "@/components/auth/AuthCard";
 
-type Step = 1 | 2 | 3;
+type Step = 2 | 3;
 
 const StepIndicator = ({ step }: { step: Step }) => {
   const items = [
@@ -56,56 +56,21 @@ const StepIndicator = ({ step }: { step: Step }) => {
 
 const Register = () => {
   const navigate = useNavigate();
-  const [step, setStep] = useState<Step>(1);
+  const location = useLocation();
+  const userId = (location.state as { userId?: string } | null)?.userId;
+
+  const [step, setStep] = useState<Step>(2);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Step 1
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
-  const [userId, setUserId] = useState<string | null>(null);
-
-  // Step 2
   const [brandName, setBrandName] = useState("");
   const [legalName, setLegalName] = useState("");
 
-  const handleStep1 = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    const trimmed = email.trim();
-    if (!trimmed || !password || !confirm) {
-      setError("יש למלא את כל השדות.");
-      return;
+  useEffect(() => {
+    if (!userId) {
+      navigate("/login", { replace: true });
     }
-    if (password.length < 6) {
-      setError("הסיסמה חייבת להכיל לפחות 6 תווים.");
-      return;
-    }
-    if (password !== confirm) {
-      setError("הסיסמאות אינן תואמות.");
-      return;
-    }
-    setLoading(true);
-    const { data, error: authError } = await supabase.auth.signUp({
-      email: trimmed,
-      password,
-      options: { emailRedirectTo: window.location.origin + "/dashboard" },
-    });
-    setLoading(false);
-    if (authError) {
-      if (authError.message.includes("already registered"))
-        setError("כתובת אימייל זו כבר רשומה.");
-      else setError("שגיאה בהרשמה. נסה שוב.");
-      return;
-    }
-    if (!data.user?.id) {
-      setError("שגיאה ביצירת המשתמש. נסה שוב.");
-      return;
-    }
-    setUserId(data.user.id);
-    setStep(2);
-  };
+  }, [userId, navigate]);
 
   const handleStep2 = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,7 +80,7 @@ const Register = () => {
       return;
     }
     if (!userId) {
-      setError("שגיאה: לא נמצא משתמש. חזור לשלב הקודם.");
+      setError("שגיאה: לא נמצא משתמש. חזור להתחברות.");
       return;
     }
     setLoading(true);
@@ -133,65 +98,11 @@ const Register = () => {
     setStep(3);
   };
 
+  if (!userId) return null;
+
   return (
     <AuthCard>
       <StepIndicator step={step} />
-
-      {step === 1 && (
-        <form onSubmit={handleStep1} className="space-y-4" dir="rtl">
-          <h2 className="text-right text-[16px] font-bold text-foreground">פרטי חשבון</h2>
-          <div className="space-y-1.5 text-right">
-            <label className="text-[13px] font-medium text-muted-foreground">אימייל</label>
-            <Input
-              type="email"
-              placeholder="your@email.com"
-              dir="ltr"
-              className="h-[44px] rounded-lg border-border text-right focus-visible:ring-primary"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={loading}
-            />
-          </div>
-          <div className="space-y-1.5 text-right">
-            <label className="text-[13px] font-medium text-muted-foreground">סיסמה</label>
-            <Input
-              type="password"
-              placeholder="לפחות 6 תווים"
-              dir="ltr"
-              className="h-[44px] rounded-lg border-border text-right focus-visible:ring-primary"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={loading}
-            />
-          </div>
-          <div className="space-y-1.5 text-right">
-            <label className="text-[13px] font-medium text-muted-foreground">אימות סיסמה</label>
-            <Input
-              type="password"
-              placeholder="הזן סיסמה שוב"
-              dir="ltr"
-              className="h-[44px] rounded-lg border-border text-right focus-visible:ring-primary"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              disabled={loading}
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="h-[44px] w-full rounded-lg bg-primary text-[14px] font-bold text-primary-foreground transition-colors hover:bg-primary/85 disabled:opacity-50"
-          >
-            {loading ? "יוצר חשבון..." : "המשך →"}
-          </button>
-          {error && <p className="text-center text-[13px] text-destructive">{error}</p>}
-          <p className="text-center text-[12px] text-muted-foreground">
-            כבר יש לך חשבון?{" "}
-            <Link to="/login" className="text-primary hover:underline">
-              התחבר
-            </Link>
-          </p>
-        </form>
-      )}
 
       {step === 2 && (
         <form onSubmit={handleStep2} className="space-y-4" dir="rtl">
@@ -225,7 +136,7 @@ const Register = () => {
             disabled={loading}
             className="h-[44px] w-full rounded-lg bg-primary text-[14px] font-bold text-primary-foreground transition-colors hover:bg-primary/85 disabled:opacity-50"
           >
-            {loading ? "שומר..." : "סיום הרשמה →"}
+            {loading ? "שומר..." : "סיום הרשמה ←"}
           </button>
           {error && <p className="text-center text-[13px] text-destructive">{error}</p>}
         </form>
