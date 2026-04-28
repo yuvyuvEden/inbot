@@ -152,6 +152,41 @@ const Register = () => {
           <p className="text-[13px] text-muted-foreground">
             שלחנו אימות לכתובת האימייל שלך. ניתן להתחיל להשתמש במערכת כבר עכשיו.
           </p>
+          {(() => {
+            const trialEnd = new Date();
+            trialEnd.setDate(trialEnd.getDate() + 30);
+            const formatted = trialEnd.toLocaleDateString("he-IL", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+            });
+            return (
+              <div
+                style={{
+                  background: "#eff6ff",
+                  border: "1px solid #bfdbfe",
+                  borderRadius: 8,
+                  padding: "12px 16px",
+                  marginTop: 16,
+                }}
+                className="text-right"
+                dir="rtl"
+              >
+                <div style={{ fontSize: 14 }}>
+                  🎉{" "}
+                  <span style={{ fontWeight: 700, color: "#1e3a5f" }}>
+                    תקופת ניסיון של 30 יום
+                  </span>
+                </div>
+                <div style={{ fontSize: 12, color: "#64748b", marginTop: 4 }}>
+                  הגישה שלך פעילה עד: {formatted}
+                </div>
+                <div style={{ fontSize: 12, color: "#64748b", marginTop: 4 }}>
+                  במהלך הניסיון תוכל לעבד עד 30 חשבוניות.
+                </div>
+              </div>
+            );
+          })()}
           <button
             onClick={() => navigate("/dashboard", { replace: true })}
             className="h-[44px] w-full rounded-lg bg-primary text-[14px] font-bold text-primary-foreground transition-colors hover:bg-primary/85"
