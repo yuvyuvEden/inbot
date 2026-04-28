@@ -267,6 +267,7 @@ export type Database = {
           processed_ids: Json
           script_id: string | null
           search_days: number
+          sheet_id: string | null
           tax_rules: Json
           telegram_chat_id: string | null
           thread_limit: number
@@ -314,6 +315,7 @@ export type Database = {
           processed_ids?: Json
           script_id?: string | null
           search_days?: number
+          sheet_id?: string | null
           tax_rules?: Json
           telegram_chat_id?: string | null
           thread_limit?: number
@@ -361,6 +363,7 @@ export type Database = {
           processed_ids?: Json
           script_id?: string | null
           search_days?: number
+          sheet_id?: string | null
           tax_rules?: Json
           telegram_chat_id?: string | null
           thread_limit?: number
@@ -512,9 +515,40 @@ export type Database = {
           },
         ]
       }
+      invoice_quarantine: {
+        Row: {
+          created_at: string
+          id: string
+          payload: Json
+          reason: string
+          resolved_at: string | null
+          resolved_by: string | null
+          telegram_chat_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          payload: Json
+          reason: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          telegram_chat_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          payload?: Json
+          reason?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          telegram_chat_id?: string
+        }
+        Relationships: []
+      }
       invoices: {
         Row: {
           allocation_number: string | null
+          approved_at: string | null
           archived_at: string | null
           archived_by: string | null
           category: string | null
@@ -524,11 +558,21 @@ export type Database = {
           deleted_at: string | null
           document_type: string | null
           drive_file_url: string | null
+          gemini_confidence: number | null
           id: string
+          intercept_type: string | null
           invoice_date: string | null
           invoice_number: string | null
           is_archived: boolean
+          note_1: string | null
+          note_2: string | null
+          note_3: string | null
+          original_filename: string | null
           payment_date: string | null
+          received_at: string
+          sheet_row_id: number | null
+          source: string
+          source_email: string | null
           status: string
           tax_deductible: number | null
           total: number | null
@@ -540,6 +584,7 @@ export type Database = {
         }
         Insert: {
           allocation_number?: string | null
+          approved_at?: string | null
           archived_at?: string | null
           archived_by?: string | null
           category?: string | null
@@ -549,11 +594,21 @@ export type Database = {
           deleted_at?: string | null
           document_type?: string | null
           drive_file_url?: string | null
+          gemini_confidence?: number | null
           id?: string
+          intercept_type?: string | null
           invoice_date?: string | null
           invoice_number?: string | null
           is_archived?: boolean
+          note_1?: string | null
+          note_2?: string | null
+          note_3?: string | null
+          original_filename?: string | null
           payment_date?: string | null
+          received_at?: string
+          sheet_row_id?: number | null
+          source?: string
+          source_email?: string | null
           status?: string
           tax_deductible?: number | null
           total?: number | null
@@ -565,6 +620,7 @@ export type Database = {
         }
         Update: {
           allocation_number?: string | null
+          approved_at?: string | null
           archived_at?: string | null
           archived_by?: string | null
           category?: string | null
@@ -574,11 +630,21 @@ export type Database = {
           deleted_at?: string | null
           document_type?: string | null
           drive_file_url?: string | null
+          gemini_confidence?: number | null
           id?: string
+          intercept_type?: string | null
           invoice_date?: string | null
           invoice_number?: string | null
           is_archived?: boolean
+          note_1?: string | null
+          note_2?: string | null
+          note_3?: string | null
+          original_filename?: string | null
           payment_date?: string | null
+          received_at?: string
+          sheet_row_id?: number | null
+          source?: string
+          source_email?: string | null
           status?: string
           tax_deductible?: number | null
           total?: number | null
