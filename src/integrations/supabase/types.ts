@@ -239,6 +239,8 @@ export type Database = {
           billing_day: number
           brand_name: string
           business_nature: string | null
+          connect_code: string | null
+          connect_code_expires_at: string | null
           created_at: string
           custom_categories: Json | null
           drive_folder_id: string | null
@@ -267,6 +269,8 @@ export type Database = {
           processed_ids: Json
           script_id: string | null
           search_days: number
+          settings_refresh_requested: boolean
+          settings_refreshed_at: string | null
           sheet_id: string | null
           tax_rules: Json
           telegram_chat_id: string | null
@@ -287,6 +291,8 @@ export type Database = {
           billing_day?: number
           brand_name: string
           business_nature?: string | null
+          connect_code?: string | null
+          connect_code_expires_at?: string | null
           created_at?: string
           custom_categories?: Json | null
           drive_folder_id?: string | null
@@ -315,6 +321,8 @@ export type Database = {
           processed_ids?: Json
           script_id?: string | null
           search_days?: number
+          settings_refresh_requested?: boolean
+          settings_refreshed_at?: string | null
           sheet_id?: string | null
           tax_rules?: Json
           telegram_chat_id?: string | null
@@ -335,6 +343,8 @@ export type Database = {
           billing_day?: number
           brand_name?: string
           business_nature?: string | null
+          connect_code?: string | null
+          connect_code_expires_at?: string | null
           created_at?: string
           custom_categories?: Json | null
           drive_folder_id?: string | null
@@ -363,6 +373,8 @@ export type Database = {
           processed_ids?: Json
           script_id?: string | null
           search_days?: number
+          settings_refresh_requested?: boolean
+          settings_refreshed_at?: string | null
           sheet_id?: string | null
           tax_rules?: Json
           telegram_chat_id?: string | null
@@ -868,6 +880,27 @@ export type Database = {
           updated_at?: string | null
           updated_by?: string | null
           value?: string
+        }
+        Relationships: []
+      }
+      telegram_rate_limits: {
+        Row: {
+          chat_id: string
+          message_count: number
+          updated_at: string
+          window_start: string
+        }
+        Insert: {
+          chat_id: string
+          message_count?: number
+          updated_at?: string
+          window_start?: string
+        }
+        Update: {
+          chat_id?: string
+          message_count?: number
+          updated_at?: string
+          window_start?: string
         }
         Relationships: []
       }
