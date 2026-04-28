@@ -255,6 +255,82 @@ function fireAndForget(url: string, init: RequestInit) {
   }
 }
 
+async function handleCallback(supabase: any, callback: any) {
+  const chatId = String(callback.message?.chat?.id ?? "");
+  const data   = callback.data ?? "";
+
+  const parts    = data.split("_");
+  if (parts.length < 3) return;
+  const flowType = parts[0];
+  const uid      = parts[1];
+  const action   = parts.slice(2).join("_");
+
+  const { data: flow, error } = await supabase
+    .from("invoice_flows")
+    .select("*")
+    .eq("id", uid)
+    .gt("expires_at", new Date().toISOString())
+    .maybeSingle();
+
+  if (error || !flow) {
+    await sendMessage(chatId, "⚠️ הפעולה פגה. שלח את החשבונית שוב.");
+    return;
+  }
+
+  await supabase.from("invoice_flows").delete().eq("id", uid);
+
+  const inv       = flow.invoice_data;
+  const clientId  = flow.client_id;
+  const PROCESS_URL_LOCAL    = Deno.env.get("PROCESS_INVOICE_URL") ?? "";
+  const PROCESS_SECRET_LOCAL = Deno.env.get("INBOT_SYNC_SECRET")   ?? "";
+
+  if (flowType === "alloc") {
+    if (action === "delete") {
+      await sendMessage(chatId, "🗑️ החשבונית בוטלה.");
+      return;
+    }
+    if (action === "keep") {
+      inv.force_zero_vat = true;
+      inv.allocation_number = "WAIVED";
+    }
+  } else if (flowType === "taxi") {
+    if (action === "no") {
+      await sendMessage(chatId, "🗑️ הנסיעה לא נרשמה (פרטית).");
+      return;
+    }
+  } else if (flowType === "food") {
+    const categoryMap: Record<string, string> = {
+      office:    "כיבוד למשרד",
+      meals:     "ארוחות ומסעדות",
+      groceries: "ארוחות ומסעדות",
+    };
+    inv.category = categoryMap[action] ?? inv.category;
+  } else if (flowType === "dup") {
+    if (action === "delete") {
+      await sendMessage(chatId, "🗑️ החשבונית בוטלה (כפילות).");
+      return;
+    }
+  }
+
+  await fetch(PROCESS_URL_LOCAL, {
+    method: "POST",
+    headers: {
+      "Content-Type":  "application/json",
+      "Authorization": `Bearer ${PROCESS_SECRET_LOCAL}`,
+    },
+    body: JSON.stringify({
+      chat_id:        chatId,
+      client_id:      clientId,
+      source:         "telegram",
+      file_bytes_b64: null,
+      message:        null,
+      resolved_flow:  inv,
+      skip_classify:  true,
+      skip_intercepts: true,
+    }),
+  });
+}
+
 function ok(): Response { return new Response("OK", { status: 200 }); }
 
 function isValidUuid(s: string): boolean {
