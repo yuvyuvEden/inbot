@@ -527,6 +527,47 @@ export type Database = {
           },
         ]
       }
+      invoice_flows: {
+        Row: {
+          chat_id: string
+          client_id: string
+          created_at: string
+          expires_at: string
+          file_url: string
+          flow_type: string
+          id: string
+          invoice_data: Json
+        }
+        Insert: {
+          chat_id: string
+          client_id: string
+          created_at?: string
+          expires_at?: string
+          file_url?: string
+          flow_type: string
+          id: string
+          invoice_data?: Json
+        }
+        Update: {
+          chat_id?: string
+          client_id?: string
+          created_at?: string
+          expires_at?: string
+          file_url?: string
+          flow_type?: string
+          id?: string
+          invoice_data?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_flows_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoice_quarantine: {
         Row: {
           created_at: string
@@ -1027,6 +1068,7 @@ export type Database = {
       }
     }
     Functions: {
+      cleanup_expired_flows: { Args: never; Returns: undefined }
       delete_accountant_full: {
         Args: { target_accountant_id: string }
         Returns: undefined
