@@ -465,10 +465,53 @@ export default function SettingsTab() {
                 >שמור מפתח</button>
               </div>
             </div>
+
+            <div style={{ marginTop: 16 }}>
+              <label style={{ fontSize: 12, fontWeight: 700, color: "#64748b" }}>אופי העסק</label>
+              <div style={{ fontSize: 11, color: "#94a3b8", marginBottom: 6 }}>
+                תיאור קצר של העסק — משפר את דיוק ה-AI בסיווג קטגוריות
+              </div>
+              {settings.businessNature && !natureEditing && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
+                  <span style={chip}>{settings.businessNature}</span>
+                  <button
+                    style={{ ...btnGhost, padding: 0, fontSize: 12, color: "#1e3a5f" }}
+                    onClick={() => { setNatureInput(settings.businessNature); setNatureEditing(true); }}
+                  >ערוך</button>
+                </div>
+              )}
+              {(!settings.businessNature || natureEditing) && (
+                <div style={{ display: "flex", gap: 8 }}>
+                  <input
+                    type="text"
+                    style={{ ...inputBase, flex: 1 }}
+                    value={natureInput}
+                    onChange={e => setNatureInput(e.target.value)}
+                    placeholder='למשל: "חברת פיתוח תוכנה וייעוץ"'
+                  />
+                  <button
+                    style={{ ...btnPrimary, ...btnSm, opacity: !natureInput.trim() ? 0.5 : 1 }}
+                    disabled={!natureInput.trim()}
+                    onClick={async () => {
+                      const val = natureInput.trim();
+                      if (!val || !clientId) return;
+                      const { error } = await supabase.from("clients").update({ business_nature: val } as any).eq("id", clientId);
+                      if (error) { toast.error("שגיאה בשמירה"); return; }
+                      setSettings(p => ({ ...p, businessNature: val }));
+                      setNatureInput("");
+                      setNatureEditing(false);
+                      setNatureSaved(true);
+                      setTimeout(() => setNatureSaved(false), 2000);
+                    }}
+                  >שמור</button>
+                </div>
+              )}
+              {natureSaved && (
+                <div style={{ fontSize: 12, color: "#16a34a", marginTop: 6 }}>✓ נשמר</div>
+              )}
+            </div>
           </div>
         </div>
-
-        {/* ── CARD 2: Learned Dictionary ── */}
         <div style={card}>
           <div style={{ ...cardHeader, justifyContent: "space-between" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}><Brain size={16} /> מילון לומד</div>
