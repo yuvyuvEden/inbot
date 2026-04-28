@@ -18,6 +18,8 @@ import AiChatTab from "@/components/tabs/AiChatTab";
 import SettingsTab from "@/components/tabs/SettingsTab";
 import { AccountantTab } from "@/components/tabs/AccountantTab";
 import { ArchiveTab } from "@/components/tabs/ArchiveTab";
+import OnboardingChecklist from "@/components/dashboard/OnboardingChecklist";
+import { useClientOnboarding } from "@/hooks/useClientOnboarding";
 import {
   BarChart2, FileText, MessageSquare, Archive, Download, Bot, Settings, LogOut, ShieldAlert,
   LayoutDashboard,
@@ -78,6 +80,7 @@ export default function Dashboard() {
   const { data: timeline, isLoading: timelineLoading } = useExpenseTimeline(effectiveClientId, period);
   const { data: categories, isLoading: categoriesLoading } = useCategoryBreakdown(effectiveClientId, period);
   const { data: recentInvoices, isLoading: recentLoading } = useRecentInvoices(effectiveClientId);
+  const { data: onboardingData } = useClientOnboarding(effectiveClientId);
 
   const { data: hasAccountant } = useQuery({
     queryKey: ["has-accountant", effectiveClientId],
@@ -208,6 +211,16 @@ export default function Dashboard() {
         <div className="mx-auto w-full md:w-[90%] bg-white rounded-none md:rounded-xl shadow-none md:shadow-[0_4px_12px_rgba(0,0,0,.08)] overflow-visible">
           {activeTab === "dashboard" ? (
             <div className="space-y-6 p-4 md:p-6">
+              {!isAdminView && onboardingData && effectiveClientId && (
+                <OnboardingChecklist
+                  clientId={effectiveClientId}
+                  geminiKey={onboardingData.gemini_api_key}
+                  businessNature={onboardingData.business_nature}
+                  telegramChatId={onboardingData.telegram_chat_id}
+                  sheetId={onboardingData.sheet_id}
+                  setActiveTab={setActiveTab}
+                />
+              )}
               {/* 1. Period Selector */}
               <div style={{ width: "100%", maxWidth: "100%", overflow: "visible" }}>
                 <p style={{ fontSize: "12px", color: "#64748b", margin: "0 0 6px 0", textAlign: "right" }}>תקופה:</p>
