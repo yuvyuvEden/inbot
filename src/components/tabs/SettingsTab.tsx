@@ -150,6 +150,13 @@ export default function SettingsTab() {
   const [invoiceCount, setInvoiceCount] = useState(0);
   const [catNameInput, setCatNameInput] = useState("");
   const [catDescInput, setCatDescInput] = useState("");
+  const [natureInput, setNatureInput] = useState("");
+  const [natureSaved, setNatureSaved] = useState(false);
+  const [natureEditing, setNatureEditing] = useState(false);
+  const [catName, setCatName] = useState("");
+  const [catDesc, setCatDesc] = useState("");
+  const [catSaving, setCatSaving] = useState(false);
+  const [showCatAdd, setShowCatAdd] = useState(false);
 
   /* ── helpers ── */
   const asArr = (v: any): string[] => {
