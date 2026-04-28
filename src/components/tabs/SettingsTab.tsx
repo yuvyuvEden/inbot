@@ -150,6 +150,13 @@ export default function SettingsTab() {
   const [invoiceCount, setInvoiceCount] = useState(0);
   const [catNameInput, setCatNameInput] = useState("");
   const [catDescInput, setCatDescInput] = useState("");
+  const [natureInput, setNatureInput] = useState("");
+  const [natureSaved, setNatureSaved] = useState(false);
+  const [natureEditing, setNatureEditing] = useState(false);
+  const [catName, setCatName] = useState("");
+  const [catDesc, setCatDesc] = useState("");
+  const [catSaving, setCatSaving] = useState(false);
+  const [showCatAdd, setShowCatAdd] = useState(false);
 
   /* ── helpers ── */
   const asArr = (v: any): string[] => {
@@ -458,10 +465,53 @@ export default function SettingsTab() {
                 >שמור מפתח</button>
               </div>
             </div>
+
+            <div style={{ marginTop: 16 }}>
+              <label style={{ fontSize: 12, fontWeight: 700, color: "#64748b" }}>אופי העסק</label>
+              <div style={{ fontSize: 11, color: "#94a3b8", marginBottom: 6 }}>
+                תיאור קצר של העסק — משפר את דיוק ה-AI בסיווג קטגוריות
+              </div>
+              {settings.businessNature && !natureEditing && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
+                  <span style={chip}>{settings.businessNature}</span>
+                  <button
+                    style={{ ...btnGhost, padding: 0, fontSize: 12, color: "#1e3a5f" }}
+                    onClick={() => { setNatureInput(settings.businessNature); setNatureEditing(true); }}
+                  >ערוך</button>
+                </div>
+              )}
+              {(!settings.businessNature || natureEditing) && (
+                <div style={{ display: "flex", gap: 8 }}>
+                  <input
+                    type="text"
+                    style={{ ...inputBase, flex: 1 }}
+                    value={natureInput}
+                    onChange={e => setNatureInput(e.target.value)}
+                    placeholder='למשל: "חברת פיתוח תוכנה וייעוץ"'
+                  />
+                  <button
+                    style={{ ...btnPrimary, ...btnSm, opacity: !natureInput.trim() ? 0.5 : 1 }}
+                    disabled={!natureInput.trim()}
+                    onClick={async () => {
+                      const val = natureInput.trim();
+                      if (!val || !clientId) return;
+                      const { error } = await supabase.from("clients").update({ business_nature: val } as any).eq("id", clientId);
+                      if (error) { toast.error("שגיאה בשמירה"); return; }
+                      setSettings(p => ({ ...p, businessNature: val }));
+                      setNatureInput("");
+                      setNatureEditing(false);
+                      setNatureSaved(true);
+                      setTimeout(() => setNatureSaved(false), 2000);
+                    }}
+                  >שמור</button>
+                </div>
+              )}
+              {natureSaved && (
+                <div style={{ fontSize: 12, color: "#16a34a", marginTop: 6 }}>✓ נשמר</div>
+              )}
+            </div>
           </div>
         </div>
-
-        {/* ── CARD 2: Learned Dictionary ── */}
         <div style={card}>
           <div style={{ ...cardHeader, justifyContent: "space-between" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}><Brain size={16} /> מילון לומד</div>
@@ -495,6 +545,94 @@ export default function SettingsTab() {
                 <button style={{ ...btnGhost, ...btnSm }} onClick={() => setShowAddWord(false)}>ביטול</button>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* ── CARD 2b: Custom Categories ── */}
+        <div style={card}>
+          <div style={{ ...cardHeader, justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <Tags size={16} /> קטגוריות מותאמות
+              {catSaving && <span style={{ fontSize: 11, fontWeight: 400, color: "#94a3b8" }}>שומר...</span>}
+            </div>
+            <button style={{ ...btnSecondary, ...btnSm }} onClick={() => setShowCatAdd(!showCatAdd)}>
+              <Plus size={14} /> הוסף
+            </button>
+          </div>
+          <div style={{ padding: 16 }}>
+            <div style={{ fontSize: 12, color: "#64748b", marginBottom: 10 }}>
+              קטגוריות הוצאה ספציפיות לעסק שלך — ה-AI ישתמש בהן לסיווג חשבוניות.
+            </div>
+            {showCatAdd && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
+                <input
+                  style={inputBase}
+                  value={catName}
+                  onChange={e => setCatName(e.target.value)}
+                  placeholder="שם קטגוריה (למשל: ציוד צילום)"
+                />
+                <input
+                  style={inputBase}
+                  value={catDesc}
+                  onChange={e => setCatDesc(e.target.value)}
+                  placeholder="תיאור (אופציונלי) — למשל: מצלמות, עדשות, תאורה"
+                />
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    style={{ ...btnPrimary, ...btnSm }}
+                    onClick={async () => {
+                      const name = catName.trim();
+                      if (!name || !clientId) return;
+                      if (settings.customCategories.some(c => c.name === name)) {
+                        toast.warning("קטגוריה כבר קיימת"); return;
+                      }
+                      const updated = [...settings.customCategories, { name, description: catDesc.trim() }];
+                      setSettings(p => ({ ...p, customCategories: updated }));
+                      setCatName(""); setCatDesc(""); setShowCatAdd(false);
+                      setCatSaving(true);
+                      const { error } = await supabase.from("clients")
+                        .update({ custom_categories: updated } as any)
+                        .eq("id", clientId);
+                      setCatSaving(false);
+                      if (error) { toast.error("שגיאה בשמירה"); return; }
+                      toast.success(`"${name}" נוספה`);
+                    }}
+                  >הוסף קטגוריה</button>
+                  <button
+                    style={{ ...btnGhost, ...btnSm }}
+                    onClick={() => { setShowCatAdd(false); setCatName(""); setCatDesc(""); }}
+                  >ביטול</button>
+                </div>
+              </div>
+            )}
+            <div style={scrollList}>
+              {settings.customCategories.length === 0 && (
+                <div style={{ padding: 10, fontSize: 12, color: "#64748b" }}>אין קטגוריות מותאמות עדיין</div>
+              )}
+              {settings.customCategories.map(cat => (
+                <div key={cat.name} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "8px 10px", borderBottom: "1px solid #f1f5f9", gap: 8 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1 }}>
+                    <span style={{ fontSize: 12, fontWeight: 700 }}>{cat.name}</span>
+                    {cat.description && (
+                      <span style={{ fontSize: 11, color: "#64748b" }}>{cat.description}</span>
+                    )}
+                  </div>
+                  <button
+                    style={btnGhost}
+                    onClick={async () => {
+                      if (!clientId) return;
+                      const updated = settings.customCategories.filter(c => c.name !== cat.name);
+                      setSettings(p => ({ ...p, customCategories: updated }));
+                      const { error } = await supabase.from("clients")
+                        .update({ custom_categories: updated } as any)
+                        .eq("id", clientId);
+                      if (error) { toast.error("שגיאה בשמירה"); return; }
+                      toast.success(`"${cat.name}" נמחקה`);
+                    }}
+                  ><X size={14} /></button>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
