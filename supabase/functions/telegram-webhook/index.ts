@@ -27,7 +27,11 @@ Deno.serve(async (req) => {
   const msg      = update?.message;
   const callback = update?.callback_query;
 
-  if (callback) { await answerCallback(callback.id); return ok(); }
+  if (callback) {
+    await answerCallback(callback.id);
+    await handleCallback(supabase, callback);
+    return ok();
+  }
   if (!msg) return ok();
 
   const chatId  = String(msg.chat?.id ?? "");
