@@ -9,6 +9,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AccountantDashboard from "./pages/AccountantDashboard";
 import AccountantClientView from "./pages/AccountantClientView";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
