@@ -168,6 +168,7 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
   const [inviteExpiry, setInviteExpiry] = useState<Date | null>(null);
   const [isGeneratingInvite, setIsGeneratingInvite] = useState(false);
   const [invitePollRef, setInvitePollRef] = useState<ReturnType<typeof setInterval> | null>(null);
+  const [clientPhone, setClientPhone] = useState<string | null>(null);
 
   /* ── helpers ── */
   const asArr = (v: any): string[] => {
