@@ -8,13 +8,31 @@ export function useClientRecord() {
     queryKey: ["client-record", user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
+      // חפש תחילה דרך client_users (תומך גם ב-owner וגם ב-member)
+      const { data: membership } = await supabase
+        .from("client_users")
+        .select("client_id, role")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+
+      if (membership?.client_id) {
+        const { data, error } = await supabase
+          .from("clients")
+          .select("id, brand_name, grace_until")
+          .eq("id", membership.client_id)
+          .maybeSingle();
+        if (error) throw error;
+        return data ? { ...data, userRole: membership.role } : null;
+      }
+
+      // fallback — לקוח ישן שעדיין לא ב-client_users
       const { data, error } = await supabase
         .from("clients")
         .select("id, brand_name, grace_until")
         .eq("user_id", user!.id)
         .maybeSingle();
       if (error) throw error;
-      return data;
+      return data ? { ...data, userRole: "owner" } : null;
     },
   });
 }
