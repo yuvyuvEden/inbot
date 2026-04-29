@@ -114,7 +114,7 @@ export function useAddClientUser() {
       telegram_chat_id?: string;
       email?: string;
     }) => {
-      const { error } = await supabase.from("client_users").insert(user);
+      const { error } = await supabase.from("client_users").insert(user as any);
       if (error) throw error;
     },
     onSuccess: (_, vars) => {

@@ -249,33 +249,72 @@ export type Database = {
         }
         Relationships: []
       }
+      client_telegram_users: {
+        Row: {
+          chat_id: string
+          client_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string | null
+        }
+        Insert: {
+          chat_id: string
+          client_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string | null
+        }
+        Update: {
+          chat_id?: string
+          client_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_telegram_users_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_telegram_users_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients_accountant_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_users: {
         Row: {
           client_id: string
           created_at: string
-          email: string | null
           id: string
-          is_active: boolean
-          name: string
-          telegram_chat_id: string | null
+          invited_by: string | null
+          role: string
+          user_id: string
         }
         Insert: {
           client_id: string
           created_at?: string
-          email?: string | null
           id?: string
-          is_active?: boolean
-          name: string
-          telegram_chat_id?: string | null
+          invited_by?: string | null
+          role?: string
+          user_id: string
         }
         Update: {
           client_id?: string
           created_at?: string
-          email?: string | null
           id?: string
-          is_active?: boolean
-          name?: string
-          telegram_chat_id?: string | null
+          invited_by?: string | null
+          role?: string
+          user_id?: string
         }
         Relationships: [
           {
@@ -315,6 +354,8 @@ export type Database = {
           gemini_api_key: string | null
           grace_until: string | null
           id: string
+          invite_code: string | null
+          invite_code_expires_at: string | null
           invoice_limit_override: number | null
           invoice_platforms: Json
           is_active: boolean
@@ -367,6 +408,8 @@ export type Database = {
           gemini_api_key?: string | null
           grace_until?: string | null
           id?: string
+          invite_code?: string | null
+          invite_code_expires_at?: string | null
           invoice_limit_override?: number | null
           invoice_platforms?: Json
           is_active?: boolean
@@ -419,6 +462,8 @@ export type Database = {
           gemini_api_key?: string | null
           grace_until?: string | null
           id?: string
+          invite_code?: string | null
+          invite_code_expires_at?: string | null
           invoice_limit_override?: number | null
           invoice_platforms?: Json
           is_active?: boolean
