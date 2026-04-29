@@ -116,6 +116,67 @@ function SettingField({
   );
 }
 
+/* ── PromptEditor: large textarea card with save + warning ── */
+function PromptEditor({
+  title, description, loadedValue, onSave, extraInfo,
+}: {
+  title: string;
+  description: string;
+  loadedValue: string;
+  onSave: (val: string) => Promise<void>;
+  extraInfo?: string;
+}) {
+  const [val, setVal] = useState(loadedValue);
+  const [saving, setSaving] = useState(false);
+  const [lastLoaded, setLastLoaded] = useState(loadedValue);
+  if (loadedValue !== lastLoaded) {
+    setLastLoaded(loadedValue);
+    setVal(loadedValue);
+  }
+  const dirty = val !== loadedValue;
+  const doSave = async () => {
+    setSaving(true);
+    try { await onSave(val); } finally { setSaving(false); }
+  };
+  return (
+    <div style={card}>
+      <div style={cardHeader}>{title}</div>
+      <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+        <div style={{ fontSize: 12, color: "#94a3b8" }}>{description}</div>
+        <textarea
+          value={val}
+          onChange={(e) => setVal(e.target.value)}
+          style={{
+            width: "100%", minHeight: 200, fontFamily: "monospace",
+            direction: "ltr", fontSize: 12, border: "1px solid #e2e8f0",
+            borderRadius: 8, padding: 12, resize: "vertical", outline: "none",
+          }}
+        />
+        <div style={{ fontSize: 11, color: "#e8941a" }}>
+          ⚠️ שינוי הפרומפט ישפיע מיידית על כל עיבוד חשבוניות חדש
+        </div>
+        {extraInfo && (
+          <div style={{ fontSize: 11, color: "#64748b", marginTop: 8 }}>{extraInfo}</div>
+        )}
+        <div>
+          <button
+            onClick={doSave}
+            disabled={!dirty || saving}
+            style={{
+              ...btnPrimary,
+              background: dirty ? "#1e3a5f" : "#e2e8f0",
+              color: dirty ? "#fff" : "#94a3b8",
+              cursor: dirty ? "pointer" : "default",
+            }}
+          >
+            {saving ? "שומר..." : "שמור פרומפט"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── ListManager: input + scrollable chip list, auto-save ── */
 function ListManager({
   items, placeholder, onChange,
@@ -579,11 +640,20 @@ export default function AdminSystemTab() {
   );
 
   const renderPromptsTab = () => (
-    <div style={card}>
-      <div style={cardHeader}>📝 פרומפטים AI</div>
-      <div style={{ padding: 16, fontSize: 13, color: "#64748b" }}>
-        ניהול פרומפטים יתווסף בקרוב. כרגע הפרומפטים מנוהלים ברמת הקוד ב-process-invoice Edge Function.
-      </div>
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <PromptEditor
+        title="סיווג מסמך (classify)"
+        description="מריץ לפני ניתוח מלא — מסנן מסמכים שאינם חשבוניות. מחזיר: INVOICE / REPORT / OTHER"
+        loadedValue={getSetting("prompt_classify_document")}
+        onSave={(v) => saveSetting("prompt_classify_document", v)}
+      />
+      <PromptEditor
+        title="ניתוח חשבונית (analyze)"
+        description="הפרומפט הראשי לחילוץ נתוני חשבונית. השתמש ב-{{NAMES}} {{VAT}} {{CATEGORIES}} כ-placeholders"
+        loadedValue={getSetting("prompt_analyze_invoice")}
+        onSave={(v) => saveSetting("prompt_analyze_invoice", v)}
+        extraInfo="{{NAMES}} = שמות הלקוח | {{VAT}} = מספר ח״פ | {{CATEGORIES}} = רשימת קטגוריות"
+      />
     </div>
   );
 
