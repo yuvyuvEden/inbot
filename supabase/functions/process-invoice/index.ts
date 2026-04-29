@@ -167,7 +167,7 @@ Deno.serve(async (req) => {
   if (!Array.isArray(aiResults)) {
     if (["INCOME","NON_FINANCIAL","LINK_ONLY_INVOICE","חשבונית עסקה"].includes(aiResults.document_type)) {
       if (aiResults.document_type === "INCOME") {
-        await sendMessage(chat_id, `⚠️ <b>זוהתה הכנסה — לא נרשמה</b>`, "HTML");
+        await broadcastMessage(supabase, client_id, chat_id, `⚠️ <b>זוהתה הכנסה — לא נרשמה</b>`, "HTML");
       }
       return json({ status: "skip", reason: aiResults.document_type });
     }
@@ -188,7 +188,7 @@ Deno.serve(async (req) => {
     if (!verifyOwnership(aiData.billed_to ?? "", myNames, client.vat_number ?? "",
         client.max_distance ?? G.max_distance)) {
       if (source === "gmail") {
-        await sendMessage(chat_id,
+        await broadcastMessage(supabase, client_id, chat_id,
           `⚠️ <b>חשבונית נדחתה — לא שייכת לעסק</b>\nלכבוד: ${escHtml(aiData.billed_to)}\nספק: ${escHtml(aiData.vendor)}`,
           "HTML"
         );
@@ -232,7 +232,7 @@ Deno.serve(async (req) => {
 
     if (dupResult.isExact) {
       if (source === "telegram") {
-        await sendMessage(chat_id,
+        await broadcastMessage(supabase, client_id, chat_id,
           `⛔ <b>כפילות!</b>\nחשבונית ${escHtml(aiData.invoice_number)} כבר קיימת.`, "HTML"
         );
       }
@@ -242,13 +242,13 @@ Deno.serve(async (req) => {
     if (dupResult.isSuspected) {
       const uid = makeUid();
       await saveFlow(supabase, uid, client_id, chat_id, "duplicate", aiData, "");
-      await sendMessageKb(chat_id,
+      await broadcastMessage(supabase, client_id, chat_id,
         `🤔 <b>ייתכן כפילות</b>\nספק: ${escHtml(aiData.vendor)} | ${Math.abs(aiData.total)}₪\nספק קיים: ${escHtml(dupResult.existingVendor ?? "")}`,
+        "HTML",
         { inline_keyboard: [
           [{ text: "🗑️ מחק (כפילות)", callback_data: `dup_${uid}_delete` }],
           [{ text: "📝 רשום למרות זאת", callback_data: `dup_${uid}_keep` }],
-        ]},
-        "HTML"
+        ]}
       );
       continue;
     }
@@ -260,13 +260,13 @@ Deno.serve(async (req) => {
     if (needsAlloc && !aiData.allocation_number) {
       const uid = makeUid();
       await saveFlow(supabase, uid, client_id, chat_id, "allocation", aiData, "");
-      await sendMessageKb(chat_id,
+      await broadcastMessage(supabase, client_id, chat_id,
         `⚠️ <b>חסר מספר הקצאה!</b>\n${escHtml(aiData.vendor)} | ${Math.abs(aiData.total)}₪\nצור קשר עם הספק.\n\nלקבל בכל זאת (ללא קיזוז מע"מ)?`,
+        "HTML",
         { inline_keyboard: [
           [{ text: "❌ לא, אבקש חשבונית חדשה", callback_data: `alloc_${uid}_delete` }],
           [{ text: "✅ כן, קבל (0 מע\"מ)",     callback_data: `alloc_${uid}_keep`   }],
-        ]},
-        "HTML"
+        ]}
       );
       continue;
     }
@@ -274,13 +274,13 @@ Deno.serve(async (req) => {
     if (isTaxi(aiData.category)) {
       const uid = makeUid();
       await saveFlow(supabase, uid, client_id, chat_id, "taxi", aiData, "");
-      await sendMessageKb(chat_id,
+      await broadcastMessage(supabase, client_id, chat_id,
         `🚕 <b>${escHtml(aiData.vendor)}</b> | ${Math.abs(aiData.total)}₪\nהנסיעה היתה לצרכי עבודה?`,
+        "HTML",
         { inline_keyboard: [
           [{ text: "✅ כן — עסקי (מוכר)", callback_data: `taxi_${uid}_yes` }],
           [{ text: "❌ לא — פרטי",        callback_data: `taxi_${uid}_no`  }],
-        ]},
-        "HTML"
+        ]}
       );
       continue;
     }
@@ -288,14 +288,14 @@ Deno.serve(async (req) => {
     if (isFood(aiData.vendor, G.food_vendors_regex)) {
       const uid = makeUid();
       await saveFlow(supabase, uid, client_id, chat_id, "food", aiData, "");
-      await sendMessageKb(chat_id,
+      await broadcastMessage(supabase, client_id, chat_id,
         `🍽️ <b>${escHtml(aiData.vendor)}</b> | ${Math.abs(aiData.total)}₪\nסוג הרכישה?`,
+        "HTML",
         { inline_keyboard: [
           [{ text: "☕ כיבוד למשרד",       callback_data: `food_${uid}_office`    }],
           [{ text: "🍽️ ארוחות ומסעדות",   callback_data: `food_${uid}_meals`     }],
           [{ text: "🛒 קניות (ללא מע\"מ)", callback_data: `food_${uid}_groceries` }],
-        ]},
-        "HTML"
+        ]}
       );
       continue;
     }
@@ -370,8 +370,8 @@ async function writeInvoice(
     return;
   }
 
-  if (source === "telegram") {
-    await sendMessage(chatId,
+  if (source === "telegram" || source === "gmail") {
+    await broadcastMessage(supabase, clientId, chatId,
       `✅ <b>נרשם בהצלחה:</b>\nספק: ${escHtml(aiData.vendor)}\nסכום: ${Math.abs(finalTotal)}₪\nקטגוריה: ${escHtml(category)}${aiData.fx_note ? `\n💱 ${escHtml(aiData.fx_note)}` : ""}`,
       "HTML"
     );
@@ -725,6 +725,30 @@ function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status, headers: { "Content-Type": "application/json" },
   });
+}
+
+async function getClientChatIds(supabase: any, clientId: string, primaryChatId: string): Promise<string[]> {
+  try {
+    const { data } = await supabase
+      .from("client_telegram_users")
+      .select("chat_id")
+      .eq("client_id", clientId)
+      .eq("is_active", true);
+    if (data?.length) return data.map((r: any) => r.chat_id);
+  } catch(e) { console.error("getClientChatIds:", e); }
+  // fallback — שלח ל-chat_id הראשי בלבד
+  return [primaryChatId];
+}
+
+async function broadcastMessage(supabase: any, clientId: string, primaryChatId: string, text: string, parseMode?: string, keyboard?: any) {
+  const chatIds = await getClientChatIds(supabase, clientId, primaryChatId);
+  for (const chatId of chatIds) {
+    if (keyboard) {
+      await sendMessageKb(chatId, text, keyboard, parseMode);
+    } else {
+      await sendMessage(chatId, text, parseMode);
+    }
+  }
 }
 
 async function sendMessage(chatId: string, text: string, parseMode?: string) {
