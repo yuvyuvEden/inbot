@@ -98,6 +98,26 @@ const Register = () => {
       setError("שגיאה בשמירת פרטי העסק. נסה שוב.");
       return;
     }
+    // שמור טלפון בפרופיל
+    if (phone.trim()) {
+      await supabase
+        .from("profiles")
+        .update({ phone: phone.trim() })
+        .eq("user_id", userId);
+    }
+    // הוסף את הבעלים ל-client_users
+    const { data: newClient } = await supabase
+      .from("clients")
+      .select("id")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (newClient) {
+      await supabase.from("client_users").insert({
+        client_id: newClient.id,
+        user_id: userId,
+        role: "owner",
+      }).then(() => {});
+    }
     setStep(3);
   };
 
