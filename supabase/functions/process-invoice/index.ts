@@ -60,6 +60,35 @@ Deno.serve(async (req) => {
     return json({ status: "ok", resolved: true });
   }
 
+  // בדיקת מכסת חשבוניות — לפי חבילה עם אפשרות דריסה לאדמין
+  const hasAccountant = Array.isArray((client as any).accountant_clients) &&
+    (client as any).accountant_clients.length > 0;
+  if (!hasAccountant && source !== "simulator") {
+    const rawLimit = (client as any).invoice_limit_override
+      ?? (client as any).plans?.invoice_limit
+      ?? 0;
+    const invoiceLimit = Number(rawLimit);
+    if (invoiceLimit > 0) {
+      // ספור חשבוניות החודש הנוכחי
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const { count } = await supabase
+        .from("invoices")
+        .select("id", { count: "exact", head: true })
+        .eq("client_id", client_id)
+        .eq("is_archived", false)
+        .gte("received_at", monthStart);
+      const currentCount = count ?? 0;
+      if (currentCount >= invoiceLimit) {
+        await broadcastMessage(supabase, client_id, chat_id,
+          `⛔ <b>הגעת למגבלת החשבוניות החודשית</b>\n\nהמנוי שלך מאפשר ${invoiceLimit} חשבוניות בחודש.\nהחודש עובדו כבר ${currentCount} חשבוניות.\n\nלשדרוג המנוי היכנס לדשבורד.`,
+          "HTML"
+        );
+        return json({ status: "blocked", reason: "invoice_limit_reached", count: currentCount, limit: invoiceLimit });
+      }
+    }
+  }
+
   const geminiKey = client.gemini_api_key ?? "";
   if (!geminiKey) {
     await sendMessage(chat_id, "⚠️ מפתח Gemini לא מוגדר.\n\nהגדר אותו בהגדרות הדשבורד.");
