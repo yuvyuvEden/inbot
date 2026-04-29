@@ -122,7 +122,7 @@ const subCardHeader: React.CSSProperties = {
 };
 
 /* ── component ─────────────────────────────────── */
-export default function SettingsTab() {
+export default function SettingsTab({ adminClientId }: { adminClientId?: string }) {
   const { user } = useAuth();
   const { data: vatRules = [] } = useVatRules();
   const getDefaultVat = (cat: string) => {
@@ -182,11 +182,11 @@ export default function SettingsTab() {
     if (!user?.id) return;
     setIsLoading(true);
     try {
-      const { data: c } = await supabase
-        .from("clients")
-        .select("*")
-        .eq("user_id", user.id)
-        .maybeSingle();
+      const baseQuery = supabase.from("clients").select("*");
+      const { data: c } = await (adminClientId
+        ? baseQuery.eq("id", adminClientId)
+        : baseQuery.eq("user_id", user.id)
+      ).maybeSingle();
       if (!c) { setIsLoading(false); return; }
       setClientId(c.id);
       setTelegramChatId((c as any).telegram_chat_id ?? null);
@@ -525,8 +525,19 @@ export default function SettingsTab() {
     }
   };
 
+  const isReadOnly = !!adminClientId;
+
   return (
     <div dir="rtl" style={{ padding: 16, fontFamily: "Heebo, sans-serif" }}>
+      {isReadOnly && (
+        <div style={{
+          background: "#fef3c7", border: "1px solid #f59e0b", borderRadius: 8,
+          padding: "10px 16px", marginBottom: 16, fontSize: 13, color: "#92400e",
+          fontFamily: "Heebo, sans-serif"
+        }}>
+          👁 מצב צפייה בלבד — אתה צופה בהגדרות של לקוח. לא ניתן לבצע שינויים.
+        </div>
+      )}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))", gap: 16 }}>
 
         {/* ── CARD: Telegram Connection ── */}
