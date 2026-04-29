@@ -126,6 +126,57 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_processing_errors: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          error_msg: string | null
+          error_type: string
+          file_name: string | null
+          id: string
+          raw_ai_response: string | null
+          source: string
+          vendor: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          error_msg?: string | null
+          error_type: string
+          file_name?: string | null
+          id?: string
+          raw_ai_response?: string | null
+          source?: string
+          vendor?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          error_msg?: string | null
+          error_type?: string
+          file_name?: string | null
+          id?: string
+          raw_ai_response?: string | null
+          source?: string
+          vendor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_processing_errors_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_processing_errors_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients_accountant_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       billing_log: {
         Row: {
           base_amount: number
