@@ -93,6 +93,7 @@ function RowMenu({
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!open) return;
     const handler = (e: MouseEvent) => {
       if (
         menuRef.current && !menuRef.current.contains(e.target as Node) &&
@@ -101,9 +102,15 @@ function RowMenu({
         setOpen(false);
       }
     };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
+    // השהייה קצרה — מונעת סגירה מיידית מה-mousedown שפתח את התפריט
+    const timer = setTimeout(() => {
+      document.addEventListener("mousedown", handler);
+    }, 10);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("mousedown", handler);
+    };
+  }, [open]);
 
   const handleOpen = () => {
     if (btnRef.current) {
