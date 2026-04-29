@@ -162,6 +162,12 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
   const [isPolling, setIsPolling] = useState(false);
   const [pollIntervalRef, setPollIntervalRef] = useState<ReturnType<typeof setInterval> | null>(null);
   const [isDownloadingConnector, setIsDownloadingConnector] = useState(false);
+  // Client users (multi-user account)
+  const [clientUsers, setClientUsers] = useState<Array<{ id: string; user_id: string; role: string; created_at: string; profiles?: { full_name: string | null; email?: string | null } }>>([]);
+  const [inviteCode, setInviteCode] = useState<string | null>(null);
+  const [inviteExpiry, setInviteExpiry] = useState<Date | null>(null);
+  const [isGeneratingInvite, setIsGeneratingInvite] = useState(false);
+  const [invitePollRef, setInvitePollRef] = useState<ReturnType<typeof setInterval> | null>(null);
 
   /* ── helpers ── */
   const asArr = (v: any): string[] => {
