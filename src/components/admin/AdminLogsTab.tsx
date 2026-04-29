@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-type LogTab = "usage" | "email" | "billing" | "ai_errors";
+type LogTab = "usage" | "email" | "billing" | "ai_errors" | "audit";
 
 export default function AdminLogsTab() {
   const [activeTab, setActiveTab] = useState<LogTab>("usage");
