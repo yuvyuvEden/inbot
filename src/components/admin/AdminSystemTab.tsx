@@ -247,6 +247,39 @@ export default function AdminSystemTab() {
   const [classifyPromptVal, setClassifyPromptVal] = useState("");
   const [analyzePromptVal, setAnalyzePromptVal] = useState("");
   const [aiChatPromptVal, setAiChatPromptVal] = useState("");
+  const [broadcastMsg, setBroadcastMsg] = useState("");
+  const [isBroadcasting, setIsBroadcasting] = useState(false);
+  const [broadcastResult, setBroadcastResult] = useState<{ sent: number; failed: number; total: number } | null>(null);
+
+  const sendBroadcast = async () => {
+    if (!broadcastMsg.trim()) return;
+    if (!window.confirm(`שלח הודעה ל-כל הלקוחות המחוברים לטלגרם?\n\n"${broadcastMsg}"`)) return;
+    setIsBroadcasting(true);
+    setBroadcastResult(null);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/telegram-broadcast`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({ message: broadcastMsg }),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) { toast.error(data.error || "שגיאה בשליחה"); return; }
+      setBroadcastResult(data);
+      setBroadcastMsg("");
+      toast.success(`✅ נשלח ל-${data.sent} לקוחות`);
+    } catch {
+      toast.error("שגיאה בשליחה");
+    } finally {
+      setIsBroadcasting(false);
+    }
+  };
 
   useEffect(() => {
     setClassifyPromptVal(settings.find((s) => s.key === "prompt_classify_document")?.value ?? "");
@@ -749,6 +782,46 @@ export default function AdminSystemTab() {
 
   return (
     <div dir="rtl" style={{ fontFamily: "Heebo, sans-serif", display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* Broadcast card */}
+      <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, padding: 16 }}>
+        <div style={{ fontWeight: 700, color: "#1e3a5f", marginBottom: 10, fontSize: 14 }}>
+          📣 שליחת הודעת מערכת לכל הלקוחות (Telegram Broadcast)
+        </div>
+        <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+          <textarea
+            value={broadcastMsg}
+            onChange={(e) => setBroadcastMsg(e.target.value)}
+            placeholder="הודעת המערכת... (תומך ב-HTML בסיסי: <b>מודגש</b>, <i>נטוי</i>)"
+            rows={3}
+            style={{
+              flex: 1, border: "1px solid #e2e8f0", borderRadius: 8,
+              padding: "8px 12px", fontFamily: "Heebo, sans-serif",
+              fontSize: 13, resize: "vertical", outline: "none",
+            }}
+          />
+          <button
+            onClick={sendBroadcast}
+            disabled={isBroadcasting || !broadcastMsg.trim()}
+            style={{
+              background: broadcastMsg.trim() ? "#1e3a5f" : "#e2e8f0",
+              color: broadcastMsg.trim() ? "#ffffff" : "#94a3b8",
+              border: "none", borderRadius: 8, padding: "8px 16px",
+              fontSize: 13, fontWeight: 700, cursor: broadcastMsg.trim() ? "pointer" : "default",
+              fontFamily: "Heebo, sans-serif", whiteSpace: "nowrap",
+            }}
+          >
+            {isBroadcasting ? "שולח..." : "📤 שלח"}
+          </button>
+        </div>
+        {broadcastResult && (
+          <div style={{ marginTop: 10, fontSize: 12, color: "#64748b" }}>
+            ✅ נשלח: <strong style={{ color: "#16a34a" }}>{broadcastResult.sent}</strong>
+            {" "} | ❌ נכשל: <strong style={{ color: "#dc2626" }}>{broadcastResult.failed}</strong>
+            {" "} | סה"כ: <strong>{broadcastResult.total}</strong>
+          </div>
+        )}
+      </div>
+
       {/* Top: orange refresh button */}
       <button
         onClick={refreshAllClients}
