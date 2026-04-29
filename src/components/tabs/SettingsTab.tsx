@@ -833,39 +833,8 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
           </div>
         </div>
 
-        {/* ── CARD 3: VAT Rate ── */}
-        <div style={card}>
-          <div style={cardHeader}><Percent size={16} /> הגדרת מע"מ</div>
-          <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
-            <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-              <span style={{ fontSize: 13 }}>שיעור נוכחי:</span>
-              <span style={{ fontSize: 16, fontWeight: 700, color: "#1e3a5f" }}>{vatPct}%</span>
-              <span style={{ fontSize: 11, color: "#64748b" }}>
-                {vatRate !== 1.18 ? "(מותאם אישית)" : "(ברירת מחדל)"}
-              </span>
-            </div>
-            <div style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
-              <div>
-                <label style={{ fontSize: 11, fontWeight: 700, color: "#64748b" }}>שיעור חדש (%)</label>
-                <input
-                  type="number"
-                  style={{ ...inputLtr, width: 100 }}
-                  value={vatInput}
-                  onChange={e => setVatInput(e.target.value)}
-                  min={1} max={99} step={1} placeholder="למשל: 17"
-                />
-              </div>
-              <button
-                style={{ ...btnPrimary, ...btnSm, opacity: !vatInput || isReadOnly ? 0.5 : 1 }}
-                disabled={!vatInput || isReadOnly}
-                onClick={saveVatRate}
-              ><Save size={14} /> עדכן</button>
-            </div>
-            <div style={{ fontSize: 11, color: "#64748b" }}>שינוי ישפיע על חשבוניות חדשות בלבד מרגע העדכון.</div>
-          </div>
-        </div>
 
-        {/* ── CARD 4: Tax Rules — full width ── */}
+
         <div style={{ ...card, gridColumn: "1 / -1" }}>
           <div style={{ ...cardHeader, justifyContent: "space-between" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}><Scale size={16} /> כללי מע"מ והוצאה מוכרת</div>
