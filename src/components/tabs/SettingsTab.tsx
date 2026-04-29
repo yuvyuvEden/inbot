@@ -7,7 +7,7 @@ import {
   Bot, BookOpen, Percent, Scale, Settings2, Wrench,
   ChevronDown, Plus, X, Pencil, RotateCcw, Save, Trash2,
   Download, Globe, FileText, Brain, UserCheck, Tags, SlidersHorizontal, HelpCircle,
-  AlertTriangle, RefreshCw,
+  AlertTriangle, RefreshCw, Users,
 } from "lucide-react";
 import { useVatRules } from "@/hooks/useVatRules";
 import { useSystemSettings } from "@/hooks/useSystemSettings";
