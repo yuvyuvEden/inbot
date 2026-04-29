@@ -132,8 +132,8 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
   };
   const [clientId, setClientId] = useState<string | null>(null);
   const [settings, setSettings] = useState<AdvancedSettings>(DEFAULT_SETTINGS);
-  const [vatRate, setVatRate] = useState(1.18);
-  const [vatInput, setVatInput] = useState("");
+  const { data: systemSettings = [] } = useSystemSettings();
+  const globalVatPct = Number(systemSettings.find(s => s.key === "vat_rate_percent")?.value ?? 18);
   const [geminiKey, setGeminiKey] = useState("");
   const [geminiInput, setGeminiInput] = useState("");
   const [taxRules, setTaxRules] = useState<TaxRule[]>([]);
