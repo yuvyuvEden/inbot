@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
       supabaseAdmin
         .from("system_settings")
         .select("key, value")
-        .in("key", ["vat_rules", "income_tax_rules"])
+        .in("key", ["vat_rules", "income_tax_rules", "prompt_ai_chat"])
     ]);
 
     if (clientRes.error || !clientRes.data?.gemini_api_key) {
@@ -70,11 +70,12 @@ Deno.serve(async (req) => {
       .map(([cat, rate]) => `${cat}: ${Math.round(rate * 100)}%`)
       .join(", ");
 
+    const promptAiChat = (settings["prompt_ai_chat"] as string) ?? null;
+
     const { question, history } = await req.json();
     if (!question) return json({ error: "question is required" }, 400);
 
-    // בנה system prompt עשיר בצד השרת — כמו 335.gs
-    const systemPrompt = `אתה יועץ פיננסי וחשבונאי מומחה לעצמאים ישראלים. אתה מנתח נתוני הוצאות עסקיות ועוזר לחסוך כסף ולמטב את ניהול המס.
+    const FALLBACK_SYSTEM_PROMPT = `אתה יועץ פיננסי וחשבונאי מומחה לעצמאים ישראלים. אתה מנתח נתוני הוצאות עסקיות ועוזר לחסוך כסף ולמטב את ניהול המס.
 
 ## זהות העסק
 שם: ${client.brand_name || "עסק"}
@@ -93,6 +94,15 @@ ${taxRulesText || "לא הוגדרו"}
 - השתמש ב-₪ לסכומים עם פסיק אלפים
 - אם אין נתון — אמור "לא מצאתי בנתונים"
 - קריטי: אל תדפיס תהליך חשיבה. החזר אך ורק את התשובה הסופית בעברית.`;
+
+    const systemPrompt = promptAiChat
+      ? promptAiChat
+          .replace(/\{\{BUSINESS_NAME\}\}/g, client.brand_name || "עסק")
+          .replace(/\{\{BUSINESS_NATURE\}\}/g, client.business_nature ? `אופי העסק: ${client.business_nature}` : "")
+          .replace(/\{\{VAT_RATE\}\}/g, String(vatRatePercent))
+          .replace(/\{\{VAT_RULES\}\}/g, vatRulesText || "לא הוגדרו")
+          .replace(/\{\{TAX_RULES\}\}/g, taxRulesText || "לא הוגדרו")
+      : FALLBACK_SYSTEM_PROMPT;
 
     // בנה contents עם היסטוריה
     const safeHistory = Array.isArray(history) ? history.slice(-10) : [];
