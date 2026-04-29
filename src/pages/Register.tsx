@@ -168,6 +168,8 @@ const Register = () => {
               dir="ltr"
             />
           </div>
+          <button
+            type="submit"
             disabled={loading}
             className="h-[44px] w-full rounded-lg bg-primary text-[14px] font-bold text-primary-foreground transition-colors hover:bg-primary/85 disabled:opacity-50"
           >
