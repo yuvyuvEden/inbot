@@ -420,6 +420,7 @@ export default function AdminClientsTab() {
                   <th style={thStyle}>חבילה</th>
                   <th style={thStyle}>תפוגה</th>
                   <th style={thStyle}>רו"ח משויך</th>
+                  <th style={thStyle}>סטטוס הגדרות</th>
                   <th style={thStyle}>פעולות</th>
                 </>
               ) : (
