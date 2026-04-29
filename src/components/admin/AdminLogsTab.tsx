@@ -351,6 +351,62 @@ export default function AdminLogsTab() {
           )}
         </div>
       )}
+
+      {activeTab === "audit" && (
+        <div style={{ overflowX: "auto" }}>
+          {auditLogs.length === 0 ? (
+            <div style={{ padding: "32px", textAlign: "center", color: "#94a3b8", fontSize: "14px", fontFamily: "Heebo, sans-serif" }}>
+              אין שינויים רשומים עדיין
+            </div>
+          ) : (
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", fontFamily: "Heebo, sans-serif" }}>
+              <thead>
+                <tr style={{ background: "#f8fafc" }}>
+                  {["תאריך", "מפתח הגדרה", "ערך ישן", "ערך חדש", "שונה על ידי"].map(h => (
+                    <th key={h} style={{ padding: "10px 12px", textAlign: "right", fontSize: "11px", color: "#64748b", fontWeight: 600, borderBottom: "1px solid #e2e8f0" }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {auditLogs
+                  .filter((a: any) =>
+                    !search ||
+                    (a.key ?? "").includes(search) ||
+                    (a.profiles?.full_name ?? "").includes(search)
+                  )
+                  .map((a: any) => (
+                    <tr key={a.id} style={{ borderBottom: "1px solid #f1f5f9" }}
+                      onMouseEnter={ev => (ev.currentTarget.style.background = "#f8fafc")}
+                      onMouseLeave={ev => (ev.currentTarget.style.background = "transparent")}
+                    >
+                      <td style={{ padding: "8px 12px", color: "#64748b", whiteSpace: "nowrap" }}>{formatDate(a.changed_at)}</td>
+                      <td style={{ padding: "8px 12px" }}>
+                        <span style={{
+                          background: "#eff6ff", color: "#1e40af",
+                          padding: "2px 8px", borderRadius: "10px",
+                          fontSize: "11px", fontWeight: 600, fontFamily: "monospace"
+                        }}>
+                          {a.key}
+                        </span>
+                      </td>
+                      <td style={{ padding: "8px 12px", color: "#94a3b8", maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: "monospace", fontSize: "11px" }}
+                        title={a.old_value ?? "—"}>
+                        {a.old_value ? (a.old_value.length > 40 ? a.old_value.slice(0, 40) + "…" : a.old_value) : "—"}
+                      </td>
+                      <td style={{ padding: "8px 12px", color: "#1e3a5f", maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: "monospace", fontSize: "11px" }}
+                        title={a.new_value ?? "—"}>
+                        {a.new_value ? (a.new_value.length > 40 ? a.new_value.slice(0, 40) + "…" : a.new_value) : "—"}
+                      </td>
+                      <td style={{ padding: "8px 12px", color: "#475569" }}>
+                        {a.profiles?.full_name ?? "אדמין"}
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
     </div>
   );
 }
