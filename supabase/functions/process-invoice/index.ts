@@ -360,6 +360,13 @@ async function writeInvoice(
   if (error) {
     console.error("writeInvoice error:", error.message);
     await sendMessage(chatId, "❌ שגיאה בשמירת החשבונית. נסה שוב.");
+    await supabase.from("ai_processing_errors").insert({
+      client_id:  clientId,
+      source,
+      error_type: "write_failed",
+      error_msg:  error.message,
+      vendor:     aiData.vendor ?? null,
+    }).catch(() => {});
     return;
   }
 
