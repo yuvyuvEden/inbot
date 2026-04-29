@@ -10,6 +10,7 @@ import {
   AlertTriangle, RefreshCw,
 } from "lucide-react";
 import { useVatRules } from "@/hooks/useVatRules";
+import { useSystemSettings } from "@/hooks/useSystemSettings";
 
 /* ── types ─────────────────────────────────────── */
 interface AdvancedSettings {
@@ -20,8 +21,6 @@ interface AdvancedSettings {
   customCategories: Array<{ name: string; description: string }>;
   businessNature: string;
   aiTemperature: number;
-  allocThresholdBefore: number;
-  allocThresholdAfter: number;
   searchDays: number;
   threadLimit: number;
   lookbackRows: number;
@@ -57,8 +56,6 @@ const DEFAULT_SETTINGS: AdvancedSettings = {
   customCategories: [],
   businessNature: "",
   aiTemperature: 0.1,
-  allocThresholdBefore: 10000,
-  allocThresholdAfter: 5000,
   searchDays: 60,
   threadLimit: 10,
   lookbackRows: 1000,
@@ -135,8 +132,8 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
   };
   const [clientId, setClientId] = useState<string | null>(null);
   const [settings, setSettings] = useState<AdvancedSettings>(DEFAULT_SETTINGS);
-  const [vatRate, setVatRate] = useState(1.18);
-  const [vatInput, setVatInput] = useState("");
+  const { data: systemSettings = [] } = useSystemSettings();
+  const globalVatPct = Number(systemSettings.find(s => s.key === "vat_rate_percent")?.value ?? 18);
   const [geminiKey, setGeminiKey] = useState("");
   const [geminiInput, setGeminiInput] = useState("");
   const [taxRules, setTaxRules] = useState<TaxRule[]>([]);
@@ -191,7 +188,6 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
       setClientId(c.id);
       setTelegramChatId((c as any).telegram_chat_id ?? null);
       setGeminiKey(c.gemini_api_key || "");
-      setVatRate((c as any).vat_rate ?? 1.18);
       setDialectWords(asArr((c as any).learned_words));
       setSettings({
         fetchDomains: asArr((c as any).fetch_domains),
@@ -201,8 +197,6 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
         customCategories: asCatArr(c.custom_categories),
         businessNature: c.business_nature || "",
         aiTemperature: (c as any).ai_temperature ?? 0.1,
-        allocThresholdBefore: (c as any).alloc_threshold_before ?? 10000,
-        allocThresholdAfter: (c as any).alloc_threshold_after ?? 5000,
         searchDays: (c as any).search_days ?? 60,
         threadLimit: (c as any).thread_limit ?? 10,
         lookbackRows: (c as any).lookback_rows ?? 1000,
@@ -277,20 +271,7 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
     }
   };
 
-  /* ── VAT rate ── */
-  const saveVatRate = async () => {
-    const pct = parseFloat(vatInput);
-    if (isNaN(pct) || pct < 1 || pct > 99) {
-      toast.warning("הזן אחוז תקין (1–99)");
-      return;
-    }
-    const newRate = 1 + pct / 100;
-    if (await updateClient({ vat_rate: newRate } as any)) {
-      setVatRate(newRate);
-      setVatInput("");
-      toast.success(`שיעור מע"מ עודכן ל-${pct}%`);
-    }
-  };
+
 
   /* ── Learned words ── */
   const addWord = async () => {
@@ -373,8 +354,6 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
       custom_categories: settings.customCategories,
       business_nature: settings.businessNature || null,
       ai_temperature: settings.aiTemperature,
-      alloc_threshold_before: settings.allocThresholdBefore,
-      alloc_threshold_after: settings.allocThresholdAfter,
       search_days: settings.searchDays,
       thread_limit: settings.threadLimit,
       lookback_rows: settings.lookbackRows,
@@ -397,7 +376,7 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
   };
   const reloadAllData = () => { loadData(); toast.info("הנתונים רועננו"); };
 
-  const vatPct = Math.round((vatRate - 1) * 100);
+  
 
   /* ── List manager sub-component ── */
   const ListManager = ({ field, placeholder }: { field: keyof AdvancedSettings; placeholder: string }) => {
@@ -662,7 +641,7 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
             </div>
             <div style={statRow}><span style={{ color: "#64748b" }}>חשבוניות</span><span>{invoiceCount.toLocaleString("he-IL")}</span></div>
             <div style={{ ...statRow, borderBottom: "none" }}>
-              <span style={{ color: "#64748b" }}>מע"מ נוכחי</span><span>{vatPct}%</span>
+              <span style={{ color: "#64748b" }}>מע"מ נוכחי</span><span>{globalVatPct}%</span>
             </div>
 
             <div style={{ marginTop: 16 }}>
@@ -854,38 +833,6 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
           </div>
         </div>
 
-        {/* ── CARD 3: VAT Rate ── */}
-        <div style={card}>
-          <div style={cardHeader}><Percent size={16} /> הגדרת מע"מ</div>
-          <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
-            <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-              <span style={{ fontSize: 13 }}>שיעור נוכחי:</span>
-              <span style={{ fontSize: 16, fontWeight: 700, color: "#1e3a5f" }}>{vatPct}%</span>
-              <span style={{ fontSize: 11, color: "#64748b" }}>
-                {vatRate !== 1.18 ? "(מותאם אישית)" : "(ברירת מחדל)"}
-              </span>
-            </div>
-            <div style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
-              <div>
-                <label style={{ fontSize: 11, fontWeight: 700, color: "#64748b" }}>שיעור חדש (%)</label>
-                <input
-                  type="number"
-                  style={{ ...inputLtr, width: 100 }}
-                  value={vatInput}
-                  onChange={e => setVatInput(e.target.value)}
-                  min={1} max={99} step={1} placeholder="למשל: 17"
-                />
-              </div>
-              <button
-                style={{ ...btnPrimary, ...btnSm, opacity: !vatInput || isReadOnly ? 0.5 : 1 }}
-                disabled={!vatInput || isReadOnly}
-                onClick={saveVatRate}
-              ><Save size={14} /> עדכן</button>
-            </div>
-            <div style={{ fontSize: 11, color: "#64748b" }}>שינוי ישפיע על חשבוניות חדשות בלבד מרגע העדכון.</div>
-          </div>
-        </div>
-
         {/* ── CARD 4: Tax Rules — full width ── */}
         <div style={{ ...card, gridColumn: "1 / -1" }}>
           <div style={{ ...cardHeader, justifyContent: "space-between" }}>
@@ -1056,35 +1003,7 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
                   </div>
                 </div>
 
-                {/* Allocation Threshold */}
-                <div style={subCard}>
-                  <div style={subCardHeader}><Scale size={14} /> סף מספר הקצאה <SubCardTooltip text={"סכום מינימום שמעליו המערכת דורשת מספר הקצאה בחשבונית מס.\nחשבונית ללא מספר הקצאה מעל הסף — תעצר לאישורך.\nמיוני 2026: הסף יורד מ-₪10,000 ל-₪5,000 (תקנות רשות המסים)."} /></div>
-                  <div style={{ padding: 12 }}>
-                    <div style={{ fontSize: 11, color: "#64748b", marginBottom: 8 }}>סכום מינימום שמעליו נדרש מספר הקצאה בחשבונית מס.</div>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                      <div>
-                        <label style={{ fontSize: 11, fontWeight: 700, color: "#64748b" }}>לפני יוני 2026</label>
-                        <div style={{ fontSize: 10, color: "#94a3b8" }}>ברירת מחדל: ₪10,000</div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                          <span style={{ fontSize: 12 }}>₪</span>
-                          <input type="number" style={inputLtr} value={settings.allocThresholdBefore}
-                            min={0} max={999999} step={1}
-                            onChange={e => setSettings(p => ({ ...p, allocThresholdBefore: +e.target.value }))} />
-                        </div>
-                      </div>
-                      <div>
-                        <label style={{ fontSize: 11, fontWeight: 700, color: "#64748b" }}>מיוני 2026 ואילך</label>
-                        <div style={{ fontSize: 10, color: "#94a3b8" }}>ברירת מחדל: ₪5,000</div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                          <span style={{ fontSize: 12 }}>₪</span>
-                          <input type="number" style={inputLtr} value={settings.allocThresholdAfter}
-                            min={0} max={999999} step={1}
-                            onChange={e => setSettings(p => ({ ...p, allocThresholdAfter: +e.target.value }))} />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+
 
                 {/* Advanced Tuning */}
                 <div style={subCard}>
