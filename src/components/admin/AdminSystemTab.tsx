@@ -831,6 +831,75 @@ export default function AdminSystemTab() {
             </div>
           </div>
         </div>
+
+        <div style={card}>
+          <div style={cardHeader}>
+            🧪 סימולטור עיבוד חשבונית
+          </div>
+          <div style={{ padding: 16 }}>
+            <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: 12 }}>
+              העלה קובץ PDF או תמונה ובחר לקוח — המערכת תריץ את הפרומפט האמיתי ותציג את תוצאת ה-JSON.
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 700, color: "#64748b" }}>לקוח לסימולציה</label>
+                <select
+                  value={simClientId}
+                  onChange={e => setSimClientId(e.target.value)}
+                  style={{ ...inputBase, marginTop: 4 }}
+                >
+                  <option value="">בחר לקוח...</option>
+                  {simClients.map((c: any) => (
+                    <option key={c.id} value={c.id}>{c.brand_name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 700, color: "#64748b" }}>קובץ חשבונית (PDF / תמונה)</label>
+                <input
+                  type="file"
+                  accept=".pdf,image/*"
+                  onChange={e => setSimFile(e.target.files?.[0] ?? null)}
+                  style={{ display: "block", marginTop: 4, fontSize: 13, fontFamily: "Heebo, sans-serif" }}
+                />
+                {simFile && (
+                  <div style={{ fontSize: 11, color: "#64748b", marginTop: 4 }}>
+                    {simFile.name} — {(simFile.size / 1024).toFixed(1)} KB
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={runSimulator}
+                disabled={simLoading || !simFile || !simClientId}
+                style={{
+                  ...btnPrimary,
+                  opacity: (!simFile || !simClientId) ? 0.5 : 1,
+                  justifyContent: "center",
+                }}
+              >
+                {simLoading ? "מעבד..." : "▶️ הרץ סימולציה"}
+              </button>
+            </div>
+            {simError && (
+              <div style={{ marginTop: 12, padding: 10, background: "#fef2f2", borderRadius: 8, fontSize: 12, color: "#dc2626" }}>
+                ❌ {simError}
+              </div>
+            )}
+            {simResult && (
+              <div style={{ marginTop: 12 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#1e3a5f", marginBottom: 6 }}>תוצאה:</div>
+                <pre style={{
+                  background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8,
+                  padding: 12, fontSize: 11, fontFamily: "monospace",
+                  overflowX: "auto", maxHeight: 400, overflowY: "auto",
+                  direction: "ltr", textAlign: "left",
+                }}>
+                  {simResult}
+                </pre>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     );
   };
