@@ -224,6 +224,67 @@ const Register = () => {
               </div>
             );
           })()}
+          {/* קוד הזמנה — אם הוזמן על ידי מישהו */}
+          <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: 16, marginTop: 8 }}>
+            <div style={{ fontSize: 13, color: "#64748b", marginBottom: 8, textAlign: "right" }}>
+              קיבלת קוד הזמנה מחשבון קיים? הכנס אותו כאן:
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input
+                type="text"
+                placeholder="XXXXXX"
+                value={inviteCode}
+                onChange={e => setInviteCode(e.target.value.toUpperCase())}
+                maxLength={6}
+                style={{
+                  flex: 1, border: "1px solid #e2e8f0", borderRadius: 8,
+                  padding: "8px 12px", fontFamily: "monospace", fontSize: 16,
+                  textAlign: "center", letterSpacing: 4, direction: "ltr",
+                  outline: "none",
+                }}
+              />
+              <button
+                disabled={inviteLoading || inviteCode.length < 6}
+                onClick={async () => {
+                  if (!inviteCode.trim()) return;
+                  setInviteLoading(true);
+                  try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    const res = await fetch(
+                      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/accept-invite`,
+                      {
+                        method: "POST",
+                        headers: {
+                          "Content-Type": "application/json",
+                          "Authorization": `Bearer ${session?.access_token}`,
+                        },
+                        body: JSON.stringify({ invite_code: inviteCode }),
+                      }
+                    );
+                    const data = await res.json();
+                    if (!res.ok) {
+                      alert(data.error || "שגיאה בהצטרפות");
+                    } else {
+                      alert(`✅ הצטרפת בהצלחה לחשבון: ${data.brand_name}`);
+                      setInviteCode("");
+                    }
+                  } finally {
+                    setInviteLoading(false);
+                  }
+                }}
+                style={{
+                  padding: "8px 16px", borderRadius: 8, border: "none",
+                  backgroundColor: inviteCode.length === 6 ? "#1e3a5f" : "#e2e8f0",
+                  color: inviteCode.length === 6 ? "#fff" : "#94a3b8",
+                  fontFamily: "Heebo, sans-serif", fontSize: 13, fontWeight: 700,
+                  cursor: inviteCode.length === 6 ? "pointer" : "default",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {inviteLoading ? "מצרף..." : "הצטרף"}
+              </button>
+            </div>
+          </div>
           <button
             onClick={() => navigate("/dashboard", { replace: true })}
             className="h-[44px] w-full rounded-lg bg-primary text-[14px] font-bold text-primary-foreground transition-colors hover:bg-primary/85"
