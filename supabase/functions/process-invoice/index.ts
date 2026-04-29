@@ -123,7 +123,7 @@ Deno.serve(async (req) => {
   const base64 = btoa(String.fromCharCode(...rawBytes));
 
   if (source === "gmail" && !skip_classify) {
-    const docClass = await classifyDocumentType(base64, mimeType, geminiKey);
+    const docClass = await classifyDocumentType(base64, mimeType, geminiKey, G.prompt_classify_document);
     if (docClass === "OTHER" || docClass === "REPORT") {
       console.log(`סיווג מקדים: ${docClass} — דילוג`);
       return json({ status: "skip", reason: docClass });
@@ -149,6 +149,7 @@ Deno.serve(async (req) => {
     msgFrom: msg_from ?? null,
     invoicePlatforms: G.invoice_platforms,
     aiTemperature: client.ai_temperature ?? G.ai_temperature,
+    aiPromptOverride: G.prompt_analyze_invoice ?? null,
   });
 
   if (!aiResults) {
@@ -356,9 +357,9 @@ async function writeInvoice(
 }
 
 async function classifyDocumentType(
-  base64: string, mimeType: string, geminiKey: string
+  base64: string, mimeType: string, geminiKey: string, promptOverride?: string | null
 ): Promise<string> {
-  const prompt = `You are a document classifier. Look ONLY at the document content and answer with ONE word only:
+  const prompt = promptOverride ?? `You are a document classifier. Look ONLY at the document content and answer with ONE word only:
 - "INVOICE" if the document explicitly contains: חשבונית מס, קבלה, חשבונית מס קבלה, חשבונית זיכוי, tax invoice, invoice, receipt AND has a total amount due or VAT amount.
 - "REPORT" if this is a summary report with NO amount due — ledger, account statement, profit/loss report.
 - "OTHER" if anything else: terms, contracts, order confirmations, proforma, quotes, renewal notices, marketing.
@@ -373,7 +374,7 @@ Reply with exactly one word: INVOICE, REPORT, or OTHER.`;
 
 async function analyzeInvoice({ base64, mimeType, geminiKey, myNames, myHp,
   businessNature, allCategories, emailDate, msgFrom, invoicePlatforms,
-  aiTemperature }: any): Promise<any> {
+  aiTemperature, aiPromptOverride }: any): Promise<any> {
 
   const allNamesStr    = myNames.map((n: string) => `"${n}"`).join(", ");
   const senderContext  = (msgFrom && !invoicePlatforms.some((p: string) =>
@@ -383,10 +384,23 @@ async function analyzeInvoice({ base64, mimeType, geminiKey, myNames, myHp,
     ? `\n  BUSINESS NATURE: "${businessNature}". Use this context when categorizing expenses.` : "";
   const fileContext = `\n  INPUT CONTEXT: Real file attached. Analyze ONLY the file.`;
 
-  const prompt = `You are an expert Israeli accountant.
+  const FALLBACK_PROMPT = `You are an expert Israeli accountant.
 Owner Identity: Names [${allNamesStr}], VAT/ID "${myHp}".${fileContext}${senderContext}${businessContext}
 
-CRITICAL: Return a JSON ARRAY of ALL invoices found.
+CRITICAL: Return a JSON ARRAY of ALL invoices found.`;
+
+  // שלוף פרומפט מה-DB אם קיים — החלף placeholders בערכים אמיתיים
+  const dbPrompt = aiPromptOverride
+    ? aiPromptOverride
+        .replace(/\{\{NAMES\}\}/g, allNamesStr)
+        .replace(/\{\{VAT\}\}/g, myHp)
+        .replace(/\{\{CATEGORIES\}\}/g, allCategories.join(", "))
+        + (fileContext ? "\n" + fileContext : "")
+        + (senderContext ? "\n" + senderContext : "")
+        + (businessContext ? "\n" + businessContext : "")
+    : null;
+
+  const prompt = dbPrompt ?? FALLBACK_PROMPT + `
 Single invoice → still return array: [{"vendor":"..."}]
 NON_FINANCIAL / INCOME / LINK_ONLY_INVOICE → return single object (NOT array): {"document_type":"NON_FINANCIAL"}
 
@@ -590,6 +604,8 @@ function parseGlobalSettings(rows: any[]): any {
     ai_temperature:            Number(g.ai_temperature    ?? 0.1),
     vat_rate_percent:          Number(g.vat_rate_percent  ?? 18),
     max_distance:              Number(g.max_distance       ?? 2),
+    prompt_classify_document:  typeof g.prompt_classify_document === "string" ? g.prompt_classify_document : null,
+    prompt_analyze_invoice:    typeof g.prompt_analyze_invoice   === "string" ? g.prompt_analyze_invoice   : null,
   };
 }
 
