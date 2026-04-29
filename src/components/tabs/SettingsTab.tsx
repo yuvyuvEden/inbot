@@ -833,8 +833,7 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
           </div>
         </div>
 
-
-
+        {/* ── CARD 4: Tax Rules — full width ── */}
         <div style={{ ...card, gridColumn: "1 / -1" }}>
           <div style={{ ...cardHeader, justifyContent: "space-between" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}><Scale size={16} /> כללי מע"מ והוצאה מוכרת</div>
