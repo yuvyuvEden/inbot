@@ -677,8 +677,8 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
                   placeholder="AIza..."
                 />
                 <button
-                  style={{ ...btnPrimary, ...btnSm, opacity: geminiInput.length < 10 ? 0.5 : 1 }}
-                  disabled={geminiInput.length < 10}
+                  style={{ ...btnPrimary, ...btnSm, opacity: geminiInput.length < 10 || isReadOnly ? 0.5 : 1 }}
+                  disabled={geminiInput.length < 10 || isReadOnly}
                   onClick={saveGeminiKey}
                 >שמור מפתח</button>
               </div>
@@ -759,7 +759,7 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
                   placeholder="מילה חדשה..."
                   onKeyDown={e => e.key === "Enter" && addWord()}
                 />
-                <button style={{ ...btnPrimary, ...btnSm }} onClick={addWord}>הוסף</button>
+                <button style={{ ...btnPrimary, ...btnSm }} onClick={addWord} disabled={isReadOnly}>הוסף</button>
                 <button style={{ ...btnGhost, ...btnSm }} onClick={() => setShowAddWord(false)}>ביטול</button>
               </div>
             )}
@@ -877,8 +877,8 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
                 />
               </div>
               <button
-                style={{ ...btnPrimary, ...btnSm, opacity: !vatInput ? 0.5 : 1 }}
-                disabled={!vatInput}
+                style={{ ...btnPrimary, ...btnSm, opacity: !vatInput || isReadOnly ? 0.5 : 1 }}
+                disabled={!vatInput || isReadOnly}
                 onClick={saveVatRate}
               ><Save size={14} /> עדכן</button>
             </div>
@@ -1122,7 +1122,7 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
               <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: 12, marginTop: 12, display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 8 }}>
                 {savedNote && <span style={{ fontSize: 12, color: "#16a34a" }}>✓ נשמר בהצלחה</span>}
                 <button style={{ ...btnSecondary, ...btnSm }} onClick={loadData}><RotateCcw size={14} /> בטל שינויים</button>
-                <button style={{ ...btnPrimary, opacity: isSaving ? 0.5 : 1 }} disabled={isSaving} onClick={saveAdvancedSettings}>
+                <button style={{ ...btnPrimary, opacity: isSaving || isReadOnly ? 0.5 : 1 }} disabled={isSaving || isReadOnly} onClick={saveAdvancedSettings}>
                   <Save size={16} /> שמור הגדרות
                 </button>
               </div>
