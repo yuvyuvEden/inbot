@@ -102,17 +102,17 @@ function RowMenu({
         setOpen(false);
       }
     };
-    // השהייה קצרה — מונעת סגירה מיידית מה-mousedown שפתח את התפריט
     const timer = setTimeout(() => {
       document.addEventListener("mousedown", handler);
-    }, 10);
+    }, 50);
     return () => {
       clearTimeout(timer);
       document.removeEventListener("mousedown", handler);
     };
   }, [open]);
 
-  const handleOpen = () => {
+  const handleOpen = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect();
       const menuWidth = 180;
@@ -143,7 +143,7 @@ function RowMenu({
           }}
         >
           <button
-            onClick={() => { if (accountant.user_id) { onImpersonate(); setOpen(false); } }}
+            onClick={(e) => { e.stopPropagation(); if (accountant.user_id) { onImpersonate(); setOpen(false); } }}
             disabled={impersonateLoading || !accountant.user_id}
             style={{
               display: "flex", alignItems: "center", gap: "10px",
@@ -162,7 +162,7 @@ function RowMenu({
           </button>
           <div style={{ borderTop: "1px solid #e2e8f0", margin: "4px 0" }} />
           <button
-            onClick={() => { onEdit(); setOpen(false); }}
+            onClick={(e) => { e.stopPropagation(); onEdit(); setOpen(false); }}
             style={{
               display: "block", width: "100%", textAlign: "right",
               padding: "8px 14px", fontSize: "13px", background: "none",
@@ -174,7 +174,7 @@ function RowMenu({
             ✏️ ערוך פרטים
           </button>
           <button
-            onClick={() => { onToggleActive(); setOpen(false); }}
+            onClick={(e) => { e.stopPropagation(); onToggleActive(); setOpen(false); }}
             style={{
               display: "block", width: "100%", textAlign: "right",
               padding: "8px 14px", fontSize: "13px", background: "none",
@@ -186,7 +186,7 @@ function RowMenu({
             {accountant.is_active ? "⏸️ השעה" : "▶️ הפעל"}
           </button>
           <button
-            onClick={() => { onGoToBilling?.(); setOpen(false); }}
+            onClick={(e) => { e.stopPropagation(); onGoToBilling?.(); setOpen(false); }}
             style={{
               display: "block", width: "100%", textAlign: "right",
               padding: "8px 14px", fontSize: "13px", background: "none",
@@ -200,7 +200,8 @@ function RowMenu({
           </button>
           <div style={{ borderTop: "1px solid #e2e8f0", margin: "4px 0" }} />
           <button
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               setOpen(false);
               if (window.confirm(`למחוק את ${accountant.name}? פעולה זו אינה ניתנת לביטול.`)) {
                 onDelete();
