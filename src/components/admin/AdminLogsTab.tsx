@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-type LogTab = "usage" | "email" | "billing";
+type LogTab = "usage" | "email" | "billing" | "ai_errors";
 
 export default function AdminLogsTab() {
   const [activeTab, setActiveTab] = useState<LogTab>("usage");
@@ -47,13 +47,27 @@ export default function AdminLogsTab() {
     },
   });
 
+  const { data: aiErrors = [], isLoading: aiErrorsLoading } = useQuery({
+    queryKey: ["ai-errors"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ai_processing_errors")
+        .select("*, clients(brand_name)")
+        .order("created_at", { ascending: false })
+        .limit(300);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const tabs: { key: LogTab; label: string }[] = [
     { key: "usage", label: "פעולות לקוחות" },
     { key: "email", label: "מיילים" },
     { key: "billing", label: "חיובים" },
+    { key: "ai_errors", label: "🔴 שגיאות AI" },
   ];
 
-  const isLoading = usageLoading || emailLoading || billingLoading;
+  const isLoading = usageLoading || emailLoading || billingLoading || aiErrorsLoading;
 
   const formatDate = (d: string) =>
     new Date(d).toLocaleString("he-IL", {
@@ -253,6 +267,65 @@ export default function AdminLogsTab() {
                 ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {activeTab === "ai_errors" && (
+        <div style={{ overflowX: "auto" }}>
+          {aiErrors.length === 0 ? (
+            <div style={{ padding: "32px", textAlign: "center", color: "#16a34a", fontSize: "14px", fontFamily: "Heebo, sans-serif" }}>
+              ✅ אין שגיאות AI — הכל תקין
+            </div>
+          ) : (
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", fontFamily: "Heebo, sans-serif" }}>
+              <thead>
+                <tr style={{ background: "#fef2f2" }}>
+                  {["תאריך", "לקוח", "מקור", "סוג שגיאה", "ספק", "שם קובץ", "הודעה"].map(h => (
+                    <th key={h} style={{ padding: "10px 12px", textAlign: "right", fontSize: "11px", color: "#dc2626", fontWeight: 600, borderBottom: "1px solid #fecaca" }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {aiErrors
+                  .filter((e: any) =>
+                    !search ||
+                    (e.clients?.brand_name ?? "").includes(search) ||
+                    (e.error_type ?? "").includes(search) ||
+                    (e.vendor ?? "").includes(search) ||
+                    (e.error_msg ?? "").includes(search)
+                  )
+                  .map((e: any) => (
+                    <tr key={e.id} style={{ borderBottom: "1px solid #fef2f2" }}
+                      onMouseEnter={ev => (ev.currentTarget.style.background = "#fef2f2")}
+                      onMouseLeave={ev => (ev.currentTarget.style.background = "transparent")}
+                    >
+                      <td style={{ padding: "8px 12px", color: "#64748b", whiteSpace: "nowrap" }}>{formatDate(e.created_at)}</td>
+                      <td style={{ padding: "8px 12px", fontWeight: 600, color: "#1e3a5f" }}>{e.clients?.brand_name ?? "—"}</td>
+                      <td style={{ padding: "8px 12px" }}>
+                        <span style={{
+                          background: e.source === "gmail" ? "#eff6ff" : "#f0fdf4",
+                          color: e.source === "gmail" ? "#1e40af" : "#16a34a",
+                          padding: "2px 8px", borderRadius: "10px", fontSize: "11px", fontWeight: 600
+                        }}>
+                          {e.source ?? "—"}
+                        </span>
+                      </td>
+                      <td style={{ padding: "8px 12px" }}>
+                        <span style={{
+                          background: "#fef2f2", color: "#dc2626",
+                          padding: "2px 8px", borderRadius: "10px", fontSize: "11px", fontWeight: 600
+                        }}>
+                          {e.error_type ?? "—"}
+                        </span>
+                      </td>
+                      <td style={{ padding: "8px 12px", color: "#475569" }}>{e.vendor ?? "—"}</td>
+                      <td style={{ padding: "8px 12px", color: "#475569", direction: "ltr" }}>{e.file_name ?? "—"}</td>
+                      <td style={{ padding: "8px 12px", color: "#64748b", maxWidth: "300px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={e.error_msg ?? ""}>{e.error_msg ?? "—"}</td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          )}
         </div>
       )}
     </div>
