@@ -203,6 +203,25 @@ export default function AdminSystemTab() {
     await saveSetting(key, JSON.stringify(arr));
   };
 
+  // OR-string: ("term1" OR "term2" OR ...)
+  const parseOrString = (s: string) =>
+    s.replace(/^\(|\)$/g, "")
+      .split(" OR ")
+      .map((t) => t.replace(/^"|"$/g, "").replace(/\\"/g, '"').trim())
+      .filter(Boolean);
+  const buildOrString = (items: string[]) =>
+    items.length ? "(" + items.map((t) => `"${t}"`).join(" OR ") + ")" : "";
+  const saveOrList = async (key: string, items: string[]) =>
+    saveSetting(key, buildOrString(items));
+
+  // Pipe-regex: (a|b|c)
+  const parsePipeRegex = (s: string) =>
+    s.replace(/^\(|\)$/g, "").split("|").map((t) => t.trim()).filter(Boolean);
+  const buildPipeRegex = (items: string[]) =>
+    items.length ? "(" + items.join("|") + ")" : "";
+  const savePipeRegex = async (key: string, items: string[]) =>
+    saveSetting(key, buildPipeRegex(items));
+
   const refreshAllClients = async () => {
     setRefreshing(true);
     try {
