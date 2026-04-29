@@ -54,6 +54,13 @@ export type Database = {
             referencedRelation: "clients"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "accountant_clients_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients_accountant_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       accountants: {
@@ -225,6 +232,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_users_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients_accountant_view"
             referencedColumns: ["id"]
           },
         ]
@@ -566,6 +580,13 @@ export type Database = {
             referencedRelation: "clients"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "invoice_flows_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients_accountant_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       invoice_quarantine: {
@@ -715,6 +736,13 @@ export type Database = {
             referencedRelation: "clients"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients_accountant_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       notifications: {
@@ -754,6 +782,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients_accountant_view"
             referencedColumns: ["id"]
           },
           {
@@ -975,6 +1010,13 @@ export type Database = {
             referencedRelation: "clients"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "usage_log_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients_accountant_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_roles: {
@@ -1024,6 +1066,66 @@ export type Database = {
       }
     }
     Views: {
+      clients_accountant_view: {
+        Row: {
+          billing_cycle: string | null
+          billing_day: number | null
+          brand_name: string | null
+          business_nature: string | null
+          created_at: string | null
+          grace_until: string | null
+          id: string | null
+          is_active: boolean | null
+          legal_name: string | null
+          monthly_price: number | null
+          plan_expires_at: string | null
+          plan_type: string | null
+          sheet_id: string | null
+          telegram_chat_id: string | null
+          updated_at: string | null
+          vat_number: string | null
+          yearly_price: number | null
+        }
+        Insert: {
+          billing_cycle?: string | null
+          billing_day?: number | null
+          brand_name?: string | null
+          business_nature?: string | null
+          created_at?: string | null
+          grace_until?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          legal_name?: string | null
+          monthly_price?: number | null
+          plan_expires_at?: string | null
+          plan_type?: string | null
+          sheet_id?: string | null
+          telegram_chat_id?: string | null
+          updated_at?: string | null
+          vat_number?: string | null
+          yearly_price?: number | null
+        }
+        Update: {
+          billing_cycle?: string | null
+          billing_day?: number | null
+          brand_name?: string | null
+          business_nature?: string | null
+          created_at?: string | null
+          grace_until?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          legal_name?: string | null
+          monthly_price?: number | null
+          plan_expires_at?: string | null
+          plan_type?: string | null
+          sheet_id?: string | null
+          telegram_chat_id?: string | null
+          updated_at?: string | null
+          vat_number?: string | null
+          yearly_price?: number | null
+        }
+        Relationships: []
+      }
       v_active_assignments: {
         Row: {
           accountant_id: string | null
@@ -1062,6 +1164,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accountant_clients_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients_accountant_view"
             referencedColumns: ["id"]
           },
         ]
