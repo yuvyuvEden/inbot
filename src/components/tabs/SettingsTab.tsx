@@ -21,8 +21,6 @@ interface AdvancedSettings {
   customCategories: Array<{ name: string; description: string }>;
   businessNature: string;
   aiTemperature: number;
-  allocThresholdBefore: number;
-  allocThresholdAfter: number;
   searchDays: number;
   threadLimit: number;
   lookbackRows: number;
