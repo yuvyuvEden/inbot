@@ -157,6 +157,14 @@ export default function SettingsTab() {
   const [catDesc, setCatDesc] = useState("");
   const [catSaving, setCatSaving] = useState(false);
   const [showCatAdd, setShowCatAdd] = useState(false);
+  // Telegram connect state
+  const [telegramChatId, setTelegramChatId] = useState<string | null>(null);
+  const [connectCode, setConnectCode] = useState<string | null>(null);
+  const [connectCodeExpiry, setConnectCodeExpiry] = useState<Date | null>(null);
+  const [isGeneratingCode, setIsGeneratingCode] = useState(false);
+  const [isPolling, setIsPolling] = useState(false);
+  const [pollIntervalRef, setPollIntervalRef] = useState<ReturnType<typeof setInterval> | null>(null);
+  const [isDownloadingConnector, setIsDownloadingConnector] = useState(false);
 
   /* ── helpers ── */
   const asArr = (v: any): string[] => {
