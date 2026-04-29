@@ -188,7 +188,6 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
       setClientId(c.id);
       setTelegramChatId((c as any).telegram_chat_id ?? null);
       setGeminiKey(c.gemini_api_key || "");
-      setVatRate((c as any).vat_rate ?? 1.18);
       setDialectWords(asArr((c as any).learned_words));
       setSettings({
         fetchDomains: asArr((c as any).fetch_domains),
