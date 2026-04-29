@@ -532,6 +532,39 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
 
   const isReadOnly = !!adminClientId;
 
+  const generateInviteCode = async () => {
+    if (!clientId) return;
+    setIsGeneratingInvite(true);
+    try {
+      const CHARS = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+      let code = "";
+      for (let i = 0; i < 6; i++) code += CHARS[Math.floor(Math.random() * CHARS.length)];
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const { error } = await supabase
+        .from("clients")
+        .update({ invite_code: code, invite_code_expires_at: expiresAt.toISOString() })
+        .eq("id", clientId);
+      if (error) { toast.error("שגיאה ביצירת קוד"); return; }
+      setInviteCode(code);
+      setInviteExpiry(expiresAt);
+    } catch {
+      toast.error("שגיאה ביצירת קוד");
+    } finally {
+      setIsGeneratingInvite(false);
+    }
+  };
+
+  const removeMember = async (clientUserId: string) => {
+    if (!window.confirm("האם להסיר את המשתמש מהחשבון?")) return;
+    const { error } = await supabase
+      .from("client_users")
+      .delete()
+      .eq("id", clientUserId);
+    if (error) { toast.error("שגיאה בהסרה"); return; }
+    setClientUsers(prev => prev.filter(cu => cu.id !== clientUserId));
+    toast.success("המשתמש הוסר");
+  };
+
   return (
     <div dir="rtl" style={{ padding: 16, fontFamily: "Heebo, sans-serif" }}>
       {isReadOnly && (
