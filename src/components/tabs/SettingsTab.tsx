@@ -168,6 +168,7 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
   const [inviteExpiry, setInviteExpiry] = useState<Date | null>(null);
   const [isGeneratingInvite, setIsGeneratingInvite] = useState(false);
   const [invitePollRef, setInvitePollRef] = useState<ReturnType<typeof setInterval> | null>(null);
+  const [clientPhone, setClientPhone] = useState<string | null>(null);
 
   /* ── helpers ── */
   const asArr = (v: any): string[] => {
@@ -192,6 +193,16 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
       ).maybeSingle();
       if (!c) { setIsLoading(false); return; }
       setClientId(c.id);
+
+      // טען טלפון מ-profiles
+      if (c.user_id) {
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("phone")
+          .eq("user_id", c.user_id)
+          .maybeSingle();
+        setClientPhone((profileData as any)?.phone ?? null);
+      }
 
       // טען משתמשי החשבון
       const { data: cuData } = await supabase
@@ -783,6 +794,14 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
               </span>
             </div>
             <div style={statRow}><span style={{ color: "#64748b" }}>חשבוניות</span><span>{invoiceCount.toLocaleString("he-IL")}</span></div>
+            {isReadOnly && (
+              <div style={statRow}>
+                <span style={{ color: "#64748b" }}>טלפון</span>
+                <span style={{ direction: "ltr", fontFamily: "monospace" }}>
+                  {clientPhone ?? "לא הוזן"}
+                </span>
+              </div>
+            )}
             <div style={{ ...statRow, borderBottom: "none" }}>
               <span style={{ color: "#64748b" }}>מע"מ נוכחי</span><span>{globalVatPct}%</span>
             </div>
