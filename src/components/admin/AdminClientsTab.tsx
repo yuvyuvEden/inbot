@@ -922,7 +922,7 @@ function RowMenu({
         <div
           ref={menuRef}
           style={{
-            position: "absolute",
+            position: "fixed",
             top: menuPos.top,
             left: menuPos.left,
             zIndex: 9999,
