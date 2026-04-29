@@ -579,11 +579,20 @@ export default function AdminSystemTab() {
   );
 
   const renderPromptsTab = () => (
-    <div style={card}>
-      <div style={cardHeader}>📝 פרומפטים AI</div>
-      <div style={{ padding: 16, fontSize: 13, color: "#64748b" }}>
-        ניהול פרומפטים יתווסף בקרוב. כרגע הפרומפטים מנוהלים ברמת הקוד ב-process-invoice Edge Function.
-      </div>
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <PromptEditor
+        title="סיווג מסמך (classify)"
+        description="מריץ לפני ניתוח מלא — מסנן מסמכים שאינם חשבוניות. מחזיר: INVOICE / REPORT / OTHER"
+        loadedValue={getSetting("prompt_classify_document")}
+        onSave={(v) => saveSetting("prompt_classify_document", v)}
+      />
+      <PromptEditor
+        title="ניתוח חשבונית (analyze)"
+        description="הפרומפט הראשי לחילוץ נתוני חשבונית. השתמש ב-{{NAMES}} {{VAT}} {{CATEGORIES}} כ-placeholders"
+        loadedValue={getSetting("prompt_analyze_invoice")}
+        onSave={(v) => saveSetting("prompt_analyze_invoice", v)}
+        extraInfo="{{NAMES}} = שמות הלקוח | {{VAT}} = מספר ח״פ | {{CATEGORIES}} = רשימת קטגוריות"
+      />
     </div>
   );
 
