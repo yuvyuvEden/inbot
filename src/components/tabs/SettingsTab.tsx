@@ -529,6 +529,115 @@ export default function SettingsTab() {
     <div dir="rtl" style={{ padding: 16, fontFamily: "Heebo, sans-serif" }}>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))", gap: 16 }}>
 
+        {/* ── CARD: Telegram Connection ── */}
+        <div style={card}>
+          <div style={cardHeader}><Bot size={16} /> חיבור Telegram</div>
+          <div style={{ padding: 16 }}>
+            {telegramChatId ? (
+              <div>
+                <div style={statRow}>
+                  <span style={{ color: "#64748b" }}>סטטוס</span>
+                  <span style={{ color: "#16a34a", fontWeight: 600 }}>✅ מחובר</span>
+                </div>
+                <div style={{ ...statRow, borderBottom: "none" }}>
+                  <span style={{ color: "#64748b" }}>Chat ID</span>
+                  <span style={{ fontFamily: "monospace", direction: "ltr" }}>{telegramChatId}</span>
+                </div>
+                <button style={{ ...btnSecondary, ...btnSm, marginTop: 12 }} onClick={disconnectTelegram}>
+                  נתק Telegram
+                </button>
+              </div>
+            ) : connectCode ? (
+              <div>
+                <div style={{ fontSize: 12, color: "#64748b", marginBottom: 8 }}>
+                  פתח את הבוט ושלח את הפקודה הבאה:
+                </div>
+                <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, padding: 12, marginBottom: 12 }}>
+                  <div style={{ fontSize: 11, color: "#94a3b8", marginBottom: 4 }}>שלח לבוט:</div>
+                  <div style={{ fontFamily: "monospace", fontSize: 16, fontWeight: 700, direction: "ltr", color: "#1e3a5f", marginBottom: 8 }}>
+                    /connect {connectCode}
+                  </div>
+                  <button
+                    style={{ ...btnSecondary, ...btnSm }}
+                    onClick={() => { navigator.clipboard.writeText(`/connect ${connectCode}`); toast.success("הועתק!"); }}
+                  >
+                    📋 העתק פקודה
+                  </button>
+                </div>
+                <button
+                  style={{ ...btnPrimary, ...btnSm, marginBottom: 8 }}
+                  onClick={() => window.open("https://t.me/INBOTbot", "_blank")}
+                >
+                  פתח את הבוט ב-Telegram ↗
+                </button>
+                {isPolling && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#64748b", marginTop: 8 }}>
+                    <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: 99, background: "#e8941a", animation: "pulse 1.5s infinite" }} />
+                    <span>ממתין לחיבור...</span>
+                    {connectCodeExpiry && (
+                      <span style={{ color: "#94a3b8" }}>
+                        (תקף עד {connectCodeExpiry.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })})
+                      </span>
+                    )}
+                  </div>
+                )}
+                <button style={{ ...btnGhost, marginTop: 8, fontSize: 12 }} onClick={generateConnectCode}>
+                  🔄 צור קוד חדש
+                </button>
+              </div>
+            ) : (
+              <div>
+                <div style={{ fontSize: 13, color: "#64748b", marginBottom: 12 }}>
+                  חבר את חשבון Telegram שלך כדי לשלוח חשבוניות ישירות לעיבוד.
+                </div>
+                <button
+                  style={{ ...btnPrimary, ...btnSm, opacity: isGeneratingCode ? 0.6 : 1 }}
+                  disabled={isGeneratingCode}
+                  onClick={generateConnectCode}
+                >
+                  {isGeneratingCode ? "יוצר קוד..." : "✨ צור קוד חיבור"}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── CARD: Connector Download ── */}
+        <div style={card}>
+          <div style={cardHeader}><Download size={16} /> התקנת Connector Gmail</div>
+          <div style={{ padding: 16 }}>
+            <div style={{ fontSize: 13, color: "#64748b", marginBottom: 8 }}>
+              ה-Connector סורק את ה-Gmail שלך ושולח חשבוניות לעיבוד אוטומטי.
+            </div>
+            <div style={{ fontSize: 11, color: "#dc2626", marginBottom: 12 }}>
+              ⚠️ הקובץ מכיל את פרטי ההגדרה שלך — אל תשתף אותו.
+            </div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+              <button
+                style={{ ...btnPrimary, ...btnSm, opacity: isDownloadingConnector ? 0.6 : 1 }}
+                disabled={isDownloadingConnector}
+                onClick={downloadConnector}
+              >
+                <Download size={14} />
+                {isDownloadingConnector ? "מוריד..." : "הורד Connector (.gs)"}
+              </button>
+              <button
+                style={{ ...btnSecondary, ...btnSm }}
+                onClick={() => window.open("https://docs.inbot.co.il/connector", "_blank")}
+              >
+                הוראות התקנה ↗
+              </button>
+            </div>
+            <div style={{ fontSize: 12, color: "#64748b", lineHeight: 1.8, background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, padding: 10 }}>
+              <div style={{ fontWeight: 700, marginBottom: 4 }}>שלבים קצרים:</div>
+              <div>1. הורד את הקובץ</div>
+              <div>2. פתח script.google.com</div>
+              <div>3. צור פרויקט חדש → הדבק את הקוד</div>
+              <div>4. הרץ את runSetupWizard()</div>
+            </div>
+          </div>
+        </div>
+
         {/* ── CARD 1: System Status ── */}
         <div style={card}>
           <div style={cardHeader}><Bot size={16} /> מצב מערכת</div>
