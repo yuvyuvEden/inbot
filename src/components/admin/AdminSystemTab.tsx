@@ -304,36 +304,52 @@ export default function AdminSystemTab() {
             loadedValue={getSetting("gmail_search_days")}
             onSave={(v) => saveSetting("gmail_search_days", v)}
           />
-          <SettingField
-            label="מילות חיפוש בסיסיות"
-            type="textarea"
-            loadedValue={getSetting("gmail_base_terms")}
-            onSave={(v) => saveSetting("gmail_base_terms", v)}
-          />
-          <SettingField
-            label="תנאי קבצים מצורפים"
-            type="textarea"
-            loadedValue={getSetting("gmail_attach_condition")}
-            onSave={(v) => saveSetting("gmail_attach_condition", v)}
-          />
+          <div style={{ marginTop: 12 }}>
+            <div style={{ fontWeight: 700, color: "#1e3a5f", fontSize: 13, marginBottom: 8 }}>
+              מילות חיפוש בסיסיות
+            </div>
+            <ListManager
+              items={parseOrString(getSetting("gmail_base_terms"))}
+              placeholder="ביטוי חיפוש (למשל חשבונית)"
+              onChange={(arr) => saveOrList("gmail_base_terms", arr)}
+            />
+          </div>
+          <div style={{ marginTop: 12 }}>
+            <div style={{ fontWeight: 700, color: "#1e3a5f", fontSize: 13, marginBottom: 8 }}>
+              תנאי קבצים מצורפים
+            </div>
+            <ListManager
+              items={parseOrString(getSetting("gmail_attach_condition"))}
+              placeholder="תנאי (למשל has:attachment)"
+              onChange={(arr) => saveOrList("gmail_attach_condition", arr)}
+            />
+          </div>
         </div>
       </div>
 
       <div style={card}>
         <div style={cardHeader}>סינון מיילים</div>
         <div style={{ padding: 16 }}>
-          <SettingField
-            label="ביטויי התראה בלבד"
-            type="textarea"
-            loadedValue={getSetting("notification_only_phrases")}
-            onSave={(v) => saveSetting("notification_only_phrases", v)}
-          />
-          <SettingField
-            label="Regex ספקי מזון"
-            type="textarea"
-            loadedValue={getSetting("food_vendors_regex")}
-            onSave={(v) => saveSetting("food_vendors_regex", v)}
-          />
+          <div>
+            <div style={{ fontWeight: 700, color: "#1e3a5f", fontSize: 13, marginBottom: 8 }}>
+              ביטויי התראה בלבד
+            </div>
+            <ListManager
+              items={parseList("notification_only_phrases")}
+              placeholder="ביטוי התראה (למשל document is ready)"
+              onChange={(arr) => saveList("notification_only_phrases", arr)}
+            />
+          </div>
+          <div style={{ marginTop: 12 }}>
+            <div style={{ fontWeight: 700, color: "#1e3a5f", fontSize: 13, marginBottom: 8 }}>
+              Regex ספקי מזון
+            </div>
+            <ListManager
+              items={parsePipeRegex(getSetting("food_vendors_regex"))}
+              placeholder="שם ספק מזון (למשל רמי לוי)"
+              onChange={(arr) => savePipeRegex("food_vendors_regex", arr)}
+            />
+          </div>
         </div>
       </div>
 
