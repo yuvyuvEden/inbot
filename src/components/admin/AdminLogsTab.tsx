@@ -47,13 +47,27 @@ export default function AdminLogsTab() {
     },
   });
 
+  const { data: aiErrors = [], isLoading: aiErrorsLoading } = useQuery({
+    queryKey: ["ai-errors"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ai_processing_errors")
+        .select("*, clients(brand_name)")
+        .order("created_at", { ascending: false })
+        .limit(300);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const tabs: { key: LogTab; label: string }[] = [
     { key: "usage", label: "פעולות לקוחות" },
     { key: "email", label: "מיילים" },
     { key: "billing", label: "חיובים" },
+    { key: "ai_errors", label: "🔴 שגיאות AI" },
   ];
 
-  const isLoading = usageLoading || emailLoading || billingLoading;
+  const isLoading = usageLoading || emailLoading || billingLoading || aiErrorsLoading;
 
   const formatDate = (d: string) =>
     new Date(d).toLocaleString("he-IL", {
