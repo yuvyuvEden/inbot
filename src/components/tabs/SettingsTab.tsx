@@ -354,8 +354,6 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
       custom_categories: settings.customCategories,
       business_nature: settings.businessNature || null,
       ai_temperature: settings.aiTemperature,
-      alloc_threshold_before: settings.allocThresholdBefore,
-      alloc_threshold_after: settings.allocThresholdAfter,
       search_days: settings.searchDays,
       thread_limit: settings.threadLimit,
       lookback_rows: settings.lookbackRows,
