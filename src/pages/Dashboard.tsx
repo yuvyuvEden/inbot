@@ -315,7 +315,7 @@ export default function Dashboard() {
           ) : activeTab === "ai" ? (
             <AiChatTab />
           ) : activeTab === "settings" ? (
-            <SettingsTab />
+            <SettingsTab adminClientId={isAdminView ? adminViewId ?? undefined : undefined} />
           ) : (
             <p className="py-16 text-center text-muted-foreground">בקרוב...</p>
           )}
