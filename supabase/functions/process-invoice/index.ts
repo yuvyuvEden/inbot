@@ -30,7 +30,10 @@ Deno.serve(async (req) => {
     supabase.from("clients").select(`
       id, brand_name, vat_number, business_nature, custom_categories,
       owner_aliases, tax_rules, gemini_api_key, ai_temperature,
-      alloc_threshold_before, alloc_threshold_after, lookback_rows, max_distance
+      alloc_threshold_before, alloc_threshold_after, lookback_rows, max_distance,
+      plan_id, invoice_limit_override,
+      plans(invoice_limit),
+      accountant_clients!left(client_id)
     `).eq("id", client_id).eq("is_active", true).single(),
     supabase.from("system_settings").select("key, value"),
   ]);
