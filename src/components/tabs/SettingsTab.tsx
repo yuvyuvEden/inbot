@@ -928,7 +928,7 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
                           />
                         </td>
                         <td style={{ textAlign: "center", padding: 8, display: "flex", gap: 4, justifyContent: "center" }}>
-                          <button style={btnGhost} onClick={() => saveTaxRule(rule.category, rule.editVat, rule.editTax)}><Save size={14} style={{ color: "#1e3a5f" }} /></button>
+                          <button style={btnGhost} onClick={() => saveTaxRule(rule.category, rule.editVat, rule.editTax)} disabled={isReadOnly}><Save size={14} style={{ color: "#1e3a5f" }} /></button>
                           <button style={btnGhost} onClick={() => setTaxRules(prev => prev.map(r => r.category === rule.category ? { ...r, editing: false } : r))}><X size={14} /></button>
                         </td>
                       </>
@@ -1038,7 +1038,7 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
                         <input style={{ ...inputBase, flex: 1 }} placeholder="תיאור (למשל: מצלמות, עדשות, תאורה)"
                           value={catDescInput} onChange={e => setCatDescInput(e.target.value)}
                           onKeyDown={e => e.key === "Enter" && addCustomCategory()} />
-                        <button style={{ ...btnPrimary, ...btnSm }} onClick={addCustomCategory}><Plus size={14} /></button>
+                        <button style={{ ...btnPrimary, ...btnSm }} onClick={addCustomCategory} disabled={isReadOnly}><Plus size={14} /></button>
                       </div>
                     </div>
                     <div style={scrollList}>
@@ -1139,7 +1139,7 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
                 <div style={{ fontSize: 13, fontWeight: 700 }}>ניקוי Processed IDs</div>
                 <div style={{ fontSize: 11, color: "#64748b" }}>מאפשר עיבוד מחדש של מיילים ישנים ע"י Gmail Scanner</div>
               </div>
-              <button style={btnDanger} onClick={confirmClearProcessed}><Trash2 size={14} /> נקה</button>
+              <button style={btnDanger} onClick={confirmClearProcessed} disabled={isReadOnly}><Trash2 size={14} /> נקה</button>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
