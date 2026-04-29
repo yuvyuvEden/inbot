@@ -246,10 +246,12 @@ export default function AdminSystemTab() {
   const [savingRule, setSavingRule] = useState<string | null>(null);
   const [classifyPromptVal, setClassifyPromptVal] = useState("");
   const [analyzePromptVal, setAnalyzePromptVal] = useState("");
+  const [aiChatPromptVal, setAiChatPromptVal] = useState("");
 
   useEffect(() => {
     setClassifyPromptVal(settings.find((s) => s.key === "prompt_classify_document")?.value ?? "");
     setAnalyzePromptVal(settings.find((s) => s.key === "prompt_analyze_invoice")?.value ?? "");
+    setAiChatPromptVal(settings.find((s) => s.key === "prompt_ai_chat")?.value ?? "");
   }, [settings]);
 
   const getSetting = (key: string) =>
@@ -701,6 +703,44 @@ export default function AdminSystemTab() {
               שמור
             </button>
             <div style={warning}>⚠️ שינוי הפרומפט ישפיע מיידית על כל עיבוד חשבוניות חדש</div>
+          </div>
+        </div>
+
+        <div style={card}>
+          <div style={cardHeader}><Brain size={16} /> יועץ פיננסי — AI Chat</div>
+          <div style={{ padding: 16 }}>
+            <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: 4 }}>
+              הפרומפט של היועץ הפיננסי בממשק ה-AI Chat
+            </div>
+            <div style={{ fontSize: 11, color: "#64748b", marginBottom: 8, fontFamily: "monospace" }}>
+              {`{{BUSINESS_NAME}} = שם העסק | {{VAT_RATE}} = % מע״מ | {{VAT_RULES}} = כללי מע״מ | {{TAX_RULES}} = הוצאות מוכרות | {{BUSINESS_NATURE}} = אופי עסק`}
+            </div>
+            <textarea
+              style={{
+                width: "100%",
+                minHeight: 280,
+                fontFamily: "monospace",
+                fontSize: 11,
+                direction: "ltr",
+                border: "1px solid #e2e8f0",
+                borderRadius: 8,
+                padding: 12,
+                resize: "vertical",
+                boxSizing: "border-box",
+              }}
+              value={aiChatPromptVal}
+              onChange={(e) => setAiChatPromptVal(e.target.value)}
+            />
+            <button
+              style={{ ...btnPrimary, marginTop: 10, opacity: aiChatPromptVal === getSetting("prompt_ai_chat") ? 0.5 : 1 }}
+              disabled={aiChatPromptVal === getSetting("prompt_ai_chat")}
+              onClick={() => saveSetting("prompt_ai_chat", aiChatPromptVal)}
+            >
+              שמור
+            </button>
+            <div style={{ fontSize: 11, color: "#e8941a", marginTop: 6 }}>
+              ⚠️ שינוי הפרומפט ישפיע מיידית על כל שיחות ה-AI Chat
+            </div>
           </div>
         </div>
       </div>
