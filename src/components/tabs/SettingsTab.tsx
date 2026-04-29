@@ -376,7 +376,7 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
   };
   const reloadAllData = () => { loadData(); toast.info("הנתונים רועננו"); };
 
-  const vatPct = Math.round((vatRate - 1) * 100);
+  
 
   /* ── List manager sub-component ── */
   const ListManager = ({ field, placeholder }: { field: keyof AdvancedSettings; placeholder: string }) => {
