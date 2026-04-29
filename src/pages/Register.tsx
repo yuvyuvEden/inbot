@@ -154,8 +154,20 @@ const Register = () => {
               disabled={loading}
             />
           </div>
-          <button
-            type="submit"
+          <div className="space-y-1.5 text-right">
+            <label className="text-[13px] font-medium text-muted-foreground">
+              טלפון <span style={{ fontSize: 11, color: "#94a3b8" }}>(לתמיכה)</span>
+            </label>
+            <Input
+              type="tel"
+              placeholder="050-0000000"
+              className="h-[44px] rounded-lg border-border text-right focus-visible:ring-primary"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              disabled={loading}
+              dir="ltr"
+            />
+          </div>
             disabled={loading}
             className="h-[44px] w-full rounded-lg bg-primary text-[14px] font-bold text-primary-foreground transition-colors hover:bg-primary/85 disabled:opacity-50"
           >
