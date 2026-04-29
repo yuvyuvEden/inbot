@@ -436,6 +436,95 @@ export default function SettingsTab() {
     );
   }
 
+  const generateConnectCode = async () => {
+    setIsGeneratingCode(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { toast.error("לא מחובר"); return; }
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-connect-code`,
+        { method: "POST", headers: { Authorization: `Bearer ${session.access_token}` } }
+      );
+      const data = await res.json();
+      if (!res.ok) { toast.error("שגיאה ביצירת קוד"); return; }
+      setConnectCode(data.code);
+      setConnectCodeExpiry(new Date(data.expires_at));
+      setIsPolling(true);
+      const interval = setInterval(async () => {
+        if (!clientId) return;
+        const { data: row } = await supabase
+          .from("clients")
+          .select("telegram_chat_id")
+          .eq("id", clientId)
+          .maybeSingle();
+        if ((row as any)?.telegram_chat_id) {
+          setTelegramChatId((row as any).telegram_chat_id);
+          setConnectCode(null);
+          setConnectCodeExpiry(null);
+          setIsPolling(false);
+          clearInterval(interval);
+          toast.success("✅ Telegram חובר בהצלחה!");
+        }
+      }, 3000);
+      setPollIntervalRef(interval);
+      setTimeout(() => {
+        clearInterval(interval);
+        setIsPolling(false);
+        setConnectCode(null);
+        setConnectCodeExpiry(null);
+      }, 15 * 60 * 1000);
+    } catch {
+      toast.error("שגיאה בתקשורת עם השרת");
+    } finally {
+      setIsGeneratingCode(false);
+    }
+  };
+
+  const disconnectTelegram = async () => {
+    if (!clientId) return;
+    if (!window.confirm("האם לנתק את חיבור Telegram?")) return;
+    const { error } = await supabase
+      .from("clients")
+      .update({ telegram_chat_id: null } as any)
+      .eq("id", clientId);
+    if (error) { toast.error("שגיאה בניתוק"); return; }
+    setTelegramChatId(null);
+    if (pollIntervalRef) clearInterval(pollIntervalRef);
+    toast.success("Telegram נותק");
+  };
+
+  const downloadConnector = async () => {
+    setIsDownloadingConnector(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { toast.error("לא מחובר"); return; }
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-connector`,
+        { method: "GET", headers: { Authorization: `Bearer ${session.access_token}` } }
+      );
+      if (!res.ok) { toast.error("שגיאה בהורדת ה-Connector"); return; }
+      const blob = await res.blob();
+      const disposition = res.headers.get("Content-Disposition") ?? "";
+      const match = disposition.match(/filename="([^"]+)"/);
+      const filename = match?.[1] ?? "INBOT_Connector.gs";
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("✅ Connector הורד בהצלחה");
+    } catch {
+      toast.error("שגיאה בהורדה");
+    } finally {
+      setIsDownloadingConnector(false);
+    }
+  };
+
+  useEffect(() => {
+    return () => { if (pollIntervalRef) clearInterval(pollIntervalRef); };
+  }, [pollIntervalRef]);
+
   return (
     <div dir="rtl" style={{ padding: 16, fontFamily: "Heebo, sans-serif" }}>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))", gap: 16 }}>
