@@ -251,6 +251,60 @@ export default function AdminSystemTab() {
   const [broadcastMsg, setBroadcastMsg] = useState("");
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [broadcastResult, setBroadcastResult] = useState<{ sent: number; failed: number; total: number } | null>(null);
+  const [simFile, setSimFile] = useState<File | null>(null);
+  const [simClientId, setSimClientId] = useState("");
+  const [simLoading, setSimLoading] = useState(false);
+  const [simResult, setSimResult] = useState<string | null>(null);
+  const [simError, setSimError] = useState<string | null>(null);
+
+  const { data: simClients = [] } = useQuery({
+    queryKey: ["sim-clients"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("clients")
+        .select("id, brand_name")
+        .eq("is_active", true)
+        .not("gemini_api_key", "is", null)
+        .order("brand_name");
+      return data ?? [];
+    },
+  });
+
+  const runSimulator = async () => {
+    if (!simFile || !simClientId) return;
+    setSimLoading(true);
+    setSimResult(null);
+    setSimError(null);
+    try {
+      const arrayBuffer = await simFile.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+      let binary = "";
+      bytes.forEach(b => binary += String.fromCharCode(b));
+      const base64 = btoa(binary);
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/simulate-invoice`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({
+            client_id: simClientId,
+            file_bytes_b64: base64,
+            mime_type: simFile.type || "application/pdf",
+          }),
+        }
+      );
+      const data = await res.json();
+      setSimResult(JSON.stringify(data, null, 2));
+    } catch (e: any) {
+      setSimError(e.message);
+    } finally {
+      setSimLoading(false);
+    }
+  };
 
   const sendBroadcast = async () => {
     if (!broadcastMsg.trim()) return;
