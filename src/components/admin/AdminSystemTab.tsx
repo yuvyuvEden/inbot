@@ -247,6 +247,39 @@ export default function AdminSystemTab() {
   const [classifyPromptVal, setClassifyPromptVal] = useState("");
   const [analyzePromptVal, setAnalyzePromptVal] = useState("");
   const [aiChatPromptVal, setAiChatPromptVal] = useState("");
+  const [broadcastMsg, setBroadcastMsg] = useState("");
+  const [isBroadcasting, setIsBroadcasting] = useState(false);
+  const [broadcastResult, setBroadcastResult] = useState<{ sent: number; failed: number; total: number } | null>(null);
+
+  const sendBroadcast = async () => {
+    if (!broadcastMsg.trim()) return;
+    if (!window.confirm(`שלח הודעה ל-כל הלקוחות המחוברים לטלגרם?\n\n"${broadcastMsg}"`)) return;
+    setIsBroadcasting(true);
+    setBroadcastResult(null);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/telegram-broadcast`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({ message: broadcastMsg }),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) { toast.error(data.error || "שגיאה בשליחה"); return; }
+      setBroadcastResult(data);
+      setBroadcastMsg("");
+      toast.success(`✅ נשלח ל-${data.sent} לקוחות`);
+    } catch {
+      toast.error("שגיאה בשליחה");
+    } finally {
+      setIsBroadcasting(false);
+    }
+  };
 
   useEffect(() => {
     setClassifyPromptVal(settings.find((s) => s.key === "prompt_classify_document")?.value ?? "");
