@@ -1010,6 +1010,33 @@ export type Database = {
         }
         Relationships: []
       }
+      system_settings_audit: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          id: string
+          key: string
+          new_value: string | null
+          old_value: string | null
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          key: string
+          new_value?: string | null
+          old_value?: string | null
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          key?: string
+          new_value?: string | null
+          old_value?: string | null
+        }
+        Relationships: []
+      }
       telegram_rate_limits: {
         Row: {
           chat_id: string
