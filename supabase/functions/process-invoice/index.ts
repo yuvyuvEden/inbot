@@ -387,20 +387,7 @@ async function analyzeInvoice({ base64, mimeType, geminiKey, myNames, myHp,
   const FALLBACK_PROMPT = `You are an expert Israeli accountant.
 Owner Identity: Names [${allNamesStr}], VAT/ID "${myHp}".${fileContext}${senderContext}${businessContext}
 
-CRITICAL: Return a JSON ARRAY of ALL invoices found.`;
-
-  // שלוף פרומפט מה-DB אם קיים — החלף placeholders בערכים אמיתיים
-  const dbPrompt = aiPromptOverride
-    ? aiPromptOverride
-        .replace(/\{\{NAMES\}\}/g, allNamesStr)
-        .replace(/\{\{VAT\}\}/g, myHp)
-        .replace(/\{\{CATEGORIES\}\}/g, allCategories.join(", "))
-        + (fileContext ? "\n" + fileContext : "")
-        + (senderContext ? "\n" + senderContext : "")
-        + (businessContext ? "\n" + businessContext : "")
-    : null;
-
-  const prompt = dbPrompt ?? FALLBACK_PROMPT + `
+CRITICAL: Return a JSON ARRAY of ALL invoices found.
 Single invoice → still return array: [{"vendor":"..."}]
 NON_FINANCIAL / INCOME / LINK_ONLY_INVOICE → return single object (NOT array): {"document_type":"NON_FINANCIAL"}
 
@@ -417,6 +404,16 @@ Rules:
 
 Return ONLY valid JSON array:
 [{"vendor":"","supplier_vat_number":"","supplier_tax_status":"","invoice_number":"","total":0,"vat":0,"currency":"ILS","category":"","document_type":"","payment_date":"","invoice_date":"","allocation_number":"","billed_to":"","is_credit":false,"is_receipt_only":false,"learned_keywords":[]}]`;
+
+  const prompt = aiPromptOverride
+    ? aiPromptOverride
+        .replace(/\{\{NAMES\}\}/g, allNamesStr)
+        .replace(/\{\{VAT\}\}/g, myHp)
+        .replace(/\{\{CATEGORIES\}\}/g, allCategories.join(", "))
+        .replace(/\{\{FILE_CTX\}\}/g, fileContext)
+        .replace(/\{\{SENDER_CTX\}\}/g, senderContext)
+        .replace(/\{\{BUSINESS_CTX\}\}/g, businessContext)
+    : FALLBACK_PROMPT;
 
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
