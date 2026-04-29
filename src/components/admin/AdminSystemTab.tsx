@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ChevronDown, Plus, X, Globe, Download, FileText, Tags } from "lucide-react";
+import { ChevronDown, Plus, X, Globe, Download, FileText, Tags, Brain } from "lucide-react";
 import { useVatRules, useUpdateVatRule, type VatRule } from "@/hooks/useVatRules";
 import { useSystemSettings, useUpdateSystemSetting } from "@/hooks/useSystemSettings";
 
@@ -244,6 +244,13 @@ export default function AdminSystemTab() {
   const { mutateAsync: updateRule } = useUpdateVatRule();
   const [dirty, setDirty] = useState<Record<string, Partial<VatRule>>>({});
   const [savingRule, setSavingRule] = useState<string | null>(null);
+  const [classifyPromptVal, setClassifyPromptVal] = useState("");
+  const [analyzePromptVal, setAnalyzePromptVal] = useState("");
+
+  useEffect(() => {
+    setClassifyPromptVal(settings.find((s) => s.key === "prompt_classify_document")?.value ?? "");
+    setAnalyzePromptVal(settings.find((s) => s.key === "prompt_analyze_invoice")?.value ?? "");
+  }, [settings]);
 
   const getSetting = (key: string) =>
     settings.find((s) => s.key === key)?.value ?? "";
@@ -639,23 +646,66 @@ export default function AdminSystemTab() {
     </>
   );
 
-  const renderPromptsTab = () => (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      <PromptEditor
-        title="סיווג מסמך (classify)"
-        description="מריץ לפני ניתוח מלא — מסנן מסמכים שאינם חשבוניות. מחזיר: INVOICE / REPORT / OTHER"
-        loadedValue={getSetting("prompt_classify_document")}
-        onSave={(v) => saveSetting("prompt_classify_document", v)}
-      />
-      <PromptEditor
-        title="ניתוח חשבונית (analyze)"
-        description="הפרומפט הראשי לחילוץ נתוני חשבונית. השתמש ב-{{NAMES}} {{VAT}} {{CATEGORIES}} כ-placeholders"
-        loadedValue={getSetting("prompt_analyze_invoice")}
-        onSave={(v) => saveSetting("prompt_analyze_invoice", v)}
-        extraInfo="{{NAMES}} = שמות הלקוח | {{VAT}} = מספר ח״פ | {{CATEGORIES}} = רשימת קטגוריות"
-      />
-    </div>
-  );
+  const renderPromptsTab = () => {
+    const taStyle: React.CSSProperties = {
+      width: "100%", fontFamily: "monospace", fontSize: 11, direction: "ltr",
+      border: "1px solid #e2e8f0", borderRadius: 8, padding: 12, resize: "vertical",
+      outline: "none",
+    };
+    const warning: React.CSSProperties = { fontSize: 11, color: "#e8941a", marginTop: 6 };
+    const classifyLoaded = getSetting("prompt_classify_document");
+    const analyzeLoaded = getSetting("prompt_analyze_invoice");
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <div style={card}>
+          <div style={cardHeader}><Brain size={16} /> סיווג מסמך — classify</div>
+          <div style={{ padding: 16 }}>
+            <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: 8 }}>
+              מריץ לפני ניתוח מלא — מסנן מסמכים שאינם חשבוניות. מחזיר: INVOICE / REPORT / OTHER
+            </div>
+            <textarea
+              style={{ ...taStyle, minHeight: 180 }}
+              value={classifyPromptVal}
+              onChange={(e) => setClassifyPromptVal(e.target.value)}
+            />
+            <button
+              style={{ ...btnPrimary, marginTop: 10, opacity: classifyPromptVal === classifyLoaded ? 0.5 : 1 }}
+              disabled={classifyPromptVal === classifyLoaded}
+              onClick={() => saveSetting("prompt_classify_document", classifyPromptVal)}
+            >
+              שמור פרומפט
+            </button>
+            <div style={warning}>⚠️ שינוי הפרומפט ישפיע מיידית על כל עיבוד חשבוניות חדש</div>
+          </div>
+        </div>
+
+        <div style={card}>
+          <div style={cardHeader}><Brain size={16} /> ניתוח חשבונית — analyze</div>
+          <div style={{ padding: 16 }}>
+            <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: 4 }}>
+              הפרומפט הראשי לחילוץ נתוני חשבונית מ-Gemini
+            </div>
+            <div style={{ fontSize: 11, color: "#64748b", marginBottom: 8, fontFamily: "monospace" }}>
+              {`{{NAMES}} = שמות הלקוח | {{VAT}} = מספר ח״פ | {{CATEGORIES}} = קטגוריות | {{FILE_CTX}} {{SENDER_CTX}} {{BUSINESS_CTX}} = הקשר`}
+            </div>
+            <textarea
+              style={{ ...taStyle, minHeight: 320 }}
+              value={analyzePromptVal}
+              onChange={(e) => setAnalyzePromptVal(e.target.value)}
+            />
+            <button
+              style={{ ...btnPrimary, marginTop: 10, opacity: analyzePromptVal === analyzeLoaded ? 0.5 : 1 }}
+              disabled={analyzePromptVal === analyzeLoaded}
+              onClick={() => saveSetting("prompt_analyze_invoice", analyzePromptVal)}
+            >
+              שמור פרומפט
+            </button>
+            <div style={warning}>⚠️ שינוי הפרומפט ישפיע מיידית על כל עיבוד חשבוניות חדש</div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div dir="rtl" style={{ fontFamily: "Heebo, sans-serif", display: "flex", flexDirection: "column", gap: 16 }}>
