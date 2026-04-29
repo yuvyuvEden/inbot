@@ -193,6 +193,14 @@ Deno.serve(async (req) => {
           "HTML"
         );
       }
+      await supabase.from("ai_processing_errors").insert({
+        client_id:  client_id,
+        source,
+        error_type: "ownership_rejected",
+        error_msg:  `לכבוד: "${aiData.billed_to}" — לא תואם לבעלים`,
+        vendor:     aiData.vendor ?? null,
+        file_name:  originalName ?? null,
+      }).catch(() => {});
       continue;
     }
 
