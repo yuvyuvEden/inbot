@@ -687,6 +687,90 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
           </div>
         </div>
 
+        {/* ── CARD: משתמשי החשבון ── */}
+        <div style={card}>
+          <div style={cardHeader}>
+            <Users size={16} /> משתמשי החשבון
+          </div>
+          <div style={{ padding: 16 }}>
+            <div style={{ marginBottom: 14 }}>
+              {clientUsers.map(cu => (
+                <div key={cu.id} style={{
+                  display: "flex", justifyContent: "space-between", alignItems: "center",
+                  padding: "8px 0", borderBottom: "1px solid #f1f5f9",
+                }}>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "#1e3a5f" }}>
+                      {cu.profiles?.full_name || "משתמש"}
+                    </div>
+                    <div style={{ fontSize: 11, color: "#94a3b8" }}>
+                      {cu.role === "owner" ? "👑 בעלים" : "👤 חבר"}
+                    </div>
+                  </div>
+                  {cu.role !== "owner" && (
+                    <button
+                      style={{ ...btnGhost, color: "#dc2626", fontSize: 11 }}
+                      onClick={() => removeMember(cu.id)}
+                    >
+                      הסר
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {!inviteCode ? (
+              <div>
+                <div style={{ fontSize: 12, color: "#64748b", marginBottom: 10, lineHeight: 1.6 }}>
+                  הזמן עובד או שותף לגשת לחשבון. הקוד תקף ל-24 שעות.
+                </div>
+                <button
+                  style={{ ...btnPrimary, width: "100%", justifyContent: "center" }}
+                  onClick={generateInviteCode}
+                  disabled={isGeneratingInvite}
+                >
+                  {isGeneratingInvite ? "יוצר קוד..." : "✉️ צור קוד הזמנה"}
+                </button>
+              </div>
+            ) : (
+              <div>
+                <div style={{ fontSize: 12, color: "#475569", marginBottom: 8 }}>
+                  שלח את הקוד הזה למשתמש — הוא יכניס אותו לאחר ההרשמה:
+                </div>
+                <div style={{
+                  background: "#f0f4f8", border: "1px solid #cbd5e1",
+                  borderRadius: 10, padding: "12px 16px", textAlign: "center", marginBottom: 10,
+                }}>
+                  <div style={{ fontSize: 11, color: "#94a3b8", marginBottom: 4 }}>קוד הזמנה:</div>
+                  <div style={{
+                    fontFamily: "monospace", fontSize: 24, fontWeight: 700,
+                    color: "#1e3a5f", letterSpacing: 4, direction: "ltr",
+                  }}>
+                    {inviteCode}
+                  </div>
+                  <button
+                    style={{ ...btnGhost, fontSize: 11, marginTop: 6, color: "#1e3a5f" }}
+                    onClick={() => { navigator.clipboard.writeText(inviteCode); toast.success("הועתק!"); }}
+                  >
+                    📋 העתק קוד
+                  </button>
+                </div>
+                {inviteExpiry && (
+                  <div style={{ fontSize: 11, color: "#94a3b8", textAlign: "center", marginBottom: 8 }}>
+                    תקף עד {inviteExpiry.toLocaleString("he-IL", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })}
+                  </div>
+                )}
+                <button
+                  style={{ ...btnSecondary, ...btnSm, width: "100%", justifyContent: "center" }}
+                  onClick={generateInviteCode}
+                >
+                  🔄 צור קוד חדש
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* ── CARD 1: System Status ── */}
         <div style={card}>
           <div style={cardHeader}><Bot size={16} /> מצב מערכת</div>
