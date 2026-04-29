@@ -10,6 +10,7 @@ import {
   AlertTriangle, RefreshCw,
 } from "lucide-react";
 import { useVatRules } from "@/hooks/useVatRules";
+import { useSystemSettings } from "@/hooks/useSystemSettings";
 
 /* ── types ─────────────────────────────────────── */
 interface AdvancedSettings {
