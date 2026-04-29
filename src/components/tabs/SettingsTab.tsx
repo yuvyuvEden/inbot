@@ -1003,35 +1003,7 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
                   </div>
                 </div>
 
-                {/* Allocation Threshold */}
-                <div style={subCard}>
-                  <div style={subCardHeader}><Scale size={14} /> סף מספר הקצאה <SubCardTooltip text={"סכום מינימום שמעליו המערכת דורשת מספר הקצאה בחשבונית מס.\nחשבונית ללא מספר הקצאה מעל הסף — תעצר לאישורך.\nמיוני 2026: הסף יורד מ-₪10,000 ל-₪5,000 (תקנות רשות המסים)."} /></div>
-                  <div style={{ padding: 12 }}>
-                    <div style={{ fontSize: 11, color: "#64748b", marginBottom: 8 }}>סכום מינימום שמעליו נדרש מספר הקצאה בחשבונית מס.</div>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                      <div>
-                        <label style={{ fontSize: 11, fontWeight: 700, color: "#64748b" }}>לפני יוני 2026</label>
-                        <div style={{ fontSize: 10, color: "#94a3b8" }}>ברירת מחדל: ₪10,000</div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                          <span style={{ fontSize: 12 }}>₪</span>
-                          <input type="number" style={inputLtr} value={settings.allocThresholdBefore}
-                            min={0} max={999999} step={1}
-                            onChange={e => setSettings(p => ({ ...p, allocThresholdBefore: +e.target.value }))} />
-                        </div>
-                      </div>
-                      <div>
-                        <label style={{ fontSize: 11, fontWeight: 700, color: "#64748b" }}>מיוני 2026 ואילך</label>
-                        <div style={{ fontSize: 10, color: "#94a3b8" }}>ברירת מחדל: ₪5,000</div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                          <span style={{ fontSize: 12 }}>₪</span>
-                          <input type="number" style={inputLtr} value={settings.allocThresholdAfter}
-                            min={0} max={999999} step={1}
-                            onChange={e => setSettings(p => ({ ...p, allocThresholdAfter: +e.target.value }))} />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+
 
                 {/* Advanced Tuning */}
                 <div style={subCard}>
