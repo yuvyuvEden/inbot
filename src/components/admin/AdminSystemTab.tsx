@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ChevronDown, Plus, X, Globe, Download, FileText, Tags, Brain } from "lucide-react";
@@ -250,6 +251,60 @@ export default function AdminSystemTab() {
   const [broadcastMsg, setBroadcastMsg] = useState("");
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [broadcastResult, setBroadcastResult] = useState<{ sent: number; failed: number; total: number } | null>(null);
+  const [simFile, setSimFile] = useState<File | null>(null);
+  const [simClientId, setSimClientId] = useState("");
+  const [simLoading, setSimLoading] = useState(false);
+  const [simResult, setSimResult] = useState<string | null>(null);
+  const [simError, setSimError] = useState<string | null>(null);
+
+  const { data: simClients = [] } = useQuery({
+    queryKey: ["sim-clients"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("clients")
+        .select("id, brand_name")
+        .eq("is_active", true)
+        .not("gemini_api_key", "is", null)
+        .order("brand_name");
+      return data ?? [];
+    },
+  });
+
+  const runSimulator = async () => {
+    if (!simFile || !simClientId) return;
+    setSimLoading(true);
+    setSimResult(null);
+    setSimError(null);
+    try {
+      const arrayBuffer = await simFile.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+      let binary = "";
+      bytes.forEach(b => binary += String.fromCharCode(b));
+      const base64 = btoa(binary);
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/simulate-invoice`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({
+            client_id: simClientId,
+            file_bytes_b64: base64,
+            mime_type: simFile.type || "application/pdf",
+          }),
+        }
+      );
+      const data = await res.json();
+      setSimResult(JSON.stringify(data, null, 2));
+    } catch (e: any) {
+      setSimError(e.message);
+    } finally {
+      setSimLoading(false);
+    }
+  };
 
   const sendBroadcast = async () => {
     if (!broadcastMsg.trim()) return;
@@ -774,6 +829,75 @@ export default function AdminSystemTab() {
             <div style={{ fontSize: 11, color: "#e8941a", marginTop: 6 }}>
               ⚠️ שינוי הפרומפט ישפיע מיידית על כל שיחות ה-AI Chat
             </div>
+          </div>
+        </div>
+
+        <div style={card}>
+          <div style={cardHeader}>
+            🧪 סימולטור עיבוד חשבונית
+          </div>
+          <div style={{ padding: 16 }}>
+            <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: 12 }}>
+              העלה קובץ PDF או תמונה ובחר לקוח — המערכת תריץ את הפרומפט האמיתי ותציג את תוצאת ה-JSON.
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 700, color: "#64748b" }}>לקוח לסימולציה</label>
+                <select
+                  value={simClientId}
+                  onChange={e => setSimClientId(e.target.value)}
+                  style={{ ...inputBase, marginTop: 4 }}
+                >
+                  <option value="">בחר לקוח...</option>
+                  {simClients.map((c: any) => (
+                    <option key={c.id} value={c.id}>{c.brand_name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 700, color: "#64748b" }}>קובץ חשבונית (PDF / תמונה)</label>
+                <input
+                  type="file"
+                  accept=".pdf,image/*"
+                  onChange={e => setSimFile(e.target.files?.[0] ?? null)}
+                  style={{ display: "block", marginTop: 4, fontSize: 13, fontFamily: "Heebo, sans-serif" }}
+                />
+                {simFile && (
+                  <div style={{ fontSize: 11, color: "#64748b", marginTop: 4 }}>
+                    {simFile.name} — {(simFile.size / 1024).toFixed(1)} KB
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={runSimulator}
+                disabled={simLoading || !simFile || !simClientId}
+                style={{
+                  ...btnPrimary,
+                  opacity: (!simFile || !simClientId) ? 0.5 : 1,
+                  justifyContent: "center",
+                }}
+              >
+                {simLoading ? "מעבד..." : "▶️ הרץ סימולציה"}
+              </button>
+            </div>
+            {simError && (
+              <div style={{ marginTop: 12, padding: 10, background: "#fef2f2", borderRadius: 8, fontSize: 12, color: "#dc2626" }}>
+                ❌ {simError}
+              </div>
+            )}
+            {simResult && (
+              <div style={{ marginTop: 12 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#1e3a5f", marginBottom: 6 }}>תוצאה:</div>
+                <pre style={{
+                  background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8,
+                  padding: 12, fontSize: 11, fontFamily: "monospace",
+                  overflowX: "auto", maxHeight: 400, overflowY: "auto",
+                  direction: "ltr", textAlign: "left",
+                }}>
+                  {simResult}
+                </pre>
+              </div>
+            )}
           </div>
         </div>
       </div>
