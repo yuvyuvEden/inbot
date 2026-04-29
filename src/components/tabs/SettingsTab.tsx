@@ -271,20 +271,7 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
     }
   };
 
-  /* ── VAT rate ── */
-  const saveVatRate = async () => {
-    const pct = parseFloat(vatInput);
-    if (isNaN(pct) || pct < 1 || pct > 99) {
-      toast.warning("הזן אחוז תקין (1–99)");
-      return;
-    }
-    const newRate = 1 + pct / 100;
-    if (await updateClient({ vat_rate: newRate } as any)) {
-      setVatRate(newRate);
-      setVatInput("");
-      toast.success(`שיעור מע"מ עודכן ל-${pct}%`);
-    }
-  };
+
 
   /* ── Learned words ── */
   const addWord = async () => {
