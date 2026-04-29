@@ -252,6 +252,10 @@ export default function SettingsTab() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
+  useEffect(() => {
+    return () => { if (pollIntervalRef) clearInterval(pollIntervalRef); };
+  }, [pollIntervalRef]);
+
   /* ── update helper ── */
   const updateClient = async (payload: Record<string, any>) => {
     if (!clientId) return false;
@@ -520,10 +524,6 @@ export default function SettingsTab() {
       setIsDownloadingConnector(false);
     }
   };
-
-  useEffect(() => {
-    return () => { if (pollIntervalRef) clearInterval(pollIntervalRef); };
-  }, [pollIntervalRef]);
 
   return (
     <div dir="rtl" style={{ padding: 16, fontFamily: "Heebo, sans-serif" }}>
