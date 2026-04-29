@@ -192,6 +192,22 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
       ).maybeSingle();
       if (!c) { setIsLoading(false); return; }
       setClientId(c.id);
+
+      // טען משתמשי החשבון
+      const { data: cuData } = await supabase
+        .from("client_users")
+        .select("id, user_id, role, created_at")
+        .eq("client_id", c.id)
+        .order("created_at");
+      if (cuData) {
+        const userIds = cuData.map(cu => cu.user_id);
+        const { data: profilesData } = await supabase
+          .from("profiles")
+          .select("user_id, full_name")
+          .in("user_id", userIds);
+        const profileMap = new Map((profilesData ?? []).map(p => [p.user_id, p]));
+        setClientUsers(cuData.map(cu => ({ ...cu, profiles: profileMap.get(cu.user_id) })));
+      }
       setTelegramChatId((c as any).telegram_chat_id ?? null);
       setGeminiKey(c.gemini_api_key || "");
       setDialectWords(asArr((c as any).learned_words));
