@@ -116,10 +116,9 @@ function RowMenu({
     if (btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect();
       const menuWidth = 180;
-      const leftPos = Math.min(rect.left + window.scrollX, window.innerWidth - menuWidth - 8);
       setMenuPos({
-        top: rect.bottom + window.scrollY + 4,
-        left: Math.max(8, leftPos),
+        top: rect.bottom + 4,
+        left: Math.max(8, Math.min(rect.left, window.innerWidth - menuWidth - 8)),
       });
     }
     setOpen((p) => !p);
@@ -130,7 +129,7 @@ function RowMenu({
         <div
           ref={menuRef}
           style={{
-            position: "absolute",
+            position: "fixed",
             top: menuPos.top,
             left: menuPos.left,
             zIndex: 9999,
