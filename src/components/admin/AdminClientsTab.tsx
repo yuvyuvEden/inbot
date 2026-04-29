@@ -29,6 +29,8 @@ interface ClientRow {
   user_id: string | null;
   gemini_api_key: string | null;
   created_at: string;
+  settings_refresh_requested: boolean | null;
+  settings_refreshed_at: string | null;
 }
 
 const isExpiringSoon = (d: string | null) => {
@@ -82,7 +84,7 @@ export default function AdminClientsTab() {
     queryFn: async () => {
       const { data: clientsData, error } = await supabase
         .from("clients")
-        .select("id, brand_name, legal_name, vat_number, plan_type, plan_expires_at, is_active, telegram_chat_id, user_id, gemini_api_key, created_at, plan_id, invoice_limit_override, extra_invoice_price, locked_monthly_price, locked_yearly_price, plans(id, name, invoice_limit, user_limit, monthly_price, yearly_price)")
+        .select("id, brand_name, legal_name, vat_number, plan_type, plan_expires_at, is_active, telegram_chat_id, user_id, gemini_api_key, created_at, plan_id, invoice_limit_override, extra_invoice_price, locked_monthly_price, locked_yearly_price, settings_refresh_requested, settings_refreshed_at, plans(id, name, invoice_limit, user_limit, monthly_price, yearly_price)")
         .order("created_at", { ascending: false });
       if (error) throw error;
 
@@ -418,6 +420,7 @@ export default function AdminClientsTab() {
                   <th style={thStyle}>חבילה</th>
                   <th style={thStyle}>תפוגה</th>
                   <th style={thStyle}>רו"ח משויך</th>
+                  <th style={thStyle}>סטטוס הגדרות</th>
                   <th style={thStyle}>פעולות</th>
                 </>
               ) : (
@@ -584,6 +587,29 @@ export default function AdminClientsTab() {
                         </span>
                       ) : (
                         <span style={{ color: "#94a3b8" }}>—</span>
+                      )}
+                    </td>
+                    <td className="p-3">
+                      {(c as any).settings_refresh_requested ? (
+                        <span style={{
+                          background: "#fef3c7", color: "#b45309",
+                          padding: "2px 8px", borderRadius: "10px",
+                          fontSize: "11px", fontWeight: 600,
+                          display: "inline-flex", alignItems: "center", gap: "4px"
+                        }}>
+                          ⏳ ממתין לסנכרון
+                        </span>
+                      ) : (c as any).settings_refreshed_at ? (
+                        <span style={{
+                          background: "#f0fdf4", color: "#16a34a",
+                          padding: "2px 8px", borderRadius: "10px",
+                          fontSize: "11px", fontWeight: 600,
+                          display: "inline-flex", alignItems: "center", gap: "4px"
+                        }} title={`עודכן: ${new Date((c as any).settings_refreshed_at).toLocaleString("he-IL")}`}>
+                          ✅ מסונכרן
+                        </span>
+                      ) : (
+                        <span style={{ color: "#94a3b8", fontSize: "11px" }}>—</span>
                       )}
                     </td>
                     <td className="p-3">
@@ -860,6 +886,7 @@ function RowMenu({
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!open) return;
     const handler = (e: MouseEvent) => {
       if (
         menuRef.current && !menuRef.current.contains(e.target as Node) &&
@@ -868,18 +895,23 @@ function RowMenu({
         setOpen(false);
       }
     };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
+    const timer = setTimeout(() => {
+      document.addEventListener("mousedown", handler);
+    }, 50);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("mousedown", handler);
+    };
+  }, [open]);
 
-  const handleOpen = () => {
+  const handleOpen = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect();
       const menuWidth = 180;
-      const leftPos = Math.min(rect.left + window.scrollX, window.innerWidth - menuWidth - 8);
       setMenuPos({
-        top: rect.bottom + window.scrollY + 4,
-        left: Math.max(8, leftPos),
+        top: rect.bottom + 4,
+        left: Math.max(8, Math.min(rect.left, window.innerWidth - menuWidth - 8)),
       });
     }
     setOpen((p) => !p);
@@ -890,7 +922,7 @@ function RowMenu({
         <div
           ref={menuRef}
           style={{
-            position: "absolute",
+            position: "fixed",
             top: menuPos.top,
             left: menuPos.left,
             zIndex: 9999,
