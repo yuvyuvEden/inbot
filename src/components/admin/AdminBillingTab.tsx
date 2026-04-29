@@ -135,14 +135,20 @@ export function AdminBillingTab({ initialAccountantId, onClearFilter }: Props) {
 
   // Close dropdown when clicking outside
   useEffect(() => {
+    if (!openMenuId) return;
     const onDocClick = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setOpenMenuId(null);
       }
     };
-    document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
-  }, []);
+    const timer = setTimeout(() => {
+      document.addEventListener("mousedown", onDocClick);
+    }, 50);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("mousedown", onDocClick);
+    };
+  }, [openMenuId]);
 
   const { data: stats } = useBillingStats();
   const { data: allLogs = [], isLoading: logsLoading } = useBillingLogWithNames();
