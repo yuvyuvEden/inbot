@@ -117,6 +117,7 @@ export function AdminBillingTab({ initialAccountantId, onClearFilter }: Props) {
 
   // Per-row dropdown menu (accountants table)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   // History drawer for an accountant
@@ -462,7 +463,7 @@ export function AdminBillingTab({ initialAccountantId, onClearFilter }: Props) {
               style={inputStyle}
             />
           </div>
-          <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", width: "100%" }}>
+          <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", width: "100%", overflowY: "visible" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", minWidth: "780px" }}>
               <thead>
                 <tr style={{ background: "#f8fafc", textAlign: "right" }}>
@@ -507,67 +508,29 @@ export function AdminBillingTab({ initialAccountantId, onClearFilter }: Props) {
                           </span>
                         )}
                       </td>
-                      <td style={{ padding: "10px 14px", position: "relative" }}>
-                        <button
-                          onClick={() => setOpenMenuId(openMenuId === acc.id ? null : acc.id)}
-                          title="פעולות"
-                          style={{
-                            padding: "4px 8px", borderRadius: "6px",
-                            backgroundColor: "transparent", color: "#64748b",
-                            border: "1px solid #e2e8f0", cursor: "pointer",
-                            display: "inline-flex", alignItems: "center",
-                          }}>
-                          <MoreVertical size={14} />
-                        </button>
-                        {openMenuId === acc.id && (
-                          <div
-                            ref={menuRef}
+                      <td style={{ padding: "10px 14px" }}>
+                        <div style={{ position: "relative" }}>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (openMenuId === acc.id) {
+                                setOpenMenuId(null);
+                              } else {
+                                const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                                setMenuPos({ top: rect.bottom + 4, left: rect.left });
+                                setOpenMenuId(acc.id);
+                              }
+                            }}
+                            title="פעולות"
                             style={{
-                              position: "absolute", top: "100%", right: "14px", marginTop: "4px",
-                              background: "#ffffff", border: "1px solid #e2e8f0",
-                              borderRadius: "8px", boxShadow: "0 4px 16px rgba(15, 23, 42, 0.12)",
-                              zIndex: 50, minWidth: "180px", overflow: "hidden",
+                              padding: "4px 8px", borderRadius: "6px",
+                              backgroundColor: "transparent", color: "#64748b",
+                              border: "1px solid #e2e8f0", cursor: "pointer",
+                              display: "inline-flex", alignItems: "center",
                             }}>
-                            <button
-                              onClick={() => {
-                                setSelectedAccountantHistory(acc);
-                                setOpenMenuId(null);
-                              }}
-                              style={{
-                                display: "flex", alignItems: "center", gap: "8px",
-                                width: "100%", padding: "10px 12px", border: "none",
-                                background: "transparent", textAlign: "right",
-                                cursor: "pointer", fontSize: "13px", color: "#1e3a5f",
-                                fontFamily: "Heebo, sans-serif",
-                              }}
-                              onMouseEnter={(e) => (e.currentTarget.style.background = "#f8fafc")}
-                              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
-                              <History size={14} /> 📄 היסטוריית חיוב
-                            </button>
-                            <button
-                              onClick={async () => {
-                                setOpenMenuId(null);
-                                if (!alreadyBilled) {
-                                  await generateAccountantBill(acc, activeCount);
-                                }
-                              }}
-                              disabled={alreadyBilled}
-                              style={{
-                                display: "flex", alignItems: "center", gap: "8px",
-                                width: "100%", padding: "10px 12px", border: "none",
-                                borderTop: "1px solid #f1f5f9",
-                                background: "transparent", textAlign: "right",
-                                cursor: alreadyBilled ? "not-allowed" : "pointer",
-                                opacity: alreadyBilled ? 0.5 : 1,
-                                fontSize: "13px", color: "#1e3a5f",
-                                fontFamily: "Heebo, sans-serif",
-                              }}
-                              onMouseEnter={(e) => { if (!alreadyBilled) e.currentTarget.style.background = "#f8fafc"; }}
-                              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
-                              <Plus size={14} /> ➕ צור חיוב ידני
-                            </button>
-                          </div>
-                        )}
+                            <MoreVertical size={14} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -993,6 +956,69 @@ export function AdminBillingTab({ initialAccountantId, onClearFilter }: Props) {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {openMenuId && menuPos && (
+        <div
+          ref={menuRef}
+          style={{
+            position: "fixed",
+            top: menuPos.top,
+            left: menuPos.left,
+            zIndex: 9999,
+            background: "#ffffff",
+            border: "1px solid #e2e8f0",
+            borderRadius: "8px",
+            boxShadow: "0 4px 16px rgba(15, 23, 42, 0.12)",
+            minWidth: "180px",
+            overflow: "hidden",
+            fontFamily: "Heebo, sans-serif",
+          }}
+        >
+          {filteredAccountants.filter((a: any) => a.id === openMenuId).map((acc: any) => {
+            const activeCount = acc.base_client_count ?? 10;
+            const alreadyBilled = billedAccountantIds.has(acc.id);
+            return (
+              <div key={acc.id}>
+                <button
+                  onClick={() => { setSelectedAccountantHistory(acc); setOpenMenuId(null); }}
+                  style={{
+                    display: "flex", alignItems: "center", gap: "8px",
+                    width: "100%", padding: "10px 12px", border: "none",
+                    background: "transparent", textAlign: "right",
+                    cursor: "pointer", fontSize: "13px", color: "#1e3a5f",
+                    fontFamily: "Heebo, sans-serif",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "#f8fafc")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                >
+                  <History size={14} /> 📄 היסטוריית חיוב
+                </button>
+                <button
+                  onClick={async () => {
+                    setOpenMenuId(null);
+                    if (!alreadyBilled) await generateAccountantBill(acc, activeCount);
+                  }}
+                  disabled={alreadyBilled}
+                  style={{
+                    display: "flex", alignItems: "center", gap: "8px",
+                    width: "100%", padding: "10px 12px", border: "none",
+                    borderTop: "1px solid #f1f5f9",
+                    background: "transparent", textAlign: "right",
+                    cursor: alreadyBilled ? "not-allowed" : "pointer",
+                    opacity: alreadyBilled ? 0.5 : 1,
+                    fontSize: "13px", color: "#1e3a5f",
+                    fontFamily: "Heebo, sans-serif",
+                  }}
+                  onMouseEnter={(e) => { if (!alreadyBilled) e.currentTarget.style.background = "#f8fafc"; }}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                >
+                  <Plus size={14} /> ➕ צור חיוב ידני
+                </button>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
