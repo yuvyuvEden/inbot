@@ -782,6 +782,46 @@ export default function AdminSystemTab() {
 
   return (
     <div dir="rtl" style={{ fontFamily: "Heebo, sans-serif", display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* Broadcast card */}
+      <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, padding: 16 }}>
+        <div style={{ fontWeight: 700, color: "#1e3a5f", marginBottom: 10, fontSize: 14 }}>
+          📣 שליחת הודעת מערכת לכל הלקוחות (Telegram Broadcast)
+        </div>
+        <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+          <textarea
+            value={broadcastMsg}
+            onChange={(e) => setBroadcastMsg(e.target.value)}
+            placeholder="הודעת המערכת... (תומך ב-HTML בסיסי: <b>מודגש</b>, <i>נטוי</i>)"
+            rows={3}
+            style={{
+              flex: 1, border: "1px solid #e2e8f0", borderRadius: 8,
+              padding: "8px 12px", fontFamily: "Heebo, sans-serif",
+              fontSize: 13, resize: "vertical", outline: "none",
+            }}
+          />
+          <button
+            onClick={sendBroadcast}
+            disabled={isBroadcasting || !broadcastMsg.trim()}
+            style={{
+              background: broadcastMsg.trim() ? "#1e3a5f" : "#e2e8f0",
+              color: broadcastMsg.trim() ? "#ffffff" : "#94a3b8",
+              border: "none", borderRadius: 8, padding: "8px 16px",
+              fontSize: 13, fontWeight: 700, cursor: broadcastMsg.trim() ? "pointer" : "default",
+              fontFamily: "Heebo, sans-serif", whiteSpace: "nowrap",
+            }}
+          >
+            {isBroadcasting ? "שולח..." : "📤 שלח"}
+          </button>
+        </div>
+        {broadcastResult && (
+          <div style={{ marginTop: 10, fontSize: 12, color: "#64748b" }}>
+            ✅ נשלח: <strong style={{ color: "#16a34a" }}>{broadcastResult.sent}</strong>
+            {" "} | ❌ נכשל: <strong style={{ color: "#dc2626" }}>{broadcastResult.failed}</strong>
+            {" "} | סה"כ: <strong>{broadcastResult.total}</strong>
+          </div>
+        )}
+      </div>
+
       {/* Top: orange refresh button */}
       <button
         onClick={refreshAllClients}
