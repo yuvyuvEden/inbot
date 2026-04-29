@@ -52,20 +52,24 @@ export default function AdminLogsTab() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("system_settings_audit")
-        .select("*")
+        .select("id, key, old_value, new_value, changed_by, changed_at")
         .order("changed_at", { ascending: false })
         .limit(200);
       if (error) throw error;
-      const userIds = Array.from(new Set((data ?? []).map((a: any) => a.changed_by).filter(Boolean)));
-      let profilesMap: Record<string, string> = {};
-      if (userIds.length) {
-        const { data: profs } = await supabase
-          .from("profiles")
-          .select("user_id, full_name")
-          .in("user_id", userIds as string[]);
-        profilesMap = Object.fromEntries((profs ?? []).map((p: any) => [p.user_id, p.full_name]));
-      }
-      return (data ?? []).map((a: any) => ({ ...a, profiles: { full_name: profilesMap[a.changed_by] ?? null } }));
+      if (!data?.length) return [];
+      // שלוף שמות משתמשים ידנית לפי user_id
+      const userIds = [...new Set(data.map((r: any) => r.changed_by).filter(Boolean))];
+      const { data: profiles } = userIds.length
+        ? await supabase
+            .from("profiles")
+            .select("user_id, full_name")
+            .in("user_id", userIds)
+        : { data: [] };
+      const nameMap = new Map((profiles ?? []).map((p: any) => [p.user_id, p.full_name]));
+      return data.map((r: any) => ({
+        ...r,
+        changer_name: nameMap.get(r.changed_by) ?? "אדמין",
+      }));
     },
   });
 
@@ -372,7 +376,7 @@ export default function AdminLogsTab() {
                   .filter((a: any) =>
                     !search ||
                     (a.key ?? "").includes(search) ||
-                    (a.profiles?.full_name ?? "").includes(search)
+                    (a.changer_name ?? "").includes(search)
                   )
                   .map((a: any) => (
                     <tr key={a.id} style={{ borderBottom: "1px solid #f1f5f9" }}
@@ -398,7 +402,7 @@ export default function AdminLogsTab() {
                         {a.new_value ? (a.new_value.length > 40 ? a.new_value.slice(0, 40) + "…" : a.new_value) : "—"}
                       </td>
                       <td style={{ padding: "8px 12px", color: "#475569" }}>
-                        {a.profiles?.full_name ?? "אדמין"}
+                        {a.changer_name ?? "אדמין"}
                       </td>
                     </tr>
                   ))}
