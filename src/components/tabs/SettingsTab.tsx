@@ -194,6 +194,16 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
       if (!c) { setIsLoading(false); return; }
       setClientId(c.id);
 
+      // טען טלפון מ-profiles
+      if (c.user_id) {
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("phone")
+          .eq("user_id", c.user_id)
+          .maybeSingle();
+        setClientPhone((profileData as any)?.phone ?? null);
+      }
+
       // טען משתמשי החשבון
       const { data: cuData } = await supabase
         .from("client_users")
