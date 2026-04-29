@@ -212,33 +212,14 @@ export default function AiChatTab() {
 
     try {
       const summary = buildDataSummary(allInvoices);
-      const systemPrompt = `You are an expert Israeli accountant AI assistant.
-You help small business owners understand their expenses.
-Always answer in Hebrew. Be concise and clear.
-Use ₪ for amounts. Format numbers with thousands separators.
-Today is ${summary.today}. Current month: ${summary.thisMonthKey}.
-The user's expense data is provided as a JSON summary below.
-Base all answers strictly on this data — do not invent numbers.
-If data is insufficient, say so honestly.
-Data summary: ${JSON.stringify(summary)}`;
 
       const historyForApi = chatHistory
         .filter((m) => m.id !== "welcome" && m.id !== "no-data" && !m.loading)
-        .slice(-10);
+        .slice(-10)
+        .map((m) => ({ role: m.role, text: m.text }));
 
-      const contents = [
-        { role: "user", parts: [{ text: systemPrompt }] },
-        { role: "model", parts: [{ text: "מובן, אני מוכן לעזור." }] },
-        ...historyForApi.map((m) => ({
-          role: m.role === "bot" ? "model" : "user",
-          parts: [{ text: m.text }],
-        })),
-        { role: "user", parts: [{ text: question }] },
-      ];
-
-      const fullPrompt = contents
-        .map((c) => `${c.role}: ${c.parts.map((p) => p.text).join(" ")}`)
-        .join("\n\n");
+      // הוסף את סיכום הנתונים לשאלה — הפרומפט נבנה בשרת
+      const questionWithData = `${question}\n\n[DATA:${JSON.stringify(summary)}]`;
 
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData?.session?.access_token;
@@ -251,7 +232,7 @@ Data summary: ${JSON.stringify(summary)}`;
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ prompt: fullPrompt }),
+          body: JSON.stringify({ question: questionWithData, history: historyForApi }),
         }
       );
 
