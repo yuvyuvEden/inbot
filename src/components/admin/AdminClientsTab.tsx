@@ -886,6 +886,7 @@ function RowMenu({
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!open) return;
     const handler = (e: MouseEvent) => {
       if (
         menuRef.current && !menuRef.current.contains(e.target as Node) &&
@@ -894,18 +895,23 @@ function RowMenu({
         setOpen(false);
       }
     };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
+    const timer = setTimeout(() => {
+      document.addEventListener("mousedown", handler);
+    }, 50);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("mousedown", handler);
+    };
+  }, [open]);
 
-  const handleOpen = () => {
+  const handleOpen = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect();
       const menuWidth = 180;
-      const leftPos = Math.min(rect.left + window.scrollX, window.innerWidth - menuWidth - 8);
       setMenuPos({
-        top: rect.bottom + window.scrollY + 4,
-        left: Math.max(8, leftPos),
+        top: rect.bottom + 4,
+        left: Math.max(8, Math.min(rect.left, window.innerWidth - menuWidth - 8)),
       });
     }
     setOpen((p) => !p);
