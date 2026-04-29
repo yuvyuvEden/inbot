@@ -154,6 +154,13 @@ Deno.serve(async (req) => {
 
   if (!aiResults) {
     await sendMessage(chat_id, "⚠️ לא הצלחתי לנתח את המסמך.\n\nנסה שוב או רשום ידנית בדשבורד.");
+    await supabase.from("ai_processing_errors").insert({
+      client_id:  client_id,
+      source,
+      error_type: "ai_null",
+      error_msg:  "כל 3 ניסיונות Gemini נכשלו — לא הוחזר JSON תקין",
+      file_name:  originalName ?? null,
+    }).catch(() => {});
     return json({ status: "failed", reason: "ai_null" });
   }
 
@@ -186,6 +193,14 @@ Deno.serve(async (req) => {
           "HTML"
         );
       }
+      await supabase.from("ai_processing_errors").insert({
+        client_id:  client_id,
+        source,
+        error_type: "ownership_rejected",
+        error_msg:  `לכבוד: "${aiData.billed_to}" — לא תואם לבעלים`,
+        vendor:     aiData.vendor ?? null,
+        file_name:  originalName ?? null,
+      }).catch(() => {});
       continue;
     }
 
@@ -345,6 +360,13 @@ async function writeInvoice(
   if (error) {
     console.error("writeInvoice error:", error.message);
     await sendMessage(chatId, "❌ שגיאה בשמירת החשבונית. נסה שוב.");
+    await supabase.from("ai_processing_errors").insert({
+      client_id:  clientId,
+      source,
+      error_type: "write_failed",
+      error_msg:  error.message,
+      vendor:     aiData.vendor ?? null,
+    }).catch(() => {});
     return;
   }
 
