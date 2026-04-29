@@ -794,6 +794,14 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
               </span>
             </div>
             <div style={statRow}><span style={{ color: "#64748b" }}>חשבוניות</span><span>{invoiceCount.toLocaleString("he-IL")}</span></div>
+            {isReadOnly && (
+              <div style={statRow}>
+                <span style={{ color: "#64748b" }}>טלפון</span>
+                <span style={{ direction: "ltr", fontFamily: "monospace" }}>
+                  {clientPhone ?? "לא הוזן"}
+                </span>
+              </div>
+            )}
             <div style={{ ...statRow, borderBottom: "none" }}>
               <span style={{ color: "#64748b" }}>מע"מ נוכחי</span><span>{globalVatPct}%</span>
             </div>
