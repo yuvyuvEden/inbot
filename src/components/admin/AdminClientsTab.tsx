@@ -590,6 +590,29 @@ export default function AdminClientsTab() {
                       )}
                     </td>
                     <td className="p-3">
+                      {(c as any).settings_refresh_requested ? (
+                        <span style={{
+                          background: "#fef3c7", color: "#b45309",
+                          padding: "2px 8px", borderRadius: "10px",
+                          fontSize: "11px", fontWeight: 600,
+                          display: "inline-flex", alignItems: "center", gap: "4px"
+                        }}>
+                          ⏳ ממתין לסנכרון
+                        </span>
+                      ) : (c as any).settings_refreshed_at ? (
+                        <span style={{
+                          background: "#f0fdf4", color: "#16a34a",
+                          padding: "2px 8px", borderRadius: "10px",
+                          fontSize: "11px", fontWeight: 600,
+                          display: "inline-flex", alignItems: "center", gap: "4px"
+                        }} title={`עודכן: ${new Date((c as any).settings_refreshed_at).toLocaleString("he-IL")}`}>
+                          ✅ מסונכרן
+                        </span>
+                      ) : (
+                        <span style={{ color: "#94a3b8", fontSize: "11px" }}>—</span>
+                      )}
+                    </td>
+                    <td className="p-3">
                       <div title={c.is_active ? "פעיל" : "לא פעיל"} style={{ display: "inline-block" }}>
                         <RowMenu
                           client={c}
