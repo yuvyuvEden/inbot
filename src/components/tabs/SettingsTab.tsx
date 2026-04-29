@@ -272,6 +272,10 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
     return () => { if (pollIntervalRef) clearInterval(pollIntervalRef); };
   }, [pollIntervalRef]);
 
+  useEffect(() => {
+    return () => { if (invitePollRef) clearInterval(invitePollRef); };
+  }, [invitePollRef]);
+
   /* ── update helper ── */
   const updateClient = async (payload: Record<string, any>) => {
     if (!clientId) return false;
