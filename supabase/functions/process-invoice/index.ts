@@ -154,6 +154,13 @@ Deno.serve(async (req) => {
 
   if (!aiResults) {
     await sendMessage(chat_id, "⚠️ לא הצלחתי לנתח את המסמך.\n\nנסה שוב או רשום ידנית בדשבורד.");
+    await supabase.from("ai_processing_errors").insert({
+      client_id:  client_id,
+      source,
+      error_type: "ai_null",
+      error_msg:  "כל 3 ניסיונות Gemini נכשלו — לא הוחזר JSON תקין",
+      file_name:  originalName ?? null,
+    }).catch(() => {});
     return json({ status: "failed", reason: "ai_null" });
   }
 
