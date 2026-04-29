@@ -56,8 +56,6 @@ const DEFAULT_SETTINGS: AdvancedSettings = {
   customCategories: [],
   businessNature: "",
   aiTemperature: 0.1,
-  allocThresholdBefore: 10000,
-  allocThresholdAfter: 5000,
   searchDays: 60,
   threadLimit: 10,
   lookbackRows: 1000,
