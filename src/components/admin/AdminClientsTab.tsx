@@ -29,6 +29,8 @@ interface ClientRow {
   user_id: string | null;
   gemini_api_key: string | null;
   created_at: string;
+  settings_refresh_requested: boolean | null;
+  settings_refreshed_at: string | null;
 }
 
 const isExpiringSoon = (d: string | null) => {
