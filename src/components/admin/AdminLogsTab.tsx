@@ -376,7 +376,7 @@ export default function AdminLogsTab() {
                   .filter((a: any) =>
                     !search ||
                     (a.key ?? "").includes(search) ||
-                    (a.profiles?.full_name ?? "").includes(search)
+                    (a.changer_name ?? "").includes(search)
                   )
                   .map((a: any) => (
                     <tr key={a.id} style={{ borderBottom: "1px solid #f1f5f9" }}
