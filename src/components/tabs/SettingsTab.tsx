@@ -641,7 +641,7 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
             </div>
             <div style={statRow}><span style={{ color: "#64748b" }}>חשבוניות</span><span>{invoiceCount.toLocaleString("he-IL")}</span></div>
             <div style={{ ...statRow, borderBottom: "none" }}>
-              <span style={{ color: "#64748b" }}>מע"מ נוכחי</span><span>{vatPct}%</span>
+              <span style={{ color: "#64748b" }}>מע"מ נוכחי</span><span>{globalVatPct}%</span>
             </div>
 
             <div style={{ marginTop: 16 }}>
