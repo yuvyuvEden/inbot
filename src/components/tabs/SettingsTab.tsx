@@ -122,7 +122,7 @@ const subCardHeader: React.CSSProperties = {
 };
 
 /* ── component ─────────────────────────────────── */
-export default function SettingsTab() {
+export default function SettingsTab({ adminClientId }: { adminClientId?: string }) {
   const { user } = useAuth();
   const { data: vatRules = [] } = useVatRules();
   const getDefaultVat = (cat: string) => {
@@ -182,11 +182,11 @@ export default function SettingsTab() {
     if (!user?.id) return;
     setIsLoading(true);
     try {
-      const { data: c } = await supabase
-        .from("clients")
-        .select("*")
-        .eq("user_id", user.id)
-        .maybeSingle();
+      const baseQuery = supabase.from("clients").select("*");
+      const { data: c } = await (adminClientId
+        ? baseQuery.eq("id", adminClientId)
+        : baseQuery.eq("user_id", user.id)
+      ).maybeSingle();
       if (!c) { setIsLoading(false); return; }
       setClientId(c.id);
       setTelegramChatId((c as any).telegram_chat_id ?? null);
@@ -525,8 +525,19 @@ export default function SettingsTab() {
     }
   };
 
+  const isReadOnly = !!adminClientId;
+
   return (
     <div dir="rtl" style={{ padding: 16, fontFamily: "Heebo, sans-serif" }}>
+      {isReadOnly && (
+        <div style={{
+          background: "#fef3c7", border: "1px solid #f59e0b", borderRadius: 8,
+          padding: "10px 16px", marginBottom: 16, fontSize: 13, color: "#92400e",
+          fontFamily: "Heebo, sans-serif"
+        }}>
+          👁 מצב צפייה בלבד — אתה צופה בהגדרות של לקוח. לא ניתן לבצע שינויים.
+        </div>
+      )}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))", gap: 16 }}>
 
         {/* ── CARD: Telegram Connection ── */}
@@ -666,8 +677,8 @@ export default function SettingsTab() {
                   placeholder="AIza..."
                 />
                 <button
-                  style={{ ...btnPrimary, ...btnSm, opacity: geminiInput.length < 10 ? 0.5 : 1 }}
-                  disabled={geminiInput.length < 10}
+                  style={{ ...btnPrimary, ...btnSm, opacity: geminiInput.length < 10 || isReadOnly ? 0.5 : 1 }}
+                  disabled={geminiInput.length < 10 || isReadOnly}
                   onClick={saveGeminiKey}
                 >שמור מפתח</button>
               </div>
@@ -748,7 +759,7 @@ export default function SettingsTab() {
                   placeholder="מילה חדשה..."
                   onKeyDown={e => e.key === "Enter" && addWord()}
                 />
-                <button style={{ ...btnPrimary, ...btnSm }} onClick={addWord}>הוסף</button>
+                <button style={{ ...btnPrimary, ...btnSm }} onClick={addWord} disabled={isReadOnly}>הוסף</button>
                 <button style={{ ...btnGhost, ...btnSm }} onClick={() => setShowAddWord(false)}>ביטול</button>
               </div>
             )}
@@ -866,8 +877,8 @@ export default function SettingsTab() {
                 />
               </div>
               <button
-                style={{ ...btnPrimary, ...btnSm, opacity: !vatInput ? 0.5 : 1 }}
-                disabled={!vatInput}
+                style={{ ...btnPrimary, ...btnSm, opacity: !vatInput || isReadOnly ? 0.5 : 1 }}
+                disabled={!vatInput || isReadOnly}
                 onClick={saveVatRate}
               ><Save size={14} /> עדכן</button>
             </div>
@@ -917,7 +928,7 @@ export default function SettingsTab() {
                           />
                         </td>
                         <td style={{ textAlign: "center", padding: 8, display: "flex", gap: 4, justifyContent: "center" }}>
-                          <button style={btnGhost} onClick={() => saveTaxRule(rule.category, rule.editVat, rule.editTax)}><Save size={14} style={{ color: "#1e3a5f" }} /></button>
+                          <button style={btnGhost} onClick={() => saveTaxRule(rule.category, rule.editVat, rule.editTax)} disabled={isReadOnly}><Save size={14} style={{ color: "#1e3a5f" }} /></button>
                           <button style={btnGhost} onClick={() => setTaxRules(prev => prev.map(r => r.category === rule.category ? { ...r, editing: false } : r))}><X size={14} /></button>
                         </td>
                       </>
@@ -1027,7 +1038,7 @@ export default function SettingsTab() {
                         <input style={{ ...inputBase, flex: 1 }} placeholder="תיאור (למשל: מצלמות, עדשות, תאורה)"
                           value={catDescInput} onChange={e => setCatDescInput(e.target.value)}
                           onKeyDown={e => e.key === "Enter" && addCustomCategory()} />
-                        <button style={{ ...btnPrimary, ...btnSm }} onClick={addCustomCategory}><Plus size={14} /></button>
+                        <button style={{ ...btnPrimary, ...btnSm }} onClick={addCustomCategory} disabled={isReadOnly}><Plus size={14} /></button>
                       </div>
                     </div>
                     <div style={scrollList}>
@@ -1111,7 +1122,7 @@ export default function SettingsTab() {
               <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: 12, marginTop: 12, display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 8 }}>
                 {savedNote && <span style={{ fontSize: 12, color: "#16a34a" }}>✓ נשמר בהצלחה</span>}
                 <button style={{ ...btnSecondary, ...btnSm }} onClick={loadData}><RotateCcw size={14} /> בטל שינויים</button>
-                <button style={{ ...btnPrimary, opacity: isSaving ? 0.5 : 1 }} disabled={isSaving} onClick={saveAdvancedSettings}>
+                <button style={{ ...btnPrimary, opacity: isSaving || isReadOnly ? 0.5 : 1 }} disabled={isSaving || isReadOnly} onClick={saveAdvancedSettings}>
                   <Save size={16} /> שמור הגדרות
                 </button>
               </div>
@@ -1128,7 +1139,7 @@ export default function SettingsTab() {
                 <div style={{ fontSize: 13, fontWeight: 700 }}>ניקוי Processed IDs</div>
                 <div style={{ fontSize: 11, color: "#64748b" }}>מאפשר עיבוד מחדש של מיילים ישנים ע"י Gmail Scanner</div>
               </div>
-              <button style={btnDanger} onClick={confirmClearProcessed}><Trash2 size={14} /> נקה</button>
+              <button style={btnDanger} onClick={confirmClearProcessed} disabled={isReadOnly}><Trash2 size={14} /> נקה</button>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
