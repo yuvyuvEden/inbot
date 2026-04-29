@@ -65,6 +65,9 @@ const Register = () => {
 
   const [brandName, setBrandName] = useState("");
   const [legalName, setLegalName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [inviteCode, setInviteCode] = useState("");
+  const [inviteLoading, setInviteLoading] = useState(false);
 
   useEffect(() => {
     if (!userId) {
