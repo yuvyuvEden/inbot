@@ -7,7 +7,7 @@ import {
   Bot, BookOpen, Percent, Scale, Settings2, Wrench,
   ChevronDown, Plus, X, Pencil, RotateCcw, Save, Trash2,
   Download, Globe, FileText, Brain, UserCheck, Tags, SlidersHorizontal, HelpCircle,
-  AlertTriangle, RefreshCw,
+  AlertTriangle, RefreshCw, Users,
 } from "lucide-react";
 import { useVatRules } from "@/hooks/useVatRules";
 import { useSystemSettings } from "@/hooks/useSystemSettings";
@@ -162,6 +162,12 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
   const [isPolling, setIsPolling] = useState(false);
   const [pollIntervalRef, setPollIntervalRef] = useState<ReturnType<typeof setInterval> | null>(null);
   const [isDownloadingConnector, setIsDownloadingConnector] = useState(false);
+  // Client users (multi-user account)
+  const [clientUsers, setClientUsers] = useState<Array<{ id: string; user_id: string; role: string; created_at: string; profiles?: { full_name: string | null; email?: string | null } }>>([]);
+  const [inviteCode, setInviteCode] = useState<string | null>(null);
+  const [inviteExpiry, setInviteExpiry] = useState<Date | null>(null);
+  const [isGeneratingInvite, setIsGeneratingInvite] = useState(false);
+  const [invitePollRef, setInvitePollRef] = useState<ReturnType<typeof setInterval> | null>(null);
 
   /* ── helpers ── */
   const asArr = (v: any): string[] => {
@@ -186,6 +192,22 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
       ).maybeSingle();
       if (!c) { setIsLoading(false); return; }
       setClientId(c.id);
+
+      // טען משתמשי החשבון
+      const { data: cuData } = await supabase
+        .from("client_users")
+        .select("id, user_id, role, created_at")
+        .eq("client_id", c.id)
+        .order("created_at");
+      if (cuData) {
+        const userIds = cuData.map(cu => cu.user_id);
+        const { data: profilesData } = await supabase
+          .from("profiles")
+          .select("user_id, full_name")
+          .in("user_id", userIds);
+        const profileMap = new Map((profilesData ?? []).map(p => [p.user_id, p]));
+        setClientUsers(cuData.map(cu => ({ ...cu, profiles: profileMap.get(cu.user_id) })));
+      }
       setTelegramChatId((c as any).telegram_chat_id ?? null);
       setGeminiKey(c.gemini_api_key || "");
       setDialectWords(asArr((c as any).learned_words));
@@ -249,6 +271,10 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
   useEffect(() => {
     return () => { if (pollIntervalRef) clearInterval(pollIntervalRef); };
   }, [pollIntervalRef]);
+
+  useEffect(() => {
+    return () => { if (invitePollRef) clearInterval(invitePollRef); };
+  }, [invitePollRef]);
 
   /* ── update helper ── */
   const updateClient = async (payload: Record<string, any>) => {
@@ -506,6 +532,39 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
 
   const isReadOnly = !!adminClientId;
 
+  const generateInviteCode = async () => {
+    if (!clientId) return;
+    setIsGeneratingInvite(true);
+    try {
+      const CHARS = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+      let code = "";
+      for (let i = 0; i < 6; i++) code += CHARS[Math.floor(Math.random() * CHARS.length)];
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const { error } = await supabase
+        .from("clients")
+        .update({ invite_code: code, invite_code_expires_at: expiresAt.toISOString() })
+        .eq("id", clientId);
+      if (error) { toast.error("שגיאה ביצירת קוד"); return; }
+      setInviteCode(code);
+      setInviteExpiry(expiresAt);
+    } catch {
+      toast.error("שגיאה ביצירת קוד");
+    } finally {
+      setIsGeneratingInvite(false);
+    }
+  };
+
+  const removeMember = async (clientUserId: string) => {
+    if (!window.confirm("האם להסיר את המשתמש מהחשבון?")) return;
+    const { error } = await supabase
+      .from("client_users")
+      .delete()
+      .eq("id", clientUserId);
+    if (error) { toast.error("שגיאה בהסרה"); return; }
+    setClientUsers(prev => prev.filter(cu => cu.id !== clientUserId));
+    toast.success("המשתמש הוסר");
+  };
+
   return (
     <div dir="rtl" style={{ padding: 16, fontFamily: "Heebo, sans-serif" }}>
       {isReadOnly && (
@@ -625,6 +684,90 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
               <div>3. צור פרויקט חדש → הדבק את הקוד</div>
               <div>4. הרץ את runSetupWizard()</div>
             </div>
+          </div>
+        </div>
+
+        {/* ── CARD: משתמשי החשבון ── */}
+        <div style={card}>
+          <div style={cardHeader}>
+            <Users size={16} /> משתמשי החשבון
+          </div>
+          <div style={{ padding: 16 }}>
+            <div style={{ marginBottom: 14 }}>
+              {clientUsers.map(cu => (
+                <div key={cu.id} style={{
+                  display: "flex", justifyContent: "space-between", alignItems: "center",
+                  padding: "8px 0", borderBottom: "1px solid #f1f5f9",
+                }}>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "#1e3a5f" }}>
+                      {cu.profiles?.full_name || "משתמש"}
+                    </div>
+                    <div style={{ fontSize: 11, color: "#94a3b8" }}>
+                      {cu.role === "owner" ? "👑 בעלים" : "👤 חבר"}
+                    </div>
+                  </div>
+                  {cu.role !== "owner" && (
+                    <button
+                      style={{ ...btnGhost, color: "#dc2626", fontSize: 11 }}
+                      onClick={() => removeMember(cu.id)}
+                    >
+                      הסר
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {!inviteCode ? (
+              <div>
+                <div style={{ fontSize: 12, color: "#64748b", marginBottom: 10, lineHeight: 1.6 }}>
+                  הזמן עובד או שותף לגשת לחשבון. הקוד תקף ל-24 שעות.
+                </div>
+                <button
+                  style={{ ...btnPrimary, width: "100%", justifyContent: "center" }}
+                  onClick={generateInviteCode}
+                  disabled={isGeneratingInvite}
+                >
+                  {isGeneratingInvite ? "יוצר קוד..." : "✉️ צור קוד הזמנה"}
+                </button>
+              </div>
+            ) : (
+              <div>
+                <div style={{ fontSize: 12, color: "#475569", marginBottom: 8 }}>
+                  שלח את הקוד הזה למשתמש — הוא יכניס אותו לאחר ההרשמה:
+                </div>
+                <div style={{
+                  background: "#f0f4f8", border: "1px solid #cbd5e1",
+                  borderRadius: 10, padding: "12px 16px", textAlign: "center", marginBottom: 10,
+                }}>
+                  <div style={{ fontSize: 11, color: "#94a3b8", marginBottom: 4 }}>קוד הזמנה:</div>
+                  <div style={{
+                    fontFamily: "monospace", fontSize: 24, fontWeight: 700,
+                    color: "#1e3a5f", letterSpacing: 4, direction: "ltr",
+                  }}>
+                    {inviteCode}
+                  </div>
+                  <button
+                    style={{ ...btnGhost, fontSize: 11, marginTop: 6, color: "#1e3a5f" }}
+                    onClick={() => { navigator.clipboard.writeText(inviteCode); toast.success("הועתק!"); }}
+                  >
+                    📋 העתק קוד
+                  </button>
+                </div>
+                {inviteExpiry && (
+                  <div style={{ fontSize: 11, color: "#94a3b8", textAlign: "center", marginBottom: 8 }}>
+                    תקף עד {inviteExpiry.toLocaleString("he-IL", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })}
+                  </div>
+                )}
+                <button
+                  style={{ ...btnSecondary, ...btnSm, width: "100%", justifyContent: "center" }}
+                  onClick={generateInviteCode}
+                >
+                  🔄 צור קוד חדש
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
