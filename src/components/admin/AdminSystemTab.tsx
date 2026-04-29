@@ -673,7 +673,7 @@ export default function AdminSystemTab() {
               disabled={classifyPromptVal === classifyLoaded}
               onClick={() => saveSetting("prompt_classify_document", classifyPromptVal)}
             >
-              שמור פרומפט
+              שמור
             </button>
             <div style={warning}>⚠️ שינוי הפרומפט ישפיע מיידית על כל עיבוד חשבוניות חדש</div>
           </div>
@@ -698,7 +698,7 @@ export default function AdminSystemTab() {
               disabled={analyzePromptVal === analyzeLoaded}
               onClick={() => saveSetting("prompt_analyze_invoice", analyzePromptVal)}
             >
-              שמור פרומפט
+              שמור
             </button>
             <div style={warning}>⚠️ שינוי הפרומפט ישפיע מיידית על כל עיבוד חשבוניות חדש</div>
           </div>
