@@ -197,8 +197,6 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
         customCategories: asCatArr(c.custom_categories),
         businessNature: c.business_nature || "",
         aiTemperature: (c as any).ai_temperature ?? 0.1,
-        allocThresholdBefore: (c as any).alloc_threshold_before ?? 10000,
-        allocThresholdAfter: (c as any).alloc_threshold_after ?? 5000,
         searchDays: (c as any).search_days ?? 60,
         threadLimit: (c as any).thread_limit ?? 10,
         lookbackRows: (c as any).lookback_rows ?? 1000,
