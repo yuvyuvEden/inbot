@@ -47,6 +47,28 @@ export default function AdminLogsTab() {
     },
   });
 
+  const { data: auditLogs = [], isLoading: auditLoading } = useQuery({
+    queryKey: ["settings-audit"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("system_settings_audit")
+        .select("*")
+        .order("changed_at", { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      const userIds = Array.from(new Set((data ?? []).map((a: any) => a.changed_by).filter(Boolean)));
+      let profilesMap: Record<string, string> = {};
+      if (userIds.length) {
+        const { data: profs } = await supabase
+          .from("profiles")
+          .select("user_id, full_name")
+          .in("user_id", userIds as string[]);
+        profilesMap = Object.fromEntries((profs ?? []).map((p: any) => [p.user_id, p.full_name]));
+      }
+      return (data ?? []).map((a: any) => ({ ...a, profiles: { full_name: profilesMap[a.changed_by] ?? null } }));
+    },
+  });
+
   const { data: aiErrors = [], isLoading: aiErrorsLoading } = useQuery({
     queryKey: ["ai-errors"],
     queryFn: async () => {
@@ -65,9 +87,10 @@ export default function AdminLogsTab() {
     { key: "email", label: "מיילים" },
     { key: "billing", label: "חיובים" },
     { key: "ai_errors", label: "🔴 שגיאות AI" },
+    { key: "audit", label: "📋 שינויי הגדרות" },
   ];
 
-  const isLoading = usageLoading || emailLoading || billingLoading || aiErrorsLoading;
+  const isLoading = usageLoading || emailLoading || billingLoading || aiErrorsLoading || auditLoading;
 
   const formatDate = (d: string) =>
     new Date(d).toLocaleString("he-IL", {
