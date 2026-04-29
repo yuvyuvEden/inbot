@@ -149,12 +149,7 @@ export default function OnboardingChecklist({
               </button>
             )}
             {!step.done && i === 2 && (
-              <button
-                style={actionBtnStyle}
-                onClick={() =>
-                  window.open(`https://t.me/INBOTbot?start=${clientId}`, "_blank")
-                }
-              >
+              <button style={actionBtnStyle} onClick={() => setActiveTab("settings")}>
                 חבר ←
               </button>
             )}

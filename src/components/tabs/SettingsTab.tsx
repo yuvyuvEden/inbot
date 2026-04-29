@@ -157,6 +157,14 @@ export default function SettingsTab() {
   const [catDesc, setCatDesc] = useState("");
   const [catSaving, setCatSaving] = useState(false);
   const [showCatAdd, setShowCatAdd] = useState(false);
+  // Telegram connect state
+  const [telegramChatId, setTelegramChatId] = useState<string | null>(null);
+  const [connectCode, setConnectCode] = useState<string | null>(null);
+  const [connectCodeExpiry, setConnectCodeExpiry] = useState<Date | null>(null);
+  const [isGeneratingCode, setIsGeneratingCode] = useState(false);
+  const [isPolling, setIsPolling] = useState(false);
+  const [pollIntervalRef, setPollIntervalRef] = useState<ReturnType<typeof setInterval> | null>(null);
+  const [isDownloadingConnector, setIsDownloadingConnector] = useState(false);
 
   /* ── helpers ── */
   const asArr = (v: any): string[] => {
@@ -181,6 +189,7 @@ export default function SettingsTab() {
         .maybeSingle();
       if (!c) { setIsLoading(false); return; }
       setClientId(c.id);
+      setTelegramChatId((c as any).telegram_chat_id ?? null);
       setGeminiKey(c.gemini_api_key || "");
       setVatRate((c as any).vat_rate ?? 1.18);
       setDialectWords(asArr((c as any).learned_words));
@@ -427,9 +436,207 @@ export default function SettingsTab() {
     );
   }
 
+  const generateConnectCode = async () => {
+    setIsGeneratingCode(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { toast.error("לא מחובר"); return; }
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-connect-code`,
+        { method: "POST", headers: { Authorization: `Bearer ${session.access_token}` } }
+      );
+      const data = await res.json();
+      if (!res.ok) { toast.error("שגיאה ביצירת קוד"); return; }
+      setConnectCode(data.code);
+      setConnectCodeExpiry(new Date(data.expires_at));
+      setIsPolling(true);
+      const interval = setInterval(async () => {
+        if (!clientId) return;
+        const { data: row } = await supabase
+          .from("clients")
+          .select("telegram_chat_id")
+          .eq("id", clientId)
+          .maybeSingle();
+        if ((row as any)?.telegram_chat_id) {
+          setTelegramChatId((row as any).telegram_chat_id);
+          setConnectCode(null);
+          setConnectCodeExpiry(null);
+          setIsPolling(false);
+          clearInterval(interval);
+          toast.success("✅ Telegram חובר בהצלחה!");
+        }
+      }, 3000);
+      setPollIntervalRef(interval);
+      setTimeout(() => {
+        clearInterval(interval);
+        setIsPolling(false);
+        setConnectCode(null);
+        setConnectCodeExpiry(null);
+      }, 15 * 60 * 1000);
+    } catch {
+      toast.error("שגיאה בתקשורת עם השרת");
+    } finally {
+      setIsGeneratingCode(false);
+    }
+  };
+
+  const disconnectTelegram = async () => {
+    if (!clientId) return;
+    if (!window.confirm("האם לנתק את חיבור Telegram?")) return;
+    const { error } = await supabase
+      .from("clients")
+      .update({ telegram_chat_id: null } as any)
+      .eq("id", clientId);
+    if (error) { toast.error("שגיאה בניתוק"); return; }
+    setTelegramChatId(null);
+    if (pollIntervalRef) clearInterval(pollIntervalRef);
+    toast.success("Telegram נותק");
+  };
+
+  const downloadConnector = async () => {
+    setIsDownloadingConnector(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { toast.error("לא מחובר"); return; }
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-connector`,
+        { method: "GET", headers: { Authorization: `Bearer ${session.access_token}` } }
+      );
+      if (!res.ok) { toast.error("שגיאה בהורדת ה-Connector"); return; }
+      const blob = await res.blob();
+      const disposition = res.headers.get("Content-Disposition") ?? "";
+      const match = disposition.match(/filename="([^"]+)"/);
+      const filename = match?.[1] ?? "INBOT_Connector.gs";
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("✅ Connector הורד בהצלחה");
+    } catch {
+      toast.error("שגיאה בהורדה");
+    } finally {
+      setIsDownloadingConnector(false);
+    }
+  };
+
+  useEffect(() => {
+    return () => { if (pollIntervalRef) clearInterval(pollIntervalRef); };
+  }, [pollIntervalRef]);
+
   return (
     <div dir="rtl" style={{ padding: 16, fontFamily: "Heebo, sans-serif" }}>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))", gap: 16 }}>
+
+        {/* ── CARD: Telegram Connection ── */}
+        <div style={card}>
+          <div style={cardHeader}><Bot size={16} /> חיבור Telegram</div>
+          <div style={{ padding: 16 }}>
+            {telegramChatId ? (
+              <div>
+                <div style={statRow}>
+                  <span style={{ color: "#64748b" }}>סטטוס</span>
+                  <span style={{ color: "#16a34a", fontWeight: 600 }}>✅ מחובר</span>
+                </div>
+                <div style={{ ...statRow, borderBottom: "none" }}>
+                  <span style={{ color: "#64748b" }}>Chat ID</span>
+                  <span style={{ fontFamily: "monospace", direction: "ltr" }}>{telegramChatId}</span>
+                </div>
+                <button style={{ ...btnSecondary, ...btnSm, marginTop: 12 }} onClick={disconnectTelegram}>
+                  נתק Telegram
+                </button>
+              </div>
+            ) : connectCode ? (
+              <div>
+                <div style={{ fontSize: 12, color: "#64748b", marginBottom: 8 }}>
+                  פתח את הבוט ושלח את הפקודה הבאה:
+                </div>
+                <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, padding: 12, marginBottom: 12 }}>
+                  <div style={{ fontSize: 11, color: "#94a3b8", marginBottom: 4 }}>שלח לבוט:</div>
+                  <div style={{ fontFamily: "monospace", fontSize: 16, fontWeight: 700, direction: "ltr", color: "#1e3a5f", marginBottom: 8 }}>
+                    /connect {connectCode}
+                  </div>
+                  <button
+                    style={{ ...btnSecondary, ...btnSm }}
+                    onClick={() => { navigator.clipboard.writeText(`/connect ${connectCode}`); toast.success("הועתק!"); }}
+                  >
+                    📋 העתק פקודה
+                  </button>
+                </div>
+                <button
+                  style={{ ...btnPrimary, ...btnSm, marginBottom: 8 }}
+                  onClick={() => window.open("https://t.me/INBOTbot", "_blank")}
+                >
+                  פתח את הבוט ב-Telegram ↗
+                </button>
+                {isPolling && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#64748b", marginTop: 8 }}>
+                    <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: 99, background: "#e8941a", animation: "pulse 1.5s infinite" }} />
+                    <span>ממתין לחיבור...</span>
+                    {connectCodeExpiry && (
+                      <span style={{ color: "#94a3b8" }}>
+                        (תקף עד {connectCodeExpiry.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })})
+                      </span>
+                    )}
+                  </div>
+                )}
+                <button style={{ ...btnGhost, marginTop: 8, fontSize: 12 }} onClick={generateConnectCode}>
+                  🔄 צור קוד חדש
+                </button>
+              </div>
+            ) : (
+              <div>
+                <div style={{ fontSize: 13, color: "#64748b", marginBottom: 12 }}>
+                  חבר את חשבון Telegram שלך כדי לשלוח חשבוניות ישירות לעיבוד.
+                </div>
+                <button
+                  style={{ ...btnPrimary, ...btnSm, opacity: isGeneratingCode ? 0.6 : 1 }}
+                  disabled={isGeneratingCode}
+                  onClick={generateConnectCode}
+                >
+                  {isGeneratingCode ? "יוצר קוד..." : "✨ צור קוד חיבור"}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── CARD: Connector Download ── */}
+        <div style={card}>
+          <div style={cardHeader}><Download size={16} /> התקנת Connector Gmail</div>
+          <div style={{ padding: 16 }}>
+            <div style={{ fontSize: 13, color: "#64748b", marginBottom: 8 }}>
+              ה-Connector סורק את ה-Gmail שלך ושולח חשבוניות לעיבוד אוטומטי.
+            </div>
+            <div style={{ fontSize: 11, color: "#dc2626", marginBottom: 12 }}>
+              ⚠️ הקובץ מכיל את פרטי ההגדרה שלך — אל תשתף אותו.
+            </div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+              <button
+                style={{ ...btnPrimary, ...btnSm, opacity: isDownloadingConnector ? 0.6 : 1 }}
+                disabled={isDownloadingConnector}
+                onClick={downloadConnector}
+              >
+                <Download size={14} />
+                {isDownloadingConnector ? "מוריד..." : "הורד Connector (.gs)"}
+              </button>
+              <button
+                style={{ ...btnSecondary, ...btnSm }}
+                onClick={() => window.open("https://docs.inbot.co.il/connector", "_blank")}
+              >
+                הוראות התקנה ↗
+              </button>
+            </div>
+            <div style={{ fontSize: 12, color: "#64748b", lineHeight: 1.8, background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, padding: 10 }}>
+              <div style={{ fontWeight: 700, marginBottom: 4 }}>שלבים קצרים:</div>
+              <div>1. הורד את הקובץ</div>
+              <div>2. פתח script.google.com</div>
+              <div>3. צור פרויקט חדש → הדבק את הקוד</div>
+              <div>4. הרץ את runSetupWizard()</div>
+            </div>
+          </div>
+        </div>
 
         {/* ── CARD 1: System Status ── */}
         <div style={card}>
