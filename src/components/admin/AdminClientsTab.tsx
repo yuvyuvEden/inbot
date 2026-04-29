@@ -82,7 +82,7 @@ export default function AdminClientsTab() {
     queryFn: async () => {
       const { data: clientsData, error } = await supabase
         .from("clients")
-        .select("id, brand_name, legal_name, vat_number, plan_type, plan_expires_at, is_active, telegram_chat_id, user_id, gemini_api_key, created_at, plan_id, invoice_limit_override, extra_invoice_price, locked_monthly_price, locked_yearly_price, plans(id, name, invoice_limit, user_limit, monthly_price, yearly_price)")
+        .select("id, brand_name, legal_name, vat_number, plan_type, plan_expires_at, is_active, telegram_chat_id, user_id, gemini_api_key, created_at, plan_id, invoice_limit_override, extra_invoice_price, locked_monthly_price, locked_yearly_price, settings_refresh_requested, settings_refreshed_at, plans(id, name, invoice_limit, user_limit, monthly_price, yearly_price)")
         .order("created_at", { ascending: false });
       if (error) throw error;
 
