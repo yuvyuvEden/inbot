@@ -402,7 +402,7 @@ export default function AdminLogsTab() {
                         {a.new_value ? (a.new_value.length > 40 ? a.new_value.slice(0, 40) + "…" : a.new_value) : "—"}
                       </td>
                       <td style={{ padding: "8px 12px", color: "#475569" }}>
-                        {a.profiles?.full_name ?? "אדמין"}
+                        {a.changer_name ?? "אדמין"}
                       </td>
                     </tr>
                   ))}
