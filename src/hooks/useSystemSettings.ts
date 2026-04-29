@@ -27,11 +27,28 @@ export function useUpdateSystemSetting() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ key, value }: { key: string; value: string }) => {
+      // שלוף את הערך הישן לפני העדכון
+      const { data: current } = await supabase
+        .from("system_settings")
+        .select("value")
+        .eq("key", key)
+        .maybeSingle();
+
+      // עדכן את ההגדרה
       const { error } = await supabase
         .from("system_settings")
         .update({ value })
         .eq("key", key);
       if (error) throw error;
+
+      // כתוב audit log — שגיאה כאן לא תעצור את השמירה
+      const { data: { user } } = await supabase.auth.getUser();
+      await supabase.from("system_settings_audit").insert({
+        key,
+        old_value: current?.value ?? null,
+        new_value: value,
+        changed_by: user?.id ?? null,
+      }).catch(() => {});
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["system-settings"] });
