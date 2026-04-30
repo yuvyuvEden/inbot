@@ -544,7 +544,7 @@ export default function AdminClientsTab() {
               ))
             ) : innerTab === "active" ? (
               activeClients.length === 0 ? (
-                <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">לא נמצאו לקוחות</td></tr>
+                <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">לא נמצאו לקוחות</td></tr>
               ) : (
                 activeClients.map((c) => {
                   const stripeColor = !c.is_active
