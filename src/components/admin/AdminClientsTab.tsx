@@ -564,6 +564,26 @@ export default function AdminClientsTab() {
                     onMouseEnter={(e) => (e.currentTarget.style.background = "#f8fafc")}
                     onMouseLeave={(e) => (e.currentTarget.style.background = "#ffffff")}
                   >
+                    <td
+                      style={{ width: 40, textAlign: "center", padding: "8px" }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(c.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          setSelectedIds((prev) => {
+                            const next = new Set(prev);
+                            if (next.has(c.id)) next.delete(c.id);
+                            else next.add(c.id);
+                            return next;
+                          });
+                        }}
+                        style={{ cursor: "pointer", width: 16, height: 16 }}
+                      />
+                    </td>
                     <td className="p-3 font-medium" style={{ color: "#1a202c" }}>{c.brand_name}</td>
                     <td className="p-3" onClick={() => setEditingPlanId(c.id)} style={{ cursor: "pointer" }}>
                       {editingPlanId === c.id ? (
