@@ -530,13 +530,25 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
 
   const disconnectTelegramUser = async (telegramUserId: string) => {
     if (!window.confirm("האם לנתק משתמש זה מטלגרם?")) return;
+    // מצא את ה-chat_id של המשתמש שמנתקים
+    const disconnectedUser = telegramUsers.find(u => u.id === telegramUserId);
     const { error } = await supabase
       .from("client_telegram_users")
       .update({ is_active: false })
       .eq("id", telegramUserId);
     if (error) { toast.error("שגיאה בניתוק"); return; }
-    setTelegramUsers(prev => prev.filter(u => u.id !== telegramUserId));
-    if (telegramUsers.length <= 1) setTelegramChatId(null);
+    const remaining = telegramUsers.filter(u => u.id !== telegramUserId);
+    setTelegramUsers(remaining);
+    // אם ה-chat_id שנותק הוא ה-primary — עדכן clients.telegram_chat_id
+    if (disconnectedUser && clientId && disconnectedUser.chat_id === telegramChatId) {
+      const nextChatId = remaining.length > 0 ? remaining[0].chat_id : null;
+      await supabase
+        .from("clients")
+        .update({ telegram_chat_id: nextChatId })
+        .eq("id", clientId);
+      setTelegramChatId(nextChatId);
+    }
+    if (remaining.length === 0) setTelegramChatId(null);
     toast.success("משתמש נותק מטלגרם");
   };
 
