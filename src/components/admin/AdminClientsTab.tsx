@@ -509,20 +509,43 @@ export default function AdminClientsTab() {
                       ) : (
                         (() => {
                           const b = getPlanBadge(c.plan_type);
+                          const override = (c as any).invoice_limit_override;
+                          const hasOverride = override !== null && override !== undefined;
+                          const overrideLabel = override === 0 ? "∞" : String(override);
                           return (
-                            <span
-                              style={{
-                                background: b.bg,
-                                color: b.color,
-                                borderRadius: "6px",
-                                padding: "2px 10px",
-                                fontSize: "11px",
-                                fontWeight: 700,
-                                display: "inline-block",
-                              }}
-                            >
-                              {b.text}
-                            </span>
+                            <div style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                              <span
+                                style={{
+                                  background: b.bg,
+                                  color: b.color,
+                                  borderRadius: "6px",
+                                  padding: "2px 10px",
+                                  fontSize: "11px",
+                                  fontWeight: 700,
+                                  display: "inline-block",
+                                }}
+                              >
+                                {b.text}
+                              </span>
+                              {hasOverride && (
+                                <span
+                                  title={`מגבלת חשבוניות מותאמת: ${overrideLabel}`}
+                                  style={{
+                                    background: "#fff7ed",
+                                    color: "#c2410c",
+                                    border: "1px solid #fed7aa",
+                                    borderRadius: "6px",
+                                    padding: "1px 6px",
+                                    fontSize: "10px",
+                                    fontWeight: 700,
+                                    display: "inline-block",
+                                    cursor: "default",
+                                  }}
+                                >
+                                  ⚡{overrideLabel}
+                                </span>
+                              )}
+                            </div>
                           );
                         })()
                       )}
