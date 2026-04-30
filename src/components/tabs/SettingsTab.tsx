@@ -526,8 +526,20 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
     if (error) { toast.error("שגיאה בניתוק"); return; }
     setTelegramChatId(null);
     if (pollIntervalRef) clearInterval(pollIntervalRef);
-    toast.success("Telegram נותק");
   };
+
+  const disconnectTelegramUser = async (telegramUserId: string) => {
+    if (!window.confirm("האם לנתק משתמש זה מטלגרם?")) return;
+    const { error } = await supabase
+      .from("client_telegram_users")
+      .update({ is_active: false })
+      .eq("id", telegramUserId);
+    if (error) { toast.error("שגיאה בניתוק"); return; }
+    setTelegramUsers(prev => prev.filter(u => u.id !== telegramUserId));
+    if (telegramUsers.length <= 1) setTelegramChatId(null);
+    toast.success("משתמש נותק מטלגרם");
+  };
+
 
   const downloadConnector = async () => {
     setIsDownloadingConnector(true);
