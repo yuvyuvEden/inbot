@@ -65,6 +65,7 @@ export default function AdminClientsTab() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [innerTab, setInnerTab] = useState<"active" | "pending">("active");
+  const [expiryFilter, setExpiryFilter] = useState<string>("all");
   const [editClient, setEditClient] = useState<ClientRow | null>(null);
   const [drawerAccountant, setDrawerAccountant] = useState<string>("");
   const [drawerAccountantName, setDrawerAccountantName] = useState("");
@@ -341,7 +342,21 @@ export default function AdminClientsTab() {
     c.legal_name?.toLowerCase().includes(search.toLowerCase()) ||
     c.vat_number?.toLowerCase().includes(search.toLowerCase())
   );
-  const activeClients = allFiltered.filter((c) => !isPending(c));
+  const getExpiryFilteredClients = (list: ClientRow[], filter: string): ClientRow[] => {
+    if (filter === "all") return list;
+    const now = Date.now();
+    const day = 24 * 60 * 60 * 1000;
+    return list.filter((c) => {
+      if (!c.plan_expires_at) return false;
+      const exp = new Date(c.plan_expires_at).getTime();
+      if (filter === "expired") return exp < now;
+      if (filter === "week") return exp >= now && exp <= now + 7 * day;
+      if (filter === "month") return exp >= now && exp <= now + 30 * day;
+      if (filter === "3months") return exp >= now && exp <= now + 90 * day;
+      return true;
+    });
+  };
+  const activeClients = getExpiryFilteredClients(allFiltered.filter((c) => !isPending(c)), expiryFilter);
   const pendingClients = allFiltered.filter((c) => isPending(c));
 
   const thStyle: React.CSSProperties = {
@@ -374,6 +389,26 @@ export default function AdminClientsTab() {
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-sm"
         />
+        {innerTab === "active" && (
+          <select
+            value={expiryFilter}
+            onChange={(e) => setExpiryFilter(e.target.value)}
+            style={{
+              fontFamily: "Heebo, sans-serif",
+              fontSize: 13,
+              border: "1px solid #cbd5e1",
+              borderRadius: 8,
+              padding: "6px 10px",
+              background: "#fff",
+            }}
+          >
+            <option value="all">הכל</option>
+            <option value="expired">פג תוקף</option>
+            <option value="week">השבוע</option>
+            <option value="month">החודש</option>
+            <option value="3months">3 חודשים</option>
+          </select>
+        )}
         <div style={{ display: "flex", gap: "4px" }}>
           <button
             onClick={() => setInnerTab("active")}
