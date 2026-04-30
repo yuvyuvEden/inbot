@@ -820,6 +820,25 @@ export default function AdminClientsTab() {
                       )}
                     </td>
                     <td className="p-3">
+                      {(c.invoice_count_this_month ?? 0) > 0 ? (
+                        <span
+                          style={{
+                            background: "#1e3a5f",
+                            color: "#ffffff",
+                            borderRadius: "999px",
+                            padding: "2px 10px",
+                            fontSize: "12px",
+                            fontWeight: 600,
+                            display: "inline-block",
+                          }}
+                        >
+                          {c.invoice_count_this_month}
+                        </span>
+                      ) : (
+                        <span style={{ color: "#94a3b8" }}>—</span>
+                      )}
+                    </td>
+                    <td className="p-3">
                       <div title={c.is_active ? "פעיל" : "לא פעיל"} style={{ display: "inline-block" }}>
                         <RowMenu
                           client={c}
