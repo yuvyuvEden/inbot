@@ -74,6 +74,13 @@ export default function AdminClientsTab() {
   const [planModal, setPlanModal] = useState<any>(null);
   const { impersonate, loading: impersonateLoading } = useImpersonate();
 
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkPlan, setBulkPlan] = useState<string>("");
+
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [innerTab]);
+
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   useEffect(() => {
     const handler = () => setIsMobile(window.innerWidth < 768);
@@ -252,6 +259,68 @@ export default function AdminClientsTab() {
     onError: () => toast.error("שגיאה בעדכון רו\"ח"),
   });
 
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+    setBulkPlan("");
+  };
+
+  const bulkToggleActive = async (is_active: boolean) => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    const { error } = await supabase.from("clients").update({ is_active }).in("id", ids);
+    if (error) {
+      toast.error("שגיאה בעדכון");
+      return;
+    }
+    qc.invalidateQueries({ queryKey: ["admin-clients"] });
+    toast.success(is_active ? "הלקוחות הופעלו" : "הלקוחות הושעו");
+    clearSelection();
+  };
+
+  const bulkChangePlan = async (plan_type: string) => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0 || !plan_type) return;
+    const { error } = await supabase.from("clients").update({ plan_type }).in("id", ids);
+    if (error) {
+      toast.error("שגיאה בעדכון מנוי");
+      return;
+    }
+    qc.invalidateQueries({ queryKey: ["admin-clients"] });
+    toast.success("המנוי עודכן");
+    clearSelection();
+  };
+
+  const bulkDelete = async () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    if (!window.confirm(`האם למחוק ${ids.length} לקוחות?`)) return;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const results = await Promise.all(
+        ids.map((id) =>
+          fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-delete-client`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${session?.access_token}`,
+            },
+            body: JSON.stringify({ client_id: id }),
+          }).then(async (r) => ({ ok: r.ok, body: await r.json().catch(() => ({})) }))
+        )
+      );
+      const failed = results.filter((r) => !r.ok).length;
+      qc.invalidateQueries({ queryKey: ["admin-clients"] });
+      if (failed > 0) {
+        toast.error(`${failed} לקוחות נכשלו במחיקה`);
+      } else {
+        toast.success("הלקוחות נמחקו בהצלחה");
+      }
+      clearSelection();
+    } catch (err: any) {
+      toast.error(err?.message || "שגיאה במחיקה");
+    }
+  };
+
   const allFiltered = (clients || []).filter((c) =>
     c.brand_name?.toLowerCase().includes(search.toLowerCase()) ||
     c.legal_name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -425,6 +494,26 @@ export default function AdminClientsTab() {
             <tr style={{ background: "linear-gradient(to left, #1e3a5f, #2d5a8e)" }}>
               {innerTab === "active" ? (
                 <>
+                  <th style={{ ...thStyle, width: 40, textAlign: "center", padding: "12px 8px" }}>
+                    <input
+                      type="checkbox"
+                      ref={(el) => {
+                        if (!el) return;
+                        const total = activeClients.length;
+                        const sel = activeClients.filter((c) => selectedIds.has(c.id)).length;
+                        el.indeterminate = sel > 0 && sel < total;
+                      }}
+                      checked={activeClients.length > 0 && activeClients.every((c) => selectedIds.has(c.id))}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedIds(new Set(activeClients.map((c) => c.id)));
+                        } else {
+                          setSelectedIds(new Set());
+                        }
+                      }}
+                      style={{ cursor: "pointer", width: 16, height: 16 }}
+                    />
+                  </th>
                   <th style={thStyle}>שם עסק</th>
                   <th style={thStyle}>מנוי</th>
                   <th style={thStyle}>חבילה</th>
@@ -455,7 +544,7 @@ export default function AdminClientsTab() {
               ))
             ) : innerTab === "active" ? (
               activeClients.length === 0 ? (
-                <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">לא נמצאו לקוחות</td></tr>
+                <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">לא נמצאו לקוחות</td></tr>
               ) : (
                 activeClients.map((c) => {
                   const stripeColor = !c.is_active
@@ -475,6 +564,26 @@ export default function AdminClientsTab() {
                     onMouseEnter={(e) => (e.currentTarget.style.background = "#f8fafc")}
                     onMouseLeave={(e) => (e.currentTarget.style.background = "#ffffff")}
                   >
+                    <td
+                      style={{ width: 40, textAlign: "center", padding: "8px" }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(c.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          setSelectedIds((prev) => {
+                            const next = new Set(prev);
+                            if (next.has(c.id)) next.delete(c.id);
+                            else next.add(c.id);
+                            return next;
+                          });
+                        }}
+                        style={{ cursor: "pointer", width: 16, height: 16 }}
+                      />
+                    </td>
                     <td className="p-3 font-medium" style={{ color: "#1a202c" }}>{c.brand_name}</td>
                     <td className="p-3" onClick={() => setEditingPlanId(c.id)} style={{ cursor: "pointer" }}>
                       {editingPlanId === c.id ? (
@@ -905,6 +1014,99 @@ export default function AdminClientsTab() {
             qc.invalidateQueries({ queryKey: ["admin-clients"] });
           }}
         />
+      )}
+
+      {selectedIds.size > 0 && ReactDOM.createPortal(
+        <div
+          style={{
+            position: "fixed",
+            bottom: 24,
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: "#ffffff",
+            border: "1px solid #e2e8f0",
+            borderRadius: 12,
+            boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+            padding: "12px 20px",
+            display: "flex",
+            gap: 12,
+            alignItems: "center",
+            zIndex: 1000,
+            fontFamily: "Heebo, sans-serif",
+          }}
+          dir="rtl"
+        >
+          <span style={{ color: "#64748b", fontSize: 13 }}>
+            {selectedIds.size} לקוחות נבחרו
+          </span>
+          <span style={{ width: 1, height: 24, background: "#e2e8f0" }} />
+          <button
+            onClick={() => bulkToggleActive(true)}
+            style={{
+              background: "#16a34a", color: "#ffffff", border: "none",
+              borderRadius: 8, padding: "6px 14px", fontSize: 13, fontWeight: 600,
+              cursor: "pointer", fontFamily: "Heebo, sans-serif",
+            }}
+          >
+            הפעל
+          </button>
+          <button
+            onClick={() => bulkToggleActive(false)}
+            style={{
+              background: "#64748b", color: "#ffffff", border: "none",
+              borderRadius: 8, padding: "6px 14px", fontSize: 13, fontWeight: 600,
+              cursor: "pointer", fontFamily: "Heebo, sans-serif",
+            }}
+          >
+            השעה
+          </button>
+          <span style={{ width: 1, height: 24, background: "#e2e8f0" }} />
+          <select
+            value={bulkPlan}
+            onChange={(e) => {
+              const v = e.target.value;
+              setBulkPlan(v);
+              if (v) bulkChangePlan(v);
+            }}
+            style={{
+              fontFamily: "Heebo, sans-serif",
+              fontSize: 13,
+              border: "1px solid #cbd5e1",
+              borderRadius: 8,
+              padding: "6px 10px",
+              background: "#fff",
+              cursor: "pointer",
+            }}
+          >
+            <option value="">שנה חבילה...</option>
+            <option value="free">free</option>
+            <option value="trial">trial</option>
+            <option value="basic">basic</option>
+            <option value="pro">pro</option>
+          </select>
+          <span style={{ width: 1, height: 24, background: "#e2e8f0" }} />
+          <button
+            onClick={bulkDelete}
+            style={{
+              background: "#dc2626", color: "#ffffff", border: "none",
+              borderRadius: 8, padding: "6px 14px", fontSize: 13, fontWeight: 600,
+              cursor: "pointer", fontFamily: "Heebo, sans-serif",
+            }}
+          >
+            🗑️ מחק
+          </button>
+          <button
+            onClick={clearSelection}
+            style={{
+              background: "transparent", color: "#64748b", border: "none",
+              borderRadius: 8, padding: "6px 10px", fontSize: 13, fontWeight: 600,
+              cursor: "pointer", fontFamily: "Heebo, sans-serif",
+            }}
+          >
+            ✕ בטל
+          </button>
+        </div>,
+        document.body
       )}
     </div>
   );
