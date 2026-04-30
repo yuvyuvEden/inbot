@@ -158,6 +158,7 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
   const [telegramChatId, setTelegramChatId] = useState<string | null>(null);
   const [connectCode, setConnectCode] = useState<string | null>(null);
   const [connectCodeExpiry, setConnectCodeExpiry] = useState<Date | null>(null);
+  const [botUrl, setBotUrl] = useState<string | null>(null);
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
   const [isPolling, setIsPolling] = useState(false);
   const [pollIntervalRef, setPollIntervalRef] = useState<ReturnType<typeof setInterval> | null>(null);
@@ -457,6 +458,7 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
   }
 
   const generateConnectCode = async () => {
+    setBotUrl(null);
     setIsGeneratingCode(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -469,6 +471,7 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
       if (!res.ok) { toast.error("שגיאה ביצירת קוד"); return; }
       setConnectCode(data.code);
       setConnectCodeExpiry(new Date(data.expires_at));
+      if (data.bot_url) setBotUrl(data.bot_url);
       setIsPolling(true);
       const interval = setInterval(async () => {
         if (!clientId) return;
@@ -613,23 +616,31 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
                   פתח את הבוט ושלח את הפקודה הבאה:
                 </div>
                 <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, padding: 12, marginBottom: 12 }}>
-                  <div style={{ fontSize: 11, color: "#94a3b8", marginBottom: 4 }}>שלח לבוט:</div>
-                  <div style={{ fontFamily: "monospace", fontSize: 16, fontWeight: 700, direction: "ltr", color: "#1e3a5f", marginBottom: 8 }}>
-                    /connect {connectCode}
+                  <div style={{ fontSize: 12, color: "#475569", marginBottom: 10, lineHeight: 1.6 }}>
+                    שלח את הקישור הזה לעובדים שרוצים לחבר את הטלגרם שלהם לחשבון:
                   </div>
-                  <button
-                    style={{ ...btnSecondary, ...btnSm }}
-                    onClick={() => { navigator.clipboard.writeText(`/connect ${connectCode}`); toast.success("הועתק!"); }}
-                  >
-                    📋 העתק פקודה
-                  </button>
+                  <div style={{ fontFamily: "monospace", fontSize: 13, direction: "ltr", color: "#1e3a5f", marginBottom: 10, wordBreak: "break-all", background: "#fff", border: "1px solid #e2e8f0", borderRadius: 6, padding: "8px 10px" }}>
+                    {botUrl ?? `https://t.me/INBOTbot?start=${connectCode}`}
+                  </div>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <button
+                      style={{ ...btnPrimary, ...btnSm }}
+                      onClick={() => {
+                        const url = botUrl ?? `https://t.me/INBOTbot?start=${connectCode}`;
+                        navigator.clipboard.writeText(url);
+                        toast.success("הקישור הועתק!");
+                      }}
+                    >
+                      📋 העתק קישור
+                    </button>
+                    <button
+                      style={{ ...btnSecondary, ...btnSm }}
+                      onClick={() => window.open(botUrl ?? `https://t.me/INBOTbot?start=${connectCode}`, "_blank")}
+                    >
+                      פתח בטלגרם ↗
+                    </button>
+                  </div>
                 </div>
-                <button
-                  style={{ ...btnPrimary, ...btnSm, marginBottom: 8 }}
-                  onClick={() => window.open("https://t.me/INBOTbot", "_blank")}
-                >
-                  פתח את הבוט ב-Telegram ↗
-                </button>
                 {isPolling && (
                   <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#64748b", marginTop: 8 }}>
                     <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: 99, background: "#e8941a", animation: "pulse 1.5s infinite" }} />
