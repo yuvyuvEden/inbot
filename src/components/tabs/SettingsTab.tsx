@@ -485,15 +485,18 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
       setIsPolling(true);
       const interval = setInterval(async () => {
         if (!clientId) return;
-        const { data: row } = await supabase
-          .from("clients")
-          .select("telegram_chat_id")
-          .eq("id", clientId)
-          .maybeSingle();
-        if ((row as any)?.telegram_chat_id) {
-          setTelegramChatId((row as any).telegram_chat_id);
+        const { data: tgRows } = await supabase
+          .from("client_telegram_users")
+          .select("id, chat_id, label, is_active, created_at")
+          .eq("client_id", clientId)
+          .eq("is_active", true)
+          .order("created_at");
+        if (tgRows && tgRows.length > 0) {
+          setTelegramUsers(tgRows);
+          setTelegramChatId(tgRows[0].chat_id);
           setConnectCode(null);
           setConnectCodeExpiry(null);
+          setBotUrl(null);
           setIsPolling(false);
           clearInterval(interval);
           toast.success("✅ Telegram חובר בהצלחה!");
