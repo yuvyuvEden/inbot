@@ -65,6 +65,7 @@ export default function AdminClientsTab() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [innerTab, setInnerTab] = useState<"active" | "pending">("active");
+  const [expiryFilter, setExpiryFilter] = useState<string>("all");
   const [editClient, setEditClient] = useState<ClientRow | null>(null);
   const [drawerAccountant, setDrawerAccountant] = useState<string>("");
   const [drawerAccountantName, setDrawerAccountantName] = useState("");
