@@ -222,6 +222,15 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
         setClientUsers(cuData.map(cu => ({ ...cu, profiles: profileMap.get(cu.user_id) })));
       }
       setTelegramChatId((c as any).telegram_chat_id ?? null);
+
+      // טען רשימת משתמשי טלגרם מחוברים
+      const { data: tgUsers } = await supabase
+        .from("client_telegram_users")
+        .select("id, chat_id, label, is_active, created_at")
+        .eq("client_id", c.id)
+        .eq("is_active", true)
+        .order("created_at");
+      setTelegramUsers(tgUsers ?? []);
       setGeminiKey(c.gemini_api_key || "");
       setDialectWords(asArr((c as any).learned_words));
       setSettings({
