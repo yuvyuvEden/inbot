@@ -33,6 +33,7 @@ interface ClientRow {
   settings_refreshed_at: string | null;
   phone?: string | null;
   invoice_limit_override?: number | null;
+  invoice_count_this_month?: number;
 }
 
 const isExpiringSoon = (d: string | null) => {
