@@ -39,11 +39,35 @@ export function ClientUsersModal({ client, onClose }: Props) {
 
   const disconnectTelegramUser = async (telegramUserId: string) => {
     if (!window.confirm("האם לנתק משתמש זה מטלגרם?")) return;
+    // מצא את ה-chat_id של המשתמש שמנתקים
+    const disconnectedUser = telegramUsers.find((u: any) => u.id === telegramUserId);
     const { error } = await supabase
       .from("client_telegram_users")
       .update({ is_active: false })
       .eq("id", telegramUserId);
     if (error) { toast.error("שגיאה בניתוק"); return; }
+    // אם ה-chat_id שנותק הוא ה-primary — עדכן clients.telegram_chat_id
+    if (disconnectedUser) {
+      const { data: remaining } = await supabase
+        .from("client_telegram_users")
+        .select("chat_id")
+        .eq("client_id", client.id)
+        .eq("is_active", true)
+        .order("created_at")
+        .limit(1)
+        .maybeSingle();
+      const { data: clientRow } = await supabase
+        .from("clients")
+        .select("telegram_chat_id")
+        .eq("id", client.id)
+        .maybeSingle();
+      if (clientRow?.telegram_chat_id === disconnectedUser.chat_id) {
+        await supabase
+          .from("clients")
+          .update({ telegram_chat_id: remaining?.chat_id ?? null })
+          .eq("id", client.id);
+      }
+    }
     qc.invalidateQueries({ queryKey: ["admin-client-telegram-users", client.id] });
     toast.success("משתמש נותק מטלגרם");
   };
