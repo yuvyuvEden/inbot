@@ -33,6 +33,7 @@ interface ClientRow {
   settings_refreshed_at: string | null;
   phone?: string | null;
   invoice_limit_override?: number | null;
+  invoice_count_this_month?: number;
 }
 
 const isExpiringSoon = (d: string | null) => {
@@ -131,11 +132,23 @@ export default function AdminClientsTab() {
         : { data: [] };
       const phoneMap = new Map((profilesData ?? []).map((p: any) => [p.user_id, p.phone]));
 
+      const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+      const { data: invoicesData } = await supabase
+        .from("invoices")
+        .select("client_id")
+        .gte("received_at", monthStart)
+        .is("deleted_at", null);
+      const invoiceCountMap = new Map<string, number>();
+      (invoicesData || []).forEach((row: any) => {
+        invoiceCountMap.set(row.client_id, (invoiceCountMap.get(row.client_id) || 0) + 1);
+      });
+
       return (clientsData || []).map((c) => ({
         ...c,
         has_accountant: acMap.has(c.id),
         accountant_id: acMap.get(c.id) || null,
         phone: phoneMap.get(c.user_id ?? "") ?? null,
+        invoice_count_this_month: invoiceCountMap.get(c.id) ?? 0,
       })) as ClientRow[];
     },
   });
@@ -571,6 +584,7 @@ export default function AdminClientsTab() {
                   <th style={thStyle}>תפוגה</th>
                   <th style={thStyle}>רו"ח משויך</th>
                   <th style={thStyle}>סטטוס הגדרות</th>
+                  <th style={thStyle}>חשבוניות החודש</th>
                   <th style={thStyle}>פעולות</th>
                 </>
               ) : (
@@ -595,7 +609,7 @@ export default function AdminClientsTab() {
               ))
             ) : innerTab === "active" ? (
               activeClients.length === 0 ? (
-                <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">לא נמצאו לקוחות</td></tr>
+                <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">לא נמצאו לקוחות</td></tr>
               ) : (
                 activeClients.map((c) => {
                   const stripeColor = !c.is_active
@@ -803,6 +817,25 @@ export default function AdminClientsTab() {
                         </span>
                       ) : (
                         <span style={{ color: "#94a3b8", fontSize: "11px" }}>—</span>
+                      )}
+                    </td>
+                    <td className="p-3">
+                      {(c.invoice_count_this_month ?? 0) > 0 ? (
+                        <span
+                          style={{
+                            background: "#1e3a5f",
+                            color: "#ffffff",
+                            borderRadius: "999px",
+                            padding: "2px 10px",
+                            fontSize: "12px",
+                            fontWeight: 600,
+                            display: "inline-block",
+                          }}
+                        >
+                          {c.invoice_count_this_month}
+                        </span>
+                      ) : (
+                        <span style={{ color: "#94a3b8" }}>—</span>
                       )}
                     </td>
                     <td className="p-3">
