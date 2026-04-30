@@ -1157,6 +1157,7 @@ function RowMenu({
   onImpersonate,
   impersonateLoading,
   onOpenUsers,
+  onOpenHistory,
 }: {
   client: ClientRow;
   onEdit: () => void;
@@ -1165,6 +1166,7 @@ function RowMenu({
   onImpersonate: () => void;
   impersonateLoading: boolean;
   onOpenUsers: () => void;
+  onOpenHistory: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
