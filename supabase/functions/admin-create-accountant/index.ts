@@ -104,6 +104,24 @@ Deno.serve(async (req) => {
       });
     }
 
+    const { error: deleteRoleError } = await supabaseAdmin
+      .from("user_roles")
+      .delete()
+      .eq("user_id", newUserId)
+      .eq("role", "client");
+
+    if (deleteRoleError) {
+      console.error("Failed to delete client role:", deleteRoleError.message);
+    }
+
+    const { error: insertRoleError } = await supabaseAdmin
+      .from("user_roles")
+      .insert({ user_id: newUserId, role: "accountant" });
+
+    if (insertRoleError) {
+      console.error("Failed to insert accountant role:", insertRoleError.message);
+    }
+
     const { error: resetError } = await supabaseAdmin.auth.admin.generateLink({
       type: "invite",
       email,
