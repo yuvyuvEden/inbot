@@ -361,6 +361,7 @@ export type Database = {
           invite_code: string | null
           invite_code_expires_at: string | null
           invoice_limit_override: number | null
+          invoice_limit_warning_sent_at: string | null
           invoice_platforms: Json
           is_active: boolean
           known_domains: Json
@@ -416,6 +417,7 @@ export type Database = {
           invite_code?: string | null
           invite_code_expires_at?: string | null
           invoice_limit_override?: number | null
+          invoice_limit_warning_sent_at?: string | null
           invoice_platforms?: Json
           is_active?: boolean
           known_domains?: Json
@@ -471,6 +473,7 @@ export type Database = {
           invite_code?: string | null
           invite_code_expires_at?: string | null
           invoice_limit_override?: number | null
+          invoice_limit_warning_sent_at?: string | null
           invoice_platforms?: Json
           is_active?: boolean
           known_domains?: Json
