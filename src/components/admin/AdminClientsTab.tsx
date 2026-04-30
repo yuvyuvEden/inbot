@@ -259,6 +259,68 @@ export default function AdminClientsTab() {
     onError: () => toast.error("שגיאה בעדכון רו\"ח"),
   });
 
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+    setBulkPlan("");
+  };
+
+  const bulkToggleActive = async (is_active: boolean) => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    const { error } = await supabase.from("clients").update({ is_active }).in("id", ids);
+    if (error) {
+      toast.error("שגיאה בעדכון");
+      return;
+    }
+    qc.invalidateQueries({ queryKey: ["admin-clients"] });
+    toast.success(is_active ? "הלקוחות הופעלו" : "הלקוחות הושעו");
+    clearSelection();
+  };
+
+  const bulkChangePlan = async (plan_type: string) => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0 || !plan_type) return;
+    const { error } = await supabase.from("clients").update({ plan_type }).in("id", ids);
+    if (error) {
+      toast.error("שגיאה בעדכון מנוי");
+      return;
+    }
+    qc.invalidateQueries({ queryKey: ["admin-clients"] });
+    toast.success("המנוי עודכן");
+    clearSelection();
+  };
+
+  const bulkDelete = async () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    if (!window.confirm(`האם למחוק ${ids.length} לקוחות?`)) return;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const results = await Promise.all(
+        ids.map((id) =>
+          fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-delete-client`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${session?.access_token}`,
+            },
+            body: JSON.stringify({ client_id: id }),
+          }).then(async (r) => ({ ok: r.ok, body: await r.json().catch(() => ({})) }))
+        )
+      );
+      const failed = results.filter((r) => !r.ok).length;
+      qc.invalidateQueries({ queryKey: ["admin-clients"] });
+      if (failed > 0) {
+        toast.error(`${failed} לקוחות נכשלו במחיקה`);
+      } else {
+        toast.success("הלקוחות נמחקו בהצלחה");
+      }
+      clearSelection();
+    } catch (err: any) {
+      toast.error(err?.message || "שגיאה במחיקה");
+    }
+  };
+
   const allFiltered = (clients || []).filter((c) =>
     c.brand_name?.toLowerCase().includes(search.toLowerCase()) ||
     c.legal_name?.toLowerCase().includes(search.toLowerCase()) ||
