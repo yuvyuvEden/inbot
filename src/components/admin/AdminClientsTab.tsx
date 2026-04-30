@@ -1255,6 +1255,21 @@ function RowMenu({
             <Users size={15} style={{ color: "#e8941a", flexShrink: 0 }} />
             משתמשים ותוספות
           </button>
+          <button
+            onClick={() => { onOpenHistory(); setOpen(false); }}
+            style={{
+              display: "flex", alignItems: "center", gap: "10px",
+              width: "100%", padding: "10px 16px",
+              background: "none", border: "none", cursor: "pointer",
+              fontSize: "14px", color: "#1e3a5f",
+              fontFamily: "Heebo, sans-serif", textAlign: "right",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#f0f4f8")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+          >
+            <span style={{ fontSize: 15 }}>📋</span>
+            היסטוריית רו״ח
+          </button>
           <div style={{ borderTop: "1px solid #e2e8f0", margin: "4px 0" }} />
           <button
             onClick={() => { onEdit(); setOpen(false); }}
