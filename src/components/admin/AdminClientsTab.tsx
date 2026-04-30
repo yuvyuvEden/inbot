@@ -1015,6 +1015,99 @@ export default function AdminClientsTab() {
           }}
         />
       )}
+
+      {selectedIds.size > 0 && ReactDOM.createPortal(
+        <div
+          style={{
+            position: "fixed",
+            bottom: 24,
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: "#ffffff",
+            border: "1px solid #e2e8f0",
+            borderRadius: 12,
+            boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+            padding: "12px 20px",
+            display: "flex",
+            gap: 12,
+            alignItems: "center",
+            zIndex: 1000,
+            fontFamily: "Heebo, sans-serif",
+          }}
+          dir="rtl"
+        >
+          <span style={{ color: "#64748b", fontSize: 13 }}>
+            {selectedIds.size} לקוחות נבחרו
+          </span>
+          <span style={{ width: 1, height: 24, background: "#e2e8f0" }} />
+          <button
+            onClick={() => bulkToggleActive(true)}
+            style={{
+              background: "#16a34a", color: "#ffffff", border: "none",
+              borderRadius: 8, padding: "6px 14px", fontSize: 13, fontWeight: 600,
+              cursor: "pointer", fontFamily: "Heebo, sans-serif",
+            }}
+          >
+            הפעל
+          </button>
+          <button
+            onClick={() => bulkToggleActive(false)}
+            style={{
+              background: "#64748b", color: "#ffffff", border: "none",
+              borderRadius: 8, padding: "6px 14px", fontSize: 13, fontWeight: 600,
+              cursor: "pointer", fontFamily: "Heebo, sans-serif",
+            }}
+          >
+            השעה
+          </button>
+          <span style={{ width: 1, height: 24, background: "#e2e8f0" }} />
+          <select
+            value={bulkPlan}
+            onChange={(e) => {
+              const v = e.target.value;
+              setBulkPlan(v);
+              if (v) bulkChangePlan(v);
+            }}
+            style={{
+              fontFamily: "Heebo, sans-serif",
+              fontSize: 13,
+              border: "1px solid #cbd5e1",
+              borderRadius: 8,
+              padding: "6px 10px",
+              background: "#fff",
+              cursor: "pointer",
+            }}
+          >
+            <option value="">שנה חבילה...</option>
+            <option value="free">free</option>
+            <option value="trial">trial</option>
+            <option value="basic">basic</option>
+            <option value="pro">pro</option>
+          </select>
+          <span style={{ width: 1, height: 24, background: "#e2e8f0" }} />
+          <button
+            onClick={bulkDelete}
+            style={{
+              background: "#dc2626", color: "#ffffff", border: "none",
+              borderRadius: 8, padding: "6px 14px", fontSize: 13, fontWeight: 600,
+              cursor: "pointer", fontFamily: "Heebo, sans-serif",
+            }}
+          >
+            🗑️ מחק
+          </button>
+          <button
+            onClick={clearSelection}
+            style={{
+              background: "transparent", color: "#64748b", border: "none",
+              borderRadius: 8, padding: "6px 10px", fontSize: 13, fontWeight: 600,
+              cursor: "pointer", fontFamily: "Heebo, sans-serif",
+            }}
+          >
+            ✕ בטל
+          </button>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
