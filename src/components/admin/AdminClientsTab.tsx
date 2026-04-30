@@ -132,11 +132,23 @@ export default function AdminClientsTab() {
         : { data: [] };
       const phoneMap = new Map((profilesData ?? []).map((p: any) => [p.user_id, p.phone]));
 
+      const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+      const { data: invoicesData } = await supabase
+        .from("invoices")
+        .select("client_id")
+        .gte("received_at", monthStart)
+        .is("deleted_at", null);
+      const invoiceCountMap = new Map<string, number>();
+      (invoicesData || []).forEach((row: any) => {
+        invoiceCountMap.set(row.client_id, (invoiceCountMap.get(row.client_id) || 0) + 1);
+      });
+
       return (clientsData || []).map((c) => ({
         ...c,
         has_accountant: acMap.has(c.id),
         accountant_id: acMap.get(c.id) || null,
         phone: phoneMap.get(c.user_id ?? "") ?? null,
+        invoice_count_this_month: invoiceCountMap.get(c.id) ?? 0,
       })) as ClientRow[];
     },
   });
