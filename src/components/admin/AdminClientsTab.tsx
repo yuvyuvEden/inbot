@@ -584,6 +584,7 @@ export default function AdminClientsTab() {
                   <th style={thStyle}>תפוגה</th>
                   <th style={thStyle}>רו"ח משויך</th>
                   <th style={thStyle}>סטטוס הגדרות</th>
+                  <th style={thStyle}>חשבוניות החודש</th>
                   <th style={thStyle}>פעולות</th>
                 </>
               ) : (
