@@ -74,6 +74,13 @@ export default function AdminClientsTab() {
   const [planModal, setPlanModal] = useState<any>(null);
   const { impersonate, loading: impersonateLoading } = useImpersonate();
 
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkPlan, setBulkPlan] = useState<string>("");
+
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [innerTab]);
+
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   useEffect(() => {
     const handler = () => setIsMobile(window.innerWidth < 768);
