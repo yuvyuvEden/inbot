@@ -31,6 +31,8 @@ interface ClientRow {
   created_at: string;
   settings_refresh_requested: boolean | null;
   settings_refreshed_at: string | null;
+  phone?: string | null;
+  invoice_limit_override?: number | null;
 }
 
 const isExpiringSoon = (d: string | null) => {
@@ -100,10 +102,17 @@ export default function AdminClientsTab() {
       const acMap = new Map<string, string>();
       (acData || []).forEach((ac) => acMap.set(ac.client_id, ac.accountant_id));
 
+      const userIds = (clientsData || []).map(c => c.user_id).filter(Boolean) as string[];
+      const { data: profilesData } = userIds.length
+        ? await supabase.from("profiles").select("user_id, phone").in("user_id", userIds)
+        : { data: [] };
+      const phoneMap = new Map((profilesData ?? []).map((p: any) => [p.user_id, p.phone]));
+
       return (clientsData || []).map((c) => ({
         ...c,
         has_accountant: acMap.has(c.id),
         accountant_id: acMap.get(c.id) || null,
+        phone: phoneMap.get(c.user_id ?? "") ?? null,
       })) as ClientRow[];
     },
   });
@@ -136,6 +145,7 @@ export default function AdminClientsTab() {
           is_active: c.is_active,
           telegram_chat_id: c.telegram_chat_id,
           gemini_api_key: c.gemini_api_key || null,
+          invoice_limit_override: (c as any).invoice_limit_override ?? null,
         })
         .eq("id", c.id);
       if (error) throw error;
@@ -767,6 +777,39 @@ export default function AdminClientsTab() {
                     {" "}(החבילה עולה ₪{(editClient as any).plans?.monthly_price ?? 0})
                   </div>
                 )}
+              </div>
+
+              {editClient.phone && (
+                <div style={{ padding: "8px 0", borderTop: "1px solid #f1f5f9" }}>
+                  <div style={{ fontSize: "12px", color: "#64748b", marginBottom: "4px", fontFamily: "Heebo, sans-serif" }}>
+                    טלפון (מהפרופיל)
+                  </div>
+                  <div style={{ fontSize: "13px", fontFamily: "monospace", direction: "ltr", color: "#1e3a5f" }}>
+                    {editClient.phone}
+                  </div>
+                </div>
+              )}
+
+              <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: "12px" }}>
+                <div style={{ fontSize: "13px", fontWeight: 600, color: "#1e3a5f", marginBottom: "4px", fontFamily: "Heebo, sans-serif" }}>
+                  מגבלת חשבוניות חודשית (דריסה)
+                </div>
+                <div style={{ fontSize: "11px", color: "#94a3b8", marginBottom: "8px", fontFamily: "Heebo, sans-serif" }}>
+                  ריק = לפי חבילה. 0 = ללא הגבלה. מספר = מגבלה ספציפית ללקוח זה.
+                </div>
+                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                  <Input
+                    dir="ltr"
+                    type="number"
+                    min={0}
+                    placeholder="לפי חבילה"
+                    value={(editClient as any).invoice_limit_override ?? ""}
+                    onChange={(e) => setEditClient({ ...editClient, invoice_limit_override: e.target.value === "" ? null : Number(e.target.value) } as any)}
+                  />
+                  <span style={{ fontSize: "11px", color: "#64748b", whiteSpace: "nowrap" }}>
+                    חבילה: {(editClient as any).plans?.invoice_limit ?? "—"}
+                  </span>
+                </div>
               </div>
 
               <label className="block space-y-1">
