@@ -86,6 +86,30 @@ Deno.serve(async (req) => {
         );
         return json({ status: "blocked", reason: "invoice_limit_reached", count: currentCount, limit: invoiceLimit });
       }
+
+      // NEW 🔵 — התראת 80% מגבלה — פעם אחת בחודש
+      const warningThreshold = Math.floor(invoiceLimit * 0.8);
+      if (currentCount >= warningThreshold && currentCount < invoiceLimit) {
+        const { data: clientMeta } = await supabase
+          .from("clients")
+          .select("invoice_limit_warning_sent_at")
+          .eq("id", client_id)
+          .single();
+        const warningSentAt = clientMeta?.invoice_limit_warning_sent_at;
+        const alreadySentThisMonth = warningSentAt &&
+          new Date(warningSentAt).getMonth() === now.getMonth() &&
+          new Date(warningSentAt).getFullYear() === now.getFullYear();
+        if (!alreadySentThisMonth) {
+          await broadcastMessage(supabase, client_id, chat_id,
+            `⚠️ <b>התראת מגבלה</b>\n\nהגעת ל-${currentCount} מתוך ${invoiceLimit} חשבוניות החודש (${Math.round((currentCount / invoiceLimit) * 100)}%).\n\nנותרו ${invoiceLimit - currentCount} חשבוניות בלבד.\n\nלשדרוג המנוי היכנס לדשבורד.`,
+            "HTML"
+          );
+          await supabase
+            .from("clients")
+            .update({ invoice_limit_warning_sent_at: now.toISOString() })
+            .eq("id", client_id);
+        }
+      }
     }
   }
 
