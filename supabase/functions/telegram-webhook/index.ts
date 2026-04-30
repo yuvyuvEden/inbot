@@ -85,18 +85,22 @@ Deno.serve(async (req) => {
 });
 
 async function handleStart(supabase: any, chatId: string, text: string) {
+  const parts = text.trim().split(/\s+/);
+  const payload = parts[1] ?? "";
+
+  // אם ה-payload הוא קוד חיבור בן 6 תווים — הפעל handleConnect
+  if (/^[A-Z0-9]{6}$/i.test(payload)) {
+    await handleConnect(supabase, chatId, `/connect ${payload}`);
+    return;
+  }
+
   const existing = await findClientByChatId(supabase, chatId);
   if (existing) {
     await sendMessage(chatId, `✅ אתה כבר מחובר!\n\nלדשבורד: ${APP_URL}\n\nשלח חשבונית לעיבוד, או /status לבדיקת מנוי.`);
     return;
   }
-  const parts = text.split(" ");
-  const payload = parts[1] ?? "";
-  if (isValidUuid(payload)) {
-    await sendMessage(chatId, `👋 שלום!\n\nכדי לחבר את חשבונך, השתמש בקוד שהופיע בדשבורד:\n/connect XXXXXX`);
-    return;
-  }
-  await sendMessage(chatId, `👋 ברוך הבא ל-INBOT!\n\nאוטומציה חכמה לאיסוף חשבוניות עסקיות 🧾\n\nלהרשמה ולחיבור החשבון:\n${APP_URL}\n\nאחרי ההרשמה תקבל קוד חיבור בדשבורד.`);
+
+  await sendMessage(chatId, `👋 ברוך הבא ל-INBOT!\n\nאוטומציה חכמה לאיסוף חשבוניות עסקיות 🧾\n\nלהרשמה ולחיבור החשבון:\n${APP_URL}\n\nאחרי ההרשמה תקבל קישור חיבור מהדשבורד.`);
 }
 
 async function handleConnect(supabase: any, chatId: string, text: string) {
@@ -104,14 +108,22 @@ async function handleConnect(supabase: any, chatId: string, text: string) {
   const code  = (parts[1] ?? "").trim().toUpperCase();
 
   if (!code || code.length !== 6 || !/^[A-Z0-9]{6}$/.test(code)) {
-    await sendMessage(chatId, "❌ קוד לא תקין.\n\nהשתמש בקוד בן 6 ספרות שהופיע בדשבורד:\n/connect XXXXXX");
+    await sendMessage(chatId, "❌ קוד לא תקין.\n\nהשתמש בקישור שנשלח אליך, או חזור לדשבורד וצור קוד חדש.");
     return;
   }
+
+  // בדוק אם chat_id כבר מחובר לאותו חשבון — התעלם בשקט
+  const { data: existingLink } = await supabase
+    .from("client_telegram_users")
+    .select("id, client_id")
+    .eq("chat_id", chatId)
+    .eq("is_active", true)
+    .maybeSingle();
 
   const now = new Date().toISOString();
   const { data: client, error } = await supabase
     .from("clients")
-    .select("id, brand_name, connect_code, connect_code_expires_at, telegram_chat_id")
+    .select("id, brand_name, connect_code, connect_code_expires_at, telegram_chat_id, plan_id, plans(user_limit)")
     .eq("connect_code", code)
     .gt("connect_code_expires_at", now)
     .maybeSingle();
@@ -121,29 +133,58 @@ async function handleConnect(supabase: any, chatId: string, text: string) {
     return;
   }
 
-  if (client.telegram_chat_id && client.telegram_chat_id !== chatId) {
-    await sendMessage(chatId, "⚠️ חשבון זה כבר מחובר לחשבון טלגרם אחר.\nפנה לתמיכה.");
+  // אם כבר מחובר לאותו client — התעלם בשקט
+  if (existingLink && existingLink.client_id === client.id) {
+    await sendMessage(chatId,
+      `✅ <b>כבר מחובר!</b>\n\nחשבון: ${escHtml(client.brand_name)}\n\nשלח חשבונית לעיבוד, או /status לבדיקת מנוי.`,
+      "HTML"
+    );
     return;
   }
 
-  const setupUrl = Deno.env.get("SUPABASE_URL") + "/functions/v1/inbot-complete-setup";
-  const setupRes = await fetch(setupUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${Deno.env.get("INBOT_SYNC_SECRET")}` },
-    body: JSON.stringify({ client_uuid: client.id, telegram_chat_id: chatId }),
-  });
+  // בדיקת מגבלת משתמשים לפי חבילה
+  const userLimit: number = client.plans?.user_limit ?? 0;
+  if (userLimit > 0) {
+    const { count } = await supabase
+      .from("client_telegram_users")
+      .select("id", { count: "exact", head: true })
+      .eq("client_id", client.id)
+      .eq("is_active", true);
 
-  if (!setupRes.ok) {
-    console.error("inbot-complete-setup failed:", await setupRes.text());
+    if ((count ?? 0) >= userLimit) {
+      await sendMessage(chatId,
+        `⛔ הגעת למגבלת המשתמשים של החבילה (${userLimit}).\n\nפנה לבעל החשבון לשדרוג החבילה.`
+      );
+      return;
+    }
+  }
+
+  // הוסף ל-client_telegram_users
+  const { error: insertErr } = await supabase
+    .from("client_telegram_users")
+    .insert({ client_id: client.id, chat_id: chatId, is_active: true });
+
+  if (insertErr && insertErr.code !== "23505") {
+    // 23505 = unique violation — כבר קיים, לא שגיאה אמיתית
+    console.error("insert client_telegram_users failed:", insertErr.message);
     await sendMessage(chatId, "❌ שגיאה בחיבור. נסה שוב או פנה לתמיכה.");
     return;
   }
 
-  await supabase.from("clients").update({
-    connect_code: null,
-    connect_code_expires_at: null,
-  }).eq("id", client.id);
+  // dual-write: אם זה ה-chat_id הראשון — כתוב גם ל-clients.telegram_chat_id
+  if (!client.telegram_chat_id) {
+    const setupUrl = Deno.env.get("SUPABASE_URL") + "/functions/v1/inbot-complete-setup";
+    await fetch(setupUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${Deno.env.get("INBOT_SYNC_SECRET")}`,
+      },
+      body: JSON.stringify({ client_uuid: client.id, telegram_chat_id: chatId }),
+    });
+  }
 
+  // הקוד נשאר תקף — לא מוחקים אותו
   await sendMessage(chatId,
     `✅ <b>החיבור הצליח!</b>\n\nחשבון: ${escHtml(client.brand_name)}\n\nשלח חשבונית לעיבוד, או /status לבדיקת מנוי.`,
     "HTML"
@@ -219,6 +260,24 @@ async function checkRateLimit(supabase: any, chatId: string): Promise<boolean> {
 }
 
 async function findClientByChatId(supabase: any, chatId: string) {
+  // חיפוש ראשון ב-client_telegram_users
+  const { data: link } = await supabase
+    .from("client_telegram_users")
+    .select("client_id")
+    .eq("chat_id", chatId)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  if (link?.client_id) {
+    const { data } = await supabase
+      .from("clients")
+      .select("id, brand_name, plan_type, plan_expires_at, is_active, telegram_chat_id")
+      .eq("id", link.client_id)
+      .maybeSingle();
+    return data ?? null;
+  }
+
+  // fallback ל-clients.telegram_chat_id (תאימות לאחור)
   const { data } = await supabase
     .from("clients")
     .select("id, brand_name, plan_type, plan_expires_at, is_active, telegram_chat_id")
