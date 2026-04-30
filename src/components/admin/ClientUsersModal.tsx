@@ -244,6 +244,62 @@ export function ClientUsersModal({ client, onClose }: Props) {
             </div>
           )}
         </div>
+
+        {/* Telegram connections */}
+        <div className="border-t border-border px-6 py-4">
+          <div className="mb-3 text-sm font-semibold text-primary">
+            🤖 חיבורי Telegram ({telegramUsers.length})
+          </div>
+          {tgLoading ? (
+            <p className="py-4 text-center text-sm text-muted-foreground">טוען...</p>
+          ) : telegramUsers.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              אין חיבורי Telegram פעילים
+            </p>
+          ) : (
+            <div className="w-full overflow-hidden rounded-lg border border-border">
+              <table className="w-full text-xs" style={{ tableLayout: "fixed" }}>
+                <thead>
+                  <tr className="border-b border-border bg-secondary text-right text-xs font-semibold text-muted-foreground">
+                    {["Chat ID", "תאריך חיבור", "פעולה"].map((h) => (
+                      <th key={h} className="p-2.5">
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {telegramUsers.map((u: any) => (
+                    <tr key={u.id} className="border-b border-border last:border-0">
+                      <td className="p-2.5 font-mono text-xs" dir="ltr">
+                        {u.chat_id}
+                      </td>
+                      <td className="p-2.5 text-xs text-muted-foreground">
+                        {new Date(u.created_at).toLocaleDateString("he-IL")}
+                      </td>
+                      <td className="p-2.5">
+                        <button
+                          onClick={() => disconnectTelegramUser(u.id)}
+                          style={{
+                            background: "none",
+                            border: "1px solid #fecaca",
+                            borderRadius: 6,
+                            padding: "2px 8px",
+                            fontSize: 11,
+                            color: "#dc2626",
+                            cursor: "pointer",
+                          }}
+                        >
+                          נתק
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
