@@ -161,6 +161,7 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
   const [botUrl, setBotUrl] = useState<string | null>(null);
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
   const [isPolling, setIsPolling] = useState(false);
+  const [telegramUsers, setTelegramUsers] = useState<Array<{ id: string; chat_id: string; label: string | null; is_active: boolean; created_at: string }>>([]);
   const [pollIntervalRef, setPollIntervalRef] = useState<ReturnType<typeof setInterval> | null>(null);
   const [isDownloadingConnector, setIsDownloadingConnector] = useState(false);
   // Client users (multi-user account)
@@ -221,6 +222,15 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
         setClientUsers(cuData.map(cu => ({ ...cu, profiles: profileMap.get(cu.user_id) })));
       }
       setTelegramChatId((c as any).telegram_chat_id ?? null);
+
+      // טען רשימת משתמשי טלגרם מחוברים
+      const { data: tgUsers } = await supabase
+        .from("client_telegram_users")
+        .select("id, chat_id, label, is_active, created_at")
+        .eq("client_id", c.id)
+        .eq("is_active", true)
+        .order("created_at");
+      setTelegramUsers(tgUsers ?? []);
       setGeminiKey(c.gemini_api_key || "");
       setDialectWords(asArr((c as any).learned_words));
       setSettings({
@@ -475,15 +485,18 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
       setIsPolling(true);
       const interval = setInterval(async () => {
         if (!clientId) return;
-        const { data: row } = await supabase
-          .from("clients")
-          .select("telegram_chat_id")
-          .eq("id", clientId)
-          .maybeSingle();
-        if ((row as any)?.telegram_chat_id) {
-          setTelegramChatId((row as any).telegram_chat_id);
+        const { data: tgRows } = await supabase
+          .from("client_telegram_users")
+          .select("id, chat_id, label, is_active, created_at")
+          .eq("client_id", clientId)
+          .eq("is_active", true)
+          .order("created_at");
+        if (tgRows && tgRows.length > 0) {
+          setTelegramUsers(tgRows);
+          setTelegramChatId(tgRows[0].chat_id);
           setConnectCode(null);
           setConnectCodeExpiry(null);
+          setBotUrl(null);
           setIsPolling(false);
           clearInterval(interval);
           toast.success("✅ Telegram חובר בהצלחה!");
@@ -513,8 +526,20 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
     if (error) { toast.error("שגיאה בניתוק"); return; }
     setTelegramChatId(null);
     if (pollIntervalRef) clearInterval(pollIntervalRef);
-    toast.success("Telegram נותק");
   };
+
+  const disconnectTelegramUser = async (telegramUserId: string) => {
+    if (!window.confirm("האם לנתק משתמש זה מטלגרם?")) return;
+    const { error } = await supabase
+      .from("client_telegram_users")
+      .update({ is_active: false })
+      .eq("id", telegramUserId);
+    if (error) { toast.error("שגיאה בניתוק"); return; }
+    setTelegramUsers(prev => prev.filter(u => u.id !== telegramUserId));
+    if (telegramUsers.length <= 1) setTelegramChatId(null);
+    toast.success("משתמש נותק מטלגרם");
+  };
+
 
   const downloadConnector = async () => {
     setIsDownloadingConnector(true);
@@ -596,25 +621,85 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
         <div style={card}>
           <div style={cardHeader}><Bot size={16} /> חיבור Telegram</div>
           <div style={{ padding: 16 }}>
-            {telegramChatId ? (
+            {telegramUsers.length > 0 ? (
               <div>
-                <div style={statRow}>
-                  <span style={{ color: "#64748b" }}>סטטוס</span>
-                  <span style={{ color: "#16a34a", fontWeight: 600 }}>✅ מחובר</span>
+                <div style={{ fontSize: 12, color: "#16a34a", fontWeight: 600, marginBottom: 12 }}>
+                  ✅ {telegramUsers.length} משתמש{telegramUsers.length > 1 ? "ים" : ""} מחובר{telegramUsers.length > 1 ? "ים" : ""}
                 </div>
-                <div style={{ ...statRow, borderBottom: "none" }}>
-                  <span style={{ color: "#64748b" }}>Chat ID</span>
-                  <span style={{ fontFamily: "monospace", direction: "ltr" }}>{telegramChatId}</span>
+                <div style={{ marginBottom: 14 }}>
+                  {telegramUsers.map((u) => (
+                    <div key={u.id} style={{
+                      display: "flex", justifyContent: "space-between", alignItems: "center",
+                      padding: "8px 0", borderBottom: "1px solid #f1f5f9",
+                    }}>
+                      <div>
+                        <div style={{ fontSize: 12, fontFamily: "monospace", direction: "ltr", color: "#1e3a5f" }}>
+                          {u.chat_id}
+                        </div>
+                        <div style={{ fontSize: 11, color: "#94a3b8" }}>
+                          {new Date(u.created_at).toLocaleDateString("he-IL")}
+                        </div>
+                      </div>
+                      {!isReadOnly && (
+                        <button
+                          style={{ ...btnGhost, color: "#dc2626", fontSize: 11 }}
+                          onClick={() => disconnectTelegramUser(u.id)}
+                        >
+                          נתק
+                        </button>
+                      )}
+                    </div>
+                  ))}
                 </div>
-                <button style={{ ...btnSecondary, ...btnSm, marginTop: 12 }} onClick={disconnectTelegram}>
-                  נתק Telegram
-                </button>
+                {!isReadOnly && (
+                  connectCode ? (
+                    <div>
+                      <div style={{ fontSize: 12, color: "#475569", marginBottom: 8, lineHeight: 1.6 }}>
+                        שלח את הקישור הזה למשתמש נוסף:
+                      </div>
+                      <div style={{ fontFamily: "monospace", fontSize: 12, direction: "ltr", color: "#1e3a5f", marginBottom: 10, wordBreak: "break-all", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 6, padding: "8px 10px" }}>
+                        {botUrl ?? `https://t.me/INBOTbot?start=${connectCode}`}
+                      </div>
+                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                        <button
+                          style={{ ...btnPrimary, ...btnSm }}
+                          onClick={() => {
+                            const url = botUrl ?? `https://t.me/INBOTbot?start=${connectCode}`;
+                            navigator.clipboard.writeText(url);
+                            toast.success("הקישור הועתק!");
+                          }}
+                        >
+                          📋 העתק קישור
+                        </button>
+                        <button style={{ ...btnGhost, fontSize: 12 }} onClick={generateConnectCode}>
+                          🔄 קוד חדש
+                        </button>
+                      </div>
+                      {isPolling && (
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#64748b", marginTop: 8 }}>
+                          <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: 99, background: "#e8941a" }} />
+                          <span>ממתין לחיבור...</span>
+                          {connectCodeExpiry && (
+                            <span style={{ color: "#94a3b8" }}>
+                              (תקף עד {connectCodeExpiry.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })})
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <button
+                      style={{ ...btnSecondary, ...btnSm, opacity: isGeneratingCode ? 0.6 : 1 }}
+                      disabled={isGeneratingCode}
+                      onClick={generateConnectCode}
+                    >
+                      {isGeneratingCode ? "יוצר קוד..." : "➕ חבר משתמש נוסף"}
+                    </button>
+                  )
+                )}
               </div>
             ) : connectCode ? (
               <div>
-                <div style={{ fontSize: 12, color: "#64748b", marginBottom: 8 }}>
-                  פתח את הבוט ושלח את הפקודה הבאה:
-                </div>
                 <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, padding: 12, marginBottom: 12 }}>
                   <div style={{ fontSize: 12, color: "#475569", marginBottom: 10, lineHeight: 1.6 }}>
                     שלח את הקישור הזה לעובדים שרוצים לחבר את הטלגרם שלהם לחשבון:
@@ -643,7 +728,7 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
                 </div>
                 {isPolling && (
                   <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#64748b", marginTop: 8 }}>
-                    <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: 99, background: "#e8941a", animation: "pulse 1.5s infinite" }} />
+                    <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: 99, background: "#e8941a" }} />
                     <span>ממתין לחיבור...</span>
                     {connectCodeExpiry && (
                       <span style={{ color: "#94a3b8" }}>
