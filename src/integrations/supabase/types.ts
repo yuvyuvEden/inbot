@@ -69,6 +69,7 @@ export type Database = {
           base_client_count: number
           billing_day: number
           created_at: string
+          deleted_at: string | null
           email: string
           free_months: number
           id: string
@@ -89,6 +90,7 @@ export type Database = {
           base_client_count?: number
           billing_day?: number
           created_at?: string
+          deleted_at?: string | null
           email: string
           free_months?: number
           id?: string
@@ -109,6 +111,7 @@ export type Database = {
           base_client_count?: number
           billing_day?: number
           created_at?: string
+          deleted_at?: string | null
           email?: string
           free_months?: number
           id?: string
@@ -347,6 +350,7 @@ export type Database = {
           connect_code_expires_at: string | null
           created_at: string
           custom_categories: Json | null
+          deleted_at: string | null
           drive_folder_id: string | null
           extra_invoice_price: number | null
           fetch_domains: Json
@@ -401,6 +405,7 @@ export type Database = {
           connect_code_expires_at?: string | null
           created_at?: string
           custom_categories?: Json | null
+          deleted_at?: string | null
           drive_folder_id?: string | null
           extra_invoice_price?: number | null
           fetch_domains?: Json
@@ -455,6 +460,7 @@ export type Database = {
           connect_code_expires_at?: string | null
           created_at?: string
           custom_categories?: Json | null
+          deleted_at?: string | null
           drive_folder_id?: string | null
           extra_invoice_price?: number | null
           fetch_domains?: Json

@@ -68,20 +68,24 @@ Deno.serve(async (req) => {
       .eq("id", accountant_id)
       .single();
 
-    // מחיקה מלאה דרך הפונקציה
-    const { error: fnError } = await supabaseAdmin.rpc("delete_accountant_full", {
-      p_accountant_id: accountant_id,
-    });
+    // Soft-delete: סימון הרו"ח כמחוק במקום מחיקה פיזית
+    const { error: softDeleteError } = await supabaseAdmin
+      .from("accountants")
+      .update({ deleted_at: new Date().toISOString(), updated_by: user.id })
+      .eq("id", accountant_id);
 
-    if (fnError) {
-      return new Response(JSON.stringify({ error: fnError.message }), {
+    if (softDeleteError) {
+      return new Response(JSON.stringify({ error: softDeleteError.message }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // מחיקת user מ-auth.users (דורש service_role)
+    // מחיקה קשה של user_roles, profiles ו-auth user (שומרים על accountant_clients להיסטוריה)
     if (accountant?.user_id) {
+      await supabaseAdmin.from("user_roles").delete().eq("user_id", accountant.user_id);
+      await supabaseAdmin.from("profiles").delete().eq("user_id", accountant.user_id);
+
       const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(
         accountant.user_id
       );
