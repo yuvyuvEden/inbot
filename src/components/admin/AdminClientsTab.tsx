@@ -76,6 +76,21 @@ export default function AdminClientsTab() {
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkPlan, setBulkPlan] = useState<string>("");
+  const [historyClient, setHistoryClient] = useState<ClientRow | null>(null);
+
+  const { data: accountantHistory, isLoading: historyLoading } = useQuery({
+    queryKey: ["accountant-history", historyClient?.id],
+    enabled: !!historyClient,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("accountant_clients")
+        .select("accountant_id, assigned_at, unassigned_at, accountants(name, email)")
+        .eq("client_id", historyClient!.id)
+        .order("assigned_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+  });
 
   useEffect(() => {
     setSelectedIds(new Set());
