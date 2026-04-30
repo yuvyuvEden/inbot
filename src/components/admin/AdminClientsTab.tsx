@@ -785,6 +785,7 @@ export default function AdminClientsTab() {
                           onImpersonate={() => impersonate(c.user_id, c.brand_name ?? c.legal_name ?? "לקוח", "/dashboard", c.id)}
                           impersonateLoading={false}
                           onOpenUsers={() => setUsersModal(c)}
+                          onOpenHistory={() => setHistoryClient(c)}
                         />
                       </div>
                     </td>
