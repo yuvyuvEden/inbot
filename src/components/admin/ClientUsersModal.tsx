@@ -5,6 +5,9 @@ import {
   useUpdateInvoiceOverride,
 } from "@/hooks/usePlans";
 import { Users, Plus, X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 interface Props {
   client: any;
