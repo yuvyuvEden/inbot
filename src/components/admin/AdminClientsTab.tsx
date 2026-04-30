@@ -389,6 +389,26 @@ export default function AdminClientsTab() {
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-sm"
         />
+        {innerTab === "active" && (
+          <select
+            value={expiryFilter}
+            onChange={(e) => setExpiryFilter(e.target.value)}
+            style={{
+              fontFamily: "Heebo, sans-serif",
+              fontSize: 13,
+              border: "1px solid #cbd5e1",
+              borderRadius: 8,
+              padding: "6px 10px",
+              background: "#fff",
+            }}
+          >
+            <option value="all">הכל</option>
+            <option value="expired">פג תוקף</option>
+            <option value="week">השבוע</option>
+            <option value="month">החודש</option>
+            <option value="3months">3 חודשים</option>
+          </select>
+        )}
         <div style={{ display: "flex", gap: "4px" }}>
           <button
             onClick={() => setInnerTab("active")}
