@@ -260,6 +260,24 @@ async function checkRateLimit(supabase: any, chatId: string): Promise<boolean> {
 }
 
 async function findClientByChatId(supabase: any, chatId: string) {
+  // חיפוש ראשון ב-client_telegram_users
+  const { data: link } = await supabase
+    .from("client_telegram_users")
+    .select("client_id")
+    .eq("chat_id", chatId)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  if (link?.client_id) {
+    const { data } = await supabase
+      .from("clients")
+      .select("id, brand_name, plan_type, plan_expires_at, is_active, telegram_chat_id")
+      .eq("id", link.client_id)
+      .maybeSingle();
+    return data ?? null;
+  }
+
+  // fallback ל-clients.telegram_chat_id (תאימות לאחור)
   const { data } = await supabase
     .from("clients")
     .select("id, brand_name, plan_type, plan_expires_at, is_active, telegram_chat_id")
