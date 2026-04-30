@@ -494,6 +494,26 @@ export default function AdminClientsTab() {
             <tr style={{ background: "linear-gradient(to left, #1e3a5f, #2d5a8e)" }}>
               {innerTab === "active" ? (
                 <>
+                  <th style={{ ...thStyle, width: 40, textAlign: "center", padding: "12px 8px" }}>
+                    <input
+                      type="checkbox"
+                      ref={(el) => {
+                        if (!el) return;
+                        const total = activeClients.length;
+                        const sel = activeClients.filter((c) => selectedIds.has(c.id)).length;
+                        el.indeterminate = sel > 0 && sel < total;
+                      }}
+                      checked={activeClients.length > 0 && activeClients.every((c) => selectedIds.has(c.id))}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedIds(new Set(activeClients.map((c) => c.id)));
+                        } else {
+                          setSelectedIds(new Set());
+                        }
+                      }}
+                      style={{ cursor: "pointer", width: 16, height: 16 }}
+                    />
+                  </th>
                   <th style={thStyle}>שם עסק</th>
                   <th style={thStyle}>מנוי</th>
                   <th style={thStyle}>חבילה</th>
