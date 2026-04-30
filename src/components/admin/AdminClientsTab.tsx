@@ -1019,6 +1019,82 @@ export default function AdminClientsTab() {
         </SheetContent>
       </Sheet>
 
+      <Sheet open={!!historyClient} onOpenChange={(o) => !o && setHistoryClient(null)}>
+        <SheetContent side="left" className="w-[420px] overflow-y-auto" dir="rtl">
+          <SheetHeader>
+            <SheetTitle>היסטוריית רו״ח — {historyClient?.brand_name}</SheetTitle>
+          </SheetHeader>
+          <div className="mt-6">
+            {historyLoading ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton key={i} className="h-16 w-full" />
+                ))}
+              </div>
+            ) : !accountantHistory?.length ? (
+              <div style={{ textAlign: "center", color: "#94a3b8", fontSize: 14, padding: "32px 0" }}>
+                לא נמצאו שיוכים בהיסטוריה
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 0, position: "relative" }}>
+                <div style={{
+                  position: "absolute", right: 19, top: 0, bottom: 0,
+                  width: 2, background: "#e2e8f0", zIndex: 0
+                }} />
+                {accountantHistory.map((row: any, idx: number) => {
+                  const isActive = !row.unassigned_at;
+                  const assignedDate = new Date(row.assigned_at).toLocaleDateString("he-IL");
+                  const unassignedDate = row.unassigned_at
+                    ? new Date(row.unassigned_at).toLocaleDateString("he-IL")
+                    : null;
+                  return (
+                    <div key={idx} style={{ display: "flex", gap: 16, paddingBottom: 24, position: "relative", zIndex: 1 }}>
+                      <div style={{
+                        width: 40, flexShrink: 0, display: "flex", justifyContent: "center", paddingTop: 2
+                      }}>
+                        <div style={{
+                          width: 12, height: 12, borderRadius: "50%",
+                          background: isActive ? "#16a34a" : "#cbd5e1",
+                          border: `2px solid ${isActive ? "#16a34a" : "#94a3b8"}`,
+                          marginTop: 4,
+                        }} />
+                      </div>
+                      <div style={{
+                        flex: 1, background: "#f8fafc",
+                        borderRadius: 10, padding: "12px 14px",
+                        border: `1px solid ${isActive ? "#bbf7d0" : "#e2e8f0"}`,
+                      }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                          <span style={{ fontWeight: 700, fontSize: 14, color: "#1e3a5f", fontFamily: "Heebo, sans-serif" }}>
+                            {row.accountants?.name || "—"}
+                          </span>
+                          {isActive && (
+                            <span style={{
+                              background: "#dcfce7", color: "#16a34a",
+                              borderRadius: 20, fontSize: 11, fontWeight: 700,
+                              padding: "2px 8px", fontFamily: "Heebo, sans-serif"
+                            }}>
+                              פעיל
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: 12, color: "#64748b", fontFamily: "Heebo, sans-serif" }}>
+                          {row.accountants?.email || ""}
+                        </div>
+                        <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 6, fontFamily: "Heebo, sans-serif" }}>
+                          שויך: {assignedDate}
+                          {unassignedDate && ` · הוסר: ${unassignedDate}`}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+
       {usersModal && (
         <ClientUsersModal client={usersModal} onClose={() => setUsersModal(null)} />
       )}
