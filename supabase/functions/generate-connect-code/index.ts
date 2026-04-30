@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const ALLOWED_CHARS = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+const BOT_USERNAME = Deno.env.get("TELEGRAM_BOT_USERNAME") ?? "INBOTbot";
 
 function generateCode(): string {
   let code = "";
@@ -80,5 +81,9 @@ Deno.serve(async (req) => {
 
   if (updateError) return json({ error: updateError.message }, 500);
 
-  return json({ code, expires_at: expiresAt });
+  return json({
+    code,
+    expires_at: expiresAt,
+    bot_url: `https://t.me/${BOT_USERNAME}?start=${code}`,
+  });
 });
