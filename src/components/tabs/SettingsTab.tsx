@@ -161,6 +161,7 @@ export default function SettingsTab({ adminClientId }: { adminClientId?: string 
   const [botUrl, setBotUrl] = useState<string | null>(null);
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
   const [isPolling, setIsPolling] = useState(false);
+  const [telegramUsers, setTelegramUsers] = useState<Array<{ id: string; chat_id: string; label: string | null; is_active: boolean; created_at: string }>>([]);
   const [pollIntervalRef, setPollIntervalRef] = useState<ReturnType<typeof setInterval> | null>(null);
   const [isDownloadingConnector, setIsDownloadingConnector] = useState(false);
   // Client users (multi-user account)
