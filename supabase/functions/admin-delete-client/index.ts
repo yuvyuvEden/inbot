@@ -68,21 +68,8 @@ Deno.serve(async (req) => {
       .eq("id", client_id)
       .single();
 
-    // שליפת מזהי החשבוניות למחיקת התגובות
-    const { data: invoiceRows } = await supabaseAdmin
-      .from("invoices")
-      .select("id")
-      .eq("client_id", client_id);
-    const invoiceIds = (invoiceRows || []).map((r) => r.id);
-
-    if (invoiceIds.length > 0) {
-      await supabaseAdmin.from("invoice_comments").delete().in("invoice_id", invoiceIds);
-    }
-    await supabaseAdmin.from("invoices").delete().eq("client_id", client_id);
-    await supabaseAdmin.from("accountant_clients").delete().eq("client_id", client_id);
-    await supabaseAdmin.from("notifications").delete().eq("client_id", client_id);
-    await supabaseAdmin.from("usage_log").delete().eq("client_id", client_id);
-    await supabaseAdmin.from("clients").delete().eq("id", client_id);
+    // Soft delete של רשומת הלקוח
+    await supabaseAdmin.from("clients").update({ deleted_at: new Date().toISOString(), updated_by: user.id }).eq("id", client_id);
 
     // מחיקת user מ-auth + user_roles + profiles
     if (client?.user_id) {
