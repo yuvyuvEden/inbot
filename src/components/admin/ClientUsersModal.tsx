@@ -23,6 +23,31 @@ export function ClientUsersModal({ client, onClose }: Props) {
   const [overrideCount, setOverrideCount] = useState<number>(client.invoice_limit_override ?? 0);
   const [overridePrice, setOverridePrice] = useState<number>(Number(client.extra_invoice_price ?? 0));
 
+  const qc = useQueryClient();
+  const { data: telegramUsers = [], isLoading: tgLoading } = useQuery({
+    queryKey: ["admin-client-telegram-users", client.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("client_telegram_users")
+        .select("id, chat_id, label, is_active, created_at")
+        .eq("client_id", client.id)
+        .eq("is_active", true)
+        .order("created_at");
+      return data ?? [];
+    },
+  });
+
+  const disconnectTelegramUser = async (telegramUserId: string) => {
+    if (!window.confirm("האם לנתק משתמש זה מטלגרם?")) return;
+    const { error } = await supabase
+      .from("client_telegram_users")
+      .update({ is_active: false })
+      .eq("id", telegramUserId);
+    if (error) { toast.error("שגיאה בניתוק"); return; }
+    qc.invalidateQueries({ queryKey: ["admin-client-telegram-users", client.id] });
+    toast.success("משתמש נותק מטלגרם");
+  };
+
   const inputCls =
     "w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-accent/40";
 
