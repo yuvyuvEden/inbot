@@ -5,6 +5,9 @@ import {
   useUpdateInvoiceOverride,
 } from "@/hooks/usePlans";
 import { Users, Plus, X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 interface Props {
   client: any;
@@ -19,6 +22,31 @@ export function ClientUsersModal({ client, onClose }: Props) {
   const [newUser, setNewUser] = useState({ name: "", telegram_chat_id: "", email: "" });
   const [overrideCount, setOverrideCount] = useState<number>(client.invoice_limit_override ?? 0);
   const [overridePrice, setOverridePrice] = useState<number>(Number(client.extra_invoice_price ?? 0));
+
+  const qc = useQueryClient();
+  const { data: telegramUsers = [], isLoading: tgLoading } = useQuery({
+    queryKey: ["admin-client-telegram-users", client.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("client_telegram_users")
+        .select("id, chat_id, label, is_active, created_at")
+        .eq("client_id", client.id)
+        .eq("is_active", true)
+        .order("created_at");
+      return data ?? [];
+    },
+  });
+
+  const disconnectTelegramUser = async (telegramUserId: string) => {
+    if (!window.confirm("האם לנתק משתמש זה מטלגרם?")) return;
+    const { error } = await supabase
+      .from("client_telegram_users")
+      .update({ is_active: false })
+      .eq("id", telegramUserId);
+    if (error) { toast.error("שגיאה בניתוק"); return; }
+    qc.invalidateQueries({ queryKey: ["admin-client-telegram-users", client.id] });
+    toast.success("משתמש נותק מטלגרם");
+  };
 
   const inputCls =
     "w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-accent/40";
@@ -208,6 +236,62 @@ export function ClientUsersModal({ client, onClose }: Props) {
                         >
                           {u.is_active ? "פעיל" : "לא פעיל"}
                         </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* Telegram connections */}
+        <div className="border-t border-border px-6 py-4">
+          <div className="mb-3 text-sm font-semibold text-primary">
+            🤖 חיבורי Telegram ({telegramUsers.length})
+          </div>
+          {tgLoading ? (
+            <p className="py-4 text-center text-sm text-muted-foreground">טוען...</p>
+          ) : telegramUsers.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              אין חיבורי Telegram פעילים
+            </p>
+          ) : (
+            <div className="w-full overflow-hidden rounded-lg border border-border">
+              <table className="w-full text-xs" style={{ tableLayout: "fixed" }}>
+                <thead>
+                  <tr className="border-b border-border bg-secondary text-right text-xs font-semibold text-muted-foreground">
+                    {["Chat ID", "תאריך חיבור", "פעולה"].map((h) => (
+                      <th key={h} className="p-2.5">
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {telegramUsers.map((u: any) => (
+                    <tr key={u.id} className="border-b border-border last:border-0">
+                      <td className="p-2.5 font-mono text-xs" dir="ltr">
+                        {u.chat_id}
+                      </td>
+                      <td className="p-2.5 text-xs text-muted-foreground">
+                        {new Date(u.created_at).toLocaleDateString("he-IL")}
+                      </td>
+                      <td className="p-2.5">
+                        <button
+                          onClick={() => disconnectTelegramUser(u.id)}
+                          style={{
+                            background: "none",
+                            border: "1px solid #fecaca",
+                            borderRadius: 6,
+                            padding: "2px 8px",
+                            fontSize: 11,
+                            color: "#dc2626",
+                            cursor: "pointer",
+                          }}
+                        >
+                          נתק
+                        </button>
                       </td>
                     </tr>
                   ))}
