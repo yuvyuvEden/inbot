@@ -31,6 +31,8 @@ interface ClientRow {
   created_at: string;
   settings_refresh_requested: boolean | null;
   settings_refreshed_at: string | null;
+  phone?: string | null;
+  invoice_limit_override?: number | null;
 }
 
 const isExpiringSoon = (d: string | null) => {
@@ -100,10 +102,17 @@ export default function AdminClientsTab() {
       const acMap = new Map<string, string>();
       (acData || []).forEach((ac) => acMap.set(ac.client_id, ac.accountant_id));
 
+      const userIds = (clientsData || []).map(c => c.user_id).filter(Boolean) as string[];
+      const { data: profilesData } = userIds.length
+        ? await supabase.from("profiles").select("user_id, phone").in("user_id", userIds)
+        : { data: [] };
+      const phoneMap = new Map((profilesData ?? []).map((p: any) => [p.user_id, p.phone]));
+
       return (clientsData || []).map((c) => ({
         ...c,
         has_accountant: acMap.has(c.id),
         accountant_id: acMap.get(c.id) || null,
+        phone: phoneMap.get(c.user_id ?? "") ?? null,
       })) as ClientRow[];
     },
   });
@@ -136,6 +145,7 @@ export default function AdminClientsTab() {
           is_active: c.is_active,
           telegram_chat_id: c.telegram_chat_id,
           gemini_api_key: c.gemini_api_key || null,
+          invoice_limit_override: (c as any).invoice_limit_override ?? null,
         })
         .eq("id", c.id);
       if (error) throw error;
