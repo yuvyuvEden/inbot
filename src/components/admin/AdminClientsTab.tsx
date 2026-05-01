@@ -928,7 +928,7 @@ export default function AdminClientsTab() {
 
       {/* Edit Drawer */}
       <Sheet open={!!editClient} onOpenChange={(o) => !o && setEditClient(null)}>
-        <SheetContent side="left" className="w-[400px] overflow-y-auto" dir="rtl">
+        <SheetContent side="left" className="w-[400px] overflow-y-auto" dir="rtl" onInteractOutside={(e) => { if (planModal || usersModal) { e.preventDefault(); } }}>
           <SheetHeader>
             <SheetTitle>עריכת לקוח</SheetTitle>
           </SheetHeader>

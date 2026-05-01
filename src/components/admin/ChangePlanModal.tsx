@@ -53,7 +53,7 @@ export function ChangePlanModal({ client, onClose, onSaved }: Props) {
 
   return (
     <div
-      onClick={onClose}
+      onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }}
       style={{
         position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
         zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center",
