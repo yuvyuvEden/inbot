@@ -53,7 +53,7 @@ export function ChangePlanModal({ client, onClose, onSaved }: Props) {
 
   return (
     <div
-      onClick={onClose}
+      onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }}
       style={{
         position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
         zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center",
@@ -78,7 +78,7 @@ export function ChangePlanModal({ client, onClose, onSaved }: Props) {
             </h2>
           </div>
           <button
-            onClick={onClose}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }}
             style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b" }}
             aria-label="סגור"
           >
@@ -161,7 +161,7 @@ export function ChangePlanModal({ client, onClose, onSaved }: Props) {
         {/* Actions */}
         <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end", marginTop: "8px" }}>
           <button
-            onClick={onClose}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }}
             style={{
               padding: "8px 16px", borderRadius: "8px", fontSize: "13px",
               background: "#f1f5f9", color: "#1a202c", border: "none", cursor: "pointer",
